@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="searchForm" type="cn.com.thtf.egov.cms.form.BuyContractSearchForm"/>
+		<form-bean name="prodSearchForm" type="cn.com.thtf.egov.cms.form.ProductSearchForm"/>
+		<form-bean name="buyBackContractAddForm" type="cn.com.thtf.egov.cms.form.BuyBackContractAddForm"/>
+		<form-bean name="buyContractReviewForm" type="cn.com.thtf.egov.cms.form.BuyContractReviewForm"/>
+	</form-beans>
+	<global-exceptions />
+	<global-forwards>
+		<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+	</global-forwards>
+	<action-mappings>
+		<!-- 采购退货合同列表 -->
+		<action path="/buyBackContractList"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="getBuyBackContracts"
+			name="searchForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/purchase/buyBackContractManage.jsp" />
+		</action>
+
+		<!-- 采购合同信息 -->
+		<action path="/goBuyBackContract"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="getBuyContractInfo"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/purchase/buyBackContractAdd.jsp" />
+		</action>
+
+		<!-- 产品选择 -->
+		<action path="/getProdInfoById"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="getProdInfoById"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/purchase/productSelectBuyBackContSub.jsp" />
+		</action>
+		<!-- 供应商选择 HanHaiyun -->
+		<action path="/getSupplierAddress"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="getSupplierAddress"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/purchase/buyBackContractSupplierSelectSub.jsp" />
+		</action>
+		<!-- 添加采购退货合同 HanHaiyun -->
+		<action path="/inertBuyBack"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="inertBuyBack"
+			name="buyBackContractAddForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/buyBackContractList.do" />
+		</action>
+		<!-- 修改采购退货合同 HanHaiyun-->
+		<action path="/modifyBuyBackContract"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="modifyBuyBackContract"
+			name="buyBackContractAddForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/buyBackContractList.do"/>
+		</action>
+		<!-- 跳转到采购退货合同界面 HanHaiyun -->	
+		<action path="/returnBackContractModifyPage"
+		type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="returnBackContractModifyPage"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="modify" path="/jsp/purchase/buyBackContractModify.jsp" />
+			<forward name="view" path="/jsp/purchase/buyBackContractView.jsp"/>
+			<forward name="review" path="/jsp/purchase/buyBackContractReview.jsp"/>
+			<forward name="confirm" path="/jsp/purchase/buyBackContractConfirm.jsp"/>
+		</action>
+		<!-- 跳转到采购退货预览界面 HanHaiyun -->
+		<action path="/returnBackContractPreview"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="returnBackContractPreview"
+			name=""
+			scope="request"
+			validate="false">
+		<forward name="success" path="/jsp/purchase/buyBackContractPreview.jsp" />
+		</action>
+		<!-- 采购退货合同评审 HanHaiyun -->
+		<action path="/getBackBuyContractsReview"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="getBackBuyContractsReview"
+			name="buyContractReviewForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/buyBackContractList.do" />
+		</action>
+		<!-- 采购退货合同文件下载-->
+		<action path="/downloadBuyBackContractFile"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="downloadBuyBackContractFile"
+			name=""
+			scope="request"
+			validate="false">
+		<forward name="fail" path="/jsp/invoice/redirect.jsp" />	
+		</action>
+		<!-- 删除采购退货合同-->
+		<action path="/delBuyBackContract"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="delBuyBackContract"
+			name=""
+			scope="request"
+			validate="false">
+		<forward name="success" path="/buyBackContractList.do"/>
+		</action>
+		<!-- 查看评审表 -->
+		<action path="/selBuyBackContractReview"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="selBuyBackContractReview"
+			name=""
+			scope="request"
+			validate="false">
+		<forward name="success" path="/jsp/purchase/buyBackContractSelReview.jsp"/>
+		</action>
+		<!-- 更新采购退货合同状态 -->
+		<action path="/upBuyBackContractStatus"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="upBuyBackContractStatus"
+			name=""
+			scope="request"
+			validate="false">
+		</action>
+		<!-- 搜索采购退货公司合同号是否存在 -->
+		<action path="/isExistsBuyBackContractCode"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="isExistsBuyBackContractCode"
+			name=""
+			scope="request"
+			validate="false">
+		</action>
+		<action path="/buyBackContractConfirm"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackContractAction"
+			parameter="buyBackContractConfirm"
+			name="buyBackContractAddForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/buyBackContractList.do" />
+		</action>
+		
+	</action-mappings>
+</struts-config>

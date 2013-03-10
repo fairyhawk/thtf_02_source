@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+<struts-config>
+	<data-sources />
+	<form-beans>
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>
+		<!-- 需求管理列表 -->
+		<action path="/getDemandList"
+			type="cn.com.thtf.egov.cms.action.demand.DemandAction"
+			parameter="getDemandList"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/demand/demandManage.jsp" />
+		</action>
+
+		<!-- 需求管理列表明细 -->
+		<action path="/getDemandDetailList"
+			type="cn.com.thtf.egov.cms.action.demand.DemandAction"
+			parameter="getDemandDetailList"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/demand/demandDetailManage.jsp" />
+		</action>		
+
+		<!-- 需求管理列表明细 确认 -->
+		<action path="/modifyDemandById"
+			type="cn.com.thtf.egov.cms.action.demand.DemandAction"
+			parameter="modifyDemandById"
+			name=""
+			scope="request"
+			validate="false">
+		</action>	
+	</action-mappings>
+</struts-config>

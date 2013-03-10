@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="sellBackAssessForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="sellBackAssess" type="cn.com.thtf.egov.cms.dto.SellBackAssessDto"/>
+		</form-bean>
+		<form-bean name="searchSellBackForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="searchSellBack" type="cn.com.thtf.egov.cms.dto.SellBackSearchDto"/>
+		</form-bean>
+		<!-- 退款申请用form -->
+		<form-bean name="addSellBackForm" type="org.apache.struts.action.DynaActionForm"> 
+		</form-bean>
+		<!-- 客户联系人用form -->
+		<form-bean name="customerLinkmanForm" type="cn.com.thtf.egov.cms.entity.CustomerLinkmanEntity"> 
+		</form-bean> 
+		
+		<!-- 修改退款用form -->
+		<form-bean name="modifySellBackForm" type="org.apache.struts.action.DynaActionForm"> 
+		<form-property name="modifySellBackForm" type="cn.com.thtf.egov.cms.dto.SellBackAssessDto"/>
+		</form-bean> 
+		
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>
+		<!--销售退款一览  by zzx-->
+
+		<action path="/getSellBackList" type="cn.com.thtf.egov.cms.action.sell.SellBackAction"
+			parameter="getSellBackList"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/sellBack/sellBackManager.jsp"/>
+		</action>
+
+		<!--销售退款检索  by zzx-->
+		<action path="/searchSellBack" type="cn.com.thtf.egov.cms.action.sell.SellBackAction"
+			parameter="searchSellBack" scope="request" name="searchSellBackForm" validate="false">
+			<forward name="success" path="/jsp/sellBack/sellBackManager.jsp"/>
+		</action>
+
+		
+			<!-- 显示退款评审      by jiangmx   -->
+		<action path="/getShowSellBackAssess" type="cn.com.thtf.egov.cms.action.sell.SellBackAction"
+				parameter="getShowSellBackAssess"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/sellBack/sellBackAudit.jsp"/>
+			<forward name="failure" path="/getSellBackList.do"/>
+		</action>
+
+		<!-- 退款评审      by jiangmx   -->
+		<action path="/getSellBackAssess" type="cn.com.thtf.egov.cms.action.sell.SellBackAction"
+				parameter="getSellBackAssess"
+			    scope="request"
+			    validate="false" 
+				name="sellBackAssessForm">
+			<forward name="success" path="/getSellBackList.do"/>
+			<forward name="failure" path="/getShowSellBackAssess.do"/>
+			<forward name="failureToList" path="/getSellBackList.do"/>
+		</action>
+		
+		
+			<!-- 删除退款信息      by jiangmx   -->
+		<action path="/deleteSellBack" type="cn.com.thtf.egov.cms.action.sell.SellBackAction"
+				parameter="deleteSellBack"
+			    scope="request"
+			    validate="false">
+			<forward name="success" path="/getSellBackList.do"/>
+			<forward name="failure" path="/getSellBackList.do"/>
+		</action>
+		
+		
+		<!--销售退款确认  by zzx-->
+		<action path="/confirmSellBack" type="cn.com.thtf.egov.cms.action.sell.SellBackAction"
+			parameter="confirmSellBack" scope="request" validate="false">
+			<forward name="success" path="/getSellBackList.do"/>
+		</action>
+		
+		<!--销售退款打印  by zzx-->
+		<action path="/printSellBack" type="cn.com.thtf.egov.cms.action.sell.SellBackAction"
+			parameter="printSellBack" scope="request" validate="false">	
+			<forward name="success" path="/getPrintInfo.do"/>		
+		</action>
+		<!--销售退款打印显示  by zzx-->
+		<action path="/getPrintInfo" type="cn.com.thtf.egov.cms.action.sell.SellBackAction"
+			parameter="getPrintInfo" scope="request" validate="false">	
+			<forward name="success" path="/jsp/sellBack/sellBackPrint.jsp"/>
+			<forward name="failure" path="/jsp/sellBack/sellBackPrint.jsp"/>			
+		</action>
+	<!-- 根据回款单显示退款申请信息 By LiuQingGang -->
+		<action path="/getInfoByMreturnId" type="cn.com.thtf.egov.cms.action.sell.SellBackAction"
+				parameter="getInfoByMreturnId"
+			scope="request"
+			validate="false" >
+			<forward name="success"  path="/jsp/sellBack/sellBackAdd.jsp"/>
+			<forward name="failure" path="/mreturn.do"/>  
+		</action>
+		
+		<!-- 保存提交退款申请 By LiuQingGang-->
+		<action path="/addSellBack" type="cn.com.thtf.egov.cms.action.sell.SellBackAction"
+				parameter="addSellBack"
+			scope="request"
+			validate="false" name="addSellBackForm">
+			<forward name="success"  path="/mreturn.do"/>
+			<forward name="failure" path="/getInfoByMreturnId.do"/>  
+		</action>
+		
+		<!-- 获取联系人信息 By LiuQingGang-->
+		<action path="/getLinkManById"
+			type="cn.com.thtf.egov.cms.action.sell.SellBackAction"
+			parameter="getLinkMsgByLinkManId" name="customerLinkmanForm" scope="request" validate="false">
+		</action> 
+		
+		<!-- 查看修改退款时显示信息 By LiuQingGang-->
+		<action path="/getInfoBySellBackId"
+			type="cn.com.thtf.egov.cms.action.sell.SellBackAction"
+			parameter="getInfoBySellBackId"   scope="request" validate="false">
+			
+			<forward name="modify"  path="/jsp/sellBack/sellBackModify.jsp"/>
+			<forward name="view"  path="/jsp/sellBack/sellBackView.jsp"/>
+			<forward name="failure" path="/getSellBackList.do"/> 
+		</action>
+		
+		<!-- 修改退款 By LiuQingGang-->
+		<action path="/modifySellBack"
+			type="cn.com.thtf.egov.cms.action.sell.SellBackAction"
+			parameter="modifySellBack" name="modifySellBackForm"   scope="request" validate="false">
+			 
+			<forward name="failure" path="/getInfoBySellBackId.do?type=modify"/> 
+			<forward name="success" path="/getSellBackList.do"/>  
+			
+			
+		</action>				
+				
+				
+	</action-mappings>
+	<message-resources
+		parameter="com.tsinghua.mp.web.conf.i18n.ApplicationResources"
+		/>
+</struts-config>

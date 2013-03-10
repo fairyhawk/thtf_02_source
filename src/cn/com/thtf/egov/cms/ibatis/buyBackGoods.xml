@@ -1,0 +1,919 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="buyBackGoods_sqlMap"> 
+    <typeAlias alias="buyBackGoodsAssessDto" type="cn.com.thtf.egov.cms.dto.BuyBackGoodsAssessDto"/> 
+    <typeAlias alias="buyBackGoodsListDto" type="cn.com.thtf.egov.cms.dto.BuyBackGoodsListDto"/>
+	<typeAlias alias="buyBackGoodsSearchDto" type="cn.com.thtf.egov.cms.dto.BuyBackGoodsSearchDto"/>
+	<typeAlias alias="userEntity" type="cn.com.thtf.egov.cms.entity.UserEntity"/>
+	<typeAlias alias="productTypeEntity" type="cn.com.thtf.egov.cms.entity.ProductTypeEntity" />
+	<typeAlias alias="stockroomEntity" type="cn.com.thtf.egov.cms.entity.StockroomEntity"/> 
+	<typeAlias alias="modifyBuyBackGoodsInfoDto" type="cn.com.thtf.egov.cms.dto.ModifyBuyBackGoodsInfoDto"/> 
+	
+ 	<!-- 新建返厂单显示用 By LiuQingGang -->
+	<typeAlias alias="createBuyBackGoodsInfo" type="cn.com.thtf.egov.cms.dto.CreateBuyBackGoodsInfoDto"  />
+	<!-- 库房 -->
+	<typeAlias alias="stockroomEntity" type="cn.com.thtf.egov.cms.entity.StockroomEntity"  />
+	<!-- 发货地址 -->
+	<typeAlias alias="supplierAddressEntity" type="cn.com.thtf.egov.cms.entity.SupplierAddressEntity"  />
+	<!-- 返厂单 -->
+	<typeAlias alias="buyBackGoodsEntity" type="cn.com.thtf.egov.cms.entity.BuyBackGoodsEntity"  />
+	<!-- 返厂明细 -->
+	<typeAlias alias="buyBackGoodsDetailEntity" type="cn.com.thtf.egov.cms.entity.BuyBackGoodsDetailEntity"  />	
+	     
+     <!-- 查询返厂表信息  jiangmx-->
+      <select id="selectBuyBackGoodsInfo" parameterClass="java.lang.String" resultClass="buyBackGoodsAssessDto">
+		select	buy_back_goods.id as id,
+                product_type_id as productTypeId,
+				supplier_id as supplierId,
+				supplier_name as supplierName,
+				in_stock_id as inStockId,
+				date as date,
+				request_date as requestDate, 
+				send_date as sendDate,
+				money as money,
+				status as status,
+				stockroom_id as stockroomId,
+				supplier_address_id as supplierAddressId,
+				transport_way as transportWay,
+				take_name as takeName,
+				take_number as takeNumber,
+				user_id as userId,
+				user_name as userName,
+				text as text,
+				pro_maj_id as proMajId,
+				pro_maj_name as proMajName,
+				pro_maj_date as proMajDate,
+				pro_maj_idea as proMajIdea,
+				pro_maj_text as proMajText,
+				buy_man_id as buyManId,
+				buy_man_name as buyManName,
+				buy_man_date as buyManDate,
+				buy_man_idea as buyManIdea,
+				buy_man_text as buyManText,
+				ope_maj_id as opeMajId,
+				ope_maj_name as opeMajName,
+				ope_maj_date as opeMajDate,
+				ope_maj_idea as opeMajIdea,
+				ope_maj_text as opeMajText,
+				stk_adm_id as stkAdmId,
+				stk_adm_name as stkAdmName,
+				stk_adm_date as stkAdmDate,
+				stk_adm_idea as stkAdmIdea,
+				stk_adm_text as stkAdmText
+      
+         from   buy_back_goods
+      
+         where  buy_back_goods.id=#buyBackGoodsId#
+     </select>
+     
+      <!--返厂评审  jiangmx-->
+	<update id="updateBuyBackGoodsAssess"  parameterClass="buyBackGoodsAssessDto">
+		update buy_back_goods
+	      set  status=#status#
+	
+	    <!--产品总监-->
+	   <isEqual compareValue="10" property="roleId">
+	          ,pro_maj_date = date_format(now(),'%Y-%m-%d'),
+	           pro_maj_name = #proMajName#,
+	           pro_maj_idea = #proMajIdea#,  
+			   pro_maj_text = #proMajText#
+	   
+	   </isEqual>
+	   
+	    <!--采购主管-->
+	   <isEqual compareValue="11" property="roleId">
+	          ,buy_man_date = date_format(now(),'%Y-%m-%d'),
+	           buy_man_name = #buyManName#,
+	           buy_man_idea = #buyManIdea#,  
+			   buy_man_text = #buyManText#
+	   
+	   </isEqual>
+	   
+	    <!--运营总监-->
+	   <isEqual compareValue="17" property="roleId">
+	   	      ,ope_maj_date = date_format(now(),'%Y-%m-%d'),
+	           ope_maj_name = #opeMajName#,
+			   ope_maj_idea = #opeMajIdea#,  
+			   ope_maj_text = #opeMajText#
+	   </isEqual>
+	      
+	      where buy_back_goods.id = #id#
+	   
+	</update>
+     
+
+<!-- 根据用户ID和权限获取返厂一览  by zzx-->
+	<select id="selectBuyBackGoodsList.selectBuyBackGoodsList" parameterClass="userEntity" resultClass="buyBackGoodsListDto">
+		SELECT BUY_BACK_GOODS.ID,
+		       STOCKROOM.NAME                     AS STOCKROOMNAME,
+		       BUY_CONTRACT.PRODUCT_CONTRACT_CODE AS PRODUCTCONTRACTCODE,
+		       BUY_CONTRACT.COMPANY_CONTRACT_CODE AS COMPANYCONTRACTCODE,
+		       PRODUCT_TYPE.ID                    AS PRODUCTTYPEID,
+		       PRODUCT_TYPE.NAME                  AS PRODUCTTYPENAME,
+		       SUPPLIER.NAME                      AS SUPPLIERNAME,
+		       BUY_BACK_GOODS.MONEY,
+		       BUY_BACK_GOODS.USER_NAME           AS USERNAME,
+		       BUY_BACK_GOODS.DATE,
+		       BUY_BACK_GOODS.SEND_DATE           AS SENDDATE,
+		       BUY_BACK_GOODS.STATUS
+		FROM   BUY_BACK_GOODS
+		       LEFT JOIN STOCKROOM
+		         ON BUY_BACK_GOODS.STOCKROOM_ID = STOCKROOM.ID
+		       LEFT JOIN IN_STOCK
+		         ON BUY_BACK_GOODS.IN_STOCK_ID = IN_STOCK.ID
+		       LEFT JOIN BUY_CONTRACT
+		         ON IN_STOCK.BUY_CONTRACT_ID = BUY_CONTRACT.ID
+		       LEFT JOIN PRODUCT_TYPE
+		         ON BUY_BACK_GOODS.PRODUCT_TYPE_ID = PRODUCT_TYPE.ID
+		       LEFT JOIN SUPPLIER
+		         ON BUY_BACK_GOODS.SUPPLIER_ID = SUPPLIER.ID
+		<!-- 产品总监 -->
+		<isEqual prepend="," property="roleId" compareValue="10">
+				user_product
+		</isEqual>
+		<!-- 采购主管 -->
+		<isEqual prepend="," property="roleId" compareValue="11">
+				user_product
+		</isEqual>
+		<dynamic prepend="WHERE">			
+
+			<!-- 采购专员 (自己新建)-->
+			<isEqual prepend="" property="roleId" compareValue="8">
+				BUY_BACK_GOODS.user_id = #id#					
+			</isEqual>
+
+			<!-- 产品总监(负责产品分类，返厂单状态产品总监待评审) -->
+			<isEqual prepend="" property="roleId" compareValue="10">
+				user_product.user_id=#id# and user_product.product_type_id = buy_back_goods.product_type_id
+					and buy_back_goods.status=2
+			</isEqual>
+
+			<!-- 采购主管(负责产品分类，返厂单状态采购主管待评审)-->
+			<isEqual prepend="" property="roleId" compareValue="11">
+				user_product.user_id=#id# and user_product.product_type_id = buy_back_goods.product_type_id
+					and buy_back_goods.status=4			
+			</isEqual>
+			
+			<!-- 运营总监(返厂单状态运营总监待评审)-->
+			<isEqual prepend="" property="roleId" compareValue="17">
+				BUY_BACK_GOODS.status = 6					
+			</isEqual>
+		</dynamic>
+		order by 
+ 			 buy_back_goods.id desc
+	</select>
+	
+	<!--获得所有的产品分类 By zzx--> 
+	<select id="selectProductTypeList" resultClass="productTypeEntity">
+			SELECT   PRODUCT_TYPE.ID,
+			         PRODUCT_TYPE.NO,
+			         PRODUCT_TYPE.NAME,
+			         PRODUCT_TYPE.PRODUCT_DEPT_ID,
+			         PRODUCT_TYPE.CLIMIT
+			FROM     PRODUCT_TYPE
+			ORDER BY PRODUCT_TYPE.PRODUCT_DEPT_ID
+	</select>
+	
+	
+	
+	<!-- 根据用户ID和权限获取返厂一览 (分页) by zzx-->
+	<select id="selectBuyBackGoodsList.recordCount" parameterClass="userEntity" resultClass="java.lang.Integer">
+		SELECT COUNT(BUY_BACK_GOODS.ID)		      
+		FROM   BUY_BACK_GOODS
+		       LEFT JOIN STOCKROOM
+		         ON BUY_BACK_GOODS.STOCKROOM_ID = STOCKROOM.ID
+		       LEFT JOIN IN_STOCK
+		         ON BUY_BACK_GOODS.IN_STOCK_ID = IN_STOCK.ID
+		       LEFT JOIN BUY_CONTRACT
+		         ON IN_STOCK.BUY_CONTRACT_ID = BUY_CONTRACT.ID
+		       LEFT JOIN PRODUCT_TYPE
+		         ON BUY_BACK_GOODS.PRODUCT_TYPE_ID = PRODUCT_TYPE.ID
+		       LEFT JOIN SUPPLIER
+		         ON BUY_BACK_GOODS.SUPPLIER_ID = SUPPLIER.ID
+		<!-- 产品总监 -->
+		<isEqual prepend="," property="roleId" compareValue="10">
+				user_product
+		</isEqual>
+		<!-- 采购主管 -->
+		<isEqual prepend="," property="roleId" compareValue="11">
+				user_product
+		</isEqual>
+		<dynamic prepend="WHERE">			
+
+			<!-- 采购专员 (自己新建)-->
+			<isEqual prepend="" property="roleId" compareValue="8">
+				BUY_BACK_GOODS.user_id = #id#					
+			</isEqual>
+
+			<!-- 产品总监(负责产品分类，返厂单状态产品总监待评审) -->
+			<isEqual prepend="" property="roleId" compareValue="10">
+				user_product.user_id=#id# and user_product.product_type_id = buy_back_goods.product_type_id
+					and buy_back_goods.status=2
+			</isEqual>
+
+			<!-- 采购主管(负责产品分类，返厂单状态采购主管待评审)-->
+			<isEqual prepend="" property="roleId" compareValue="11">
+				user_product.user_id=#id# and user_product.product_type_id = buy_back_goods.product_type_id
+					and buy_back_goods.status=4			
+			</isEqual>
+			
+			<!-- 运营总监(返厂单状态运营总监待评审)-->
+			<isEqual prepend="" property="roleId" compareValue="17">
+				BUY_BACK_GOODS.status = 6					
+			</isEqual>
+		</dynamic>
+		order by 
+ 			 buy_back_goods.id desc
+	</select>
+	
+	 <!--根据条件查询返厂单 by zzx-->
+	<select id="selectBuyBackGoodsListByCondition.selectBuyBackGoodsListByCondition" parameterClass="buyBackGoodsSearchDto" resultClass="buyBackGoodsListDto">
+		SELECT BUY_BACK_GOODS.ID,
+		       STOCKROOM.NAME                     AS STOCKROOMNAME,
+		       BUY_CONTRACT.PRODUCT_CONTRACT_CODE AS PRODUCTCONTRACTCODE,
+		       BUY_CONTRACT.COMPANY_CONTRACT_CODE AS COMPANYCONTRACTCODE,
+		       PRODUCT_TYPE.ID                    AS PRODUCTTYPEID,
+		       PRODUCT_TYPE.NAME                  AS PRODUCTTYPENAME,
+		       SUPPLIER.NAME                      AS SUPPLIERNAME,
+		       BUY_BACK_GOODS.MONEY,
+		       BUY_BACK_GOODS.USER_NAME           AS USERNAME,
+		       BUY_BACK_GOODS.DATE,
+		       BUY_BACK_GOODS.SEND_DATE           AS SENDDATE,
+		       BUY_BACK_GOODS.STATUS
+		FROM   BUY_BACK_GOODS
+		       LEFT JOIN STOCKROOM
+		         ON BUY_BACK_GOODS.STOCKROOM_ID = STOCKROOM.ID
+		       LEFT JOIN IN_STOCK
+		         ON BUY_BACK_GOODS.IN_STOCK_ID = IN_STOCK.ID
+		       LEFT JOIN BUY_CONTRACT
+		         ON IN_STOCK.BUY_CONTRACT_ID = BUY_CONTRACT.ID
+		       LEFT JOIN PRODUCT_TYPE
+		         ON BUY_BACK_GOODS.PRODUCT_TYPE_ID = PRODUCT_TYPE.ID
+		       LEFT JOIN SUPPLIER
+		         ON BUY_BACK_GOODS.SUPPLIER_ID = SUPPLIER.ID
+		<!-- 产品总监 -->
+		<isEqual prepend="," property="roleId" compareValue="10">
+				user_product
+		</isEqual>
+		<!-- 采购主管 -->
+		<isEqual prepend="," property="roleId" compareValue="11">
+				user_product
+		</isEqual>
+		<dynamic prepend="WHERE">			
+
+			<!-- 采购专员 (自己新建)-->
+			<isEqual prepend="and" property="roleId" compareValue="8">
+				BUY_BACK_GOODS.user_id = #loginId#					
+			</isEqual>
+
+			<!-- 产品总监(负责产品分类) -->
+			<isEqual prepend="and" property="roleId" compareValue="10">
+				user_product.user_id=#loginId# and user_product.product_type_id = buy_back_goods.product_type_id
+					
+			</isEqual>
+
+			<!-- 采购主管(负责产品分类)-->
+			<isEqual prepend="and" property="roleId" compareValue="11">
+				user_product.user_id=#loginId# and user_product.product_type_id = buy_back_goods.product_type_id
+						
+			</isEqual>
+			
+			<!-- 运营总监-->
+			<isEqual prepend="and" property="roleId" compareValue="17">
+								
+			</isEqual>
+			
+			<!-- 画面条件 -->		
+			<isNotEmpty prepend="and" property="id">
+				buy_back_goods.id = #id#
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="stockroomId">
+				buy_back_goods.stockroom_id=#stockroomId# 
+			</isNotEmpty>		
+			<isNotEmpty prepend="and" property="productContractCode">
+				buy_contract.product_contract_code=#productContractCode# 
+			</isNotEmpty>	
+			<isNotEmpty prepend="and" property="companyContractCode">
+				buy_contract.company_contract_code=#companyContractCode# 
+			</isNotEmpty>	
+			<isNotEmpty prepend="and" property="productTypeId">
+				buy_back_goods.product_type_id=#productTypeId#	 
+			</isNotEmpty>			
+			<isNotEmpty prepend="and" property="supplierName">				
+				supplier.name   like concat( '%' ,#supplierName#, '%' ) 				 
+			</isNotEmpty>		
+			<isNotEmpty prepend="and" property="userName">
+				buy_back_goods.user_name like  '%$userName$%'		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="status">
+				buy_back_goods.status=#status#	 
+			</isNotEmpty>			
+		</dynamic>
+		order by 
+ 			 buy_back_goods.id desc
+	</select>
+	
+	<!--根据条件查询返厂单(分页) by zzx-->
+	<select id="selectBuyBackGoodsListByCondition.recordCount" parameterClass="buyBackGoodsSearchDto" resultClass="java.lang.Integer">
+		SELECT COUNT(BUY_BACK_GOODS.ID)		       
+		FROM   BUY_BACK_GOODS
+		       LEFT JOIN STOCKROOM
+		         ON BUY_BACK_GOODS.STOCKROOM_ID = STOCKROOM.ID
+		       LEFT JOIN IN_STOCK
+		         ON BUY_BACK_GOODS.IN_STOCK_ID = IN_STOCK.ID
+		       LEFT JOIN BUY_CONTRACT
+		         ON IN_STOCK.BUY_CONTRACT_ID = BUY_CONTRACT.ID
+		       LEFT JOIN PRODUCT_TYPE
+		         ON BUY_BACK_GOODS.PRODUCT_TYPE_ID = PRODUCT_TYPE.ID
+		       LEFT JOIN SUPPLIER
+		         ON BUY_BACK_GOODS.SUPPLIER_ID = SUPPLIER.ID
+		<!-- 产品总监 -->
+		<isEqual prepend="," property="roleId" compareValue="10">
+				user_product
+		</isEqual>
+		<!-- 采购主管 -->
+		<isEqual prepend="," property="roleId" compareValue="11">
+				user_product
+		</isEqual>
+		<dynamic prepend="WHERE">			
+
+			<!-- 采购专员 (自己新建)-->
+			<isEqual prepend="and" property="roleId" compareValue="8">
+				BUY_BACK_GOODS.user_id = #loginId#					
+			</isEqual>
+
+			<!-- 产品总监(负责产品分类) -->
+			<isEqual prepend="and" property="roleId" compareValue="10">
+				user_product.user_id=#loginId# and user_product.product_type_id = buy_back_goods.product_type_id
+					
+			</isEqual>
+
+			<!-- 采购主管(负责产品分类)-->
+			<isEqual prepend="and" property="roleId" compareValue="11">
+				user_product.user_id=#loginId# and user_product.product_type_id = buy_back_goods.product_type_id
+					
+			</isEqual>
+			
+			<!-- 运营总监-->
+			<isEqual prepend="and" property="roleId" compareValue="17">
+							
+			</isEqual>
+			
+			<!-- 画面条件 -->		
+			<isNotEmpty prepend="and" property="id">
+				buy_back_goods.id = #id#
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="stockroomId">
+				buy_back_goods.stockroom_id=#stockroomId# 
+			</isNotEmpty>		
+			<isNotEmpty prepend="and" property="productContractCode">
+				buy_contract.product_contract_code=#productContractCode# 
+			</isNotEmpty>	
+			<isNotEmpty prepend="and" property="companyContractCode">
+				buy_contract.company_contract_code=#companyContractCode# 
+			</isNotEmpty>	
+			<isNotEmpty prepend="and" property="productTypeId">
+				buy_back_goods.product_type_id=#productTypeId#	 
+			</isNotEmpty>			
+			<isNotEmpty prepend="and" property="supplierName">				
+				supplier.name   like concat( '%' ,#supplierName#, '%' ) 				 
+			</isNotEmpty>		
+			<isNotEmpty prepend="and" property="userName">
+				buy_back_goods.user_name like  '%$userName$%'		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="status">
+				buy_back_goods.status=#status#	 
+			</isNotEmpty>			
+		</dynamic>
+		order by 
+ 			 buy_back_goods.id desc
+	</select>
+
+	
+	<!-- 新建返厂单 产品信息显示By LiuQingGang  -->	
+	<select id="selectInstockInfo" parameterClass="java.lang.String" resultClass="createBuyBackGoodsInfo">
+		SELECT 
+		in_stock.id as id,
+		in_stock.product_type_id as productTypeId,
+		product_type.name as productTypeName,
+		in_stock.supplier_id as supplierId,
+		in_stock.supplier_name as supplierName,
+		buy_contract.product_contract_code as productContractCode,
+		buy_contract.company_contract_code as companyContractCode
+		
+		from in_stock  left join product_type
+		on in_stock.product_type_id=product_type.id 
+		left join buy_contract on
+		buy_contract.id=in_stock.buy_contract_id 
+		WHERE	in_stock.id=#id#  
+		
+	</select>
+	
+	<!-- 获取厂房  By LiuQingGang -->
+	<select id="selectStockroom" resultClass="stockroomEntity">
+		select stockroom.id as id,
+		stockroom.name as name,
+		stockroom.type as type,
+		stockroom.short_name as shortName,
+		stockroom.product_dept_id  as productDeptId
+		from stockroom 
+		where stockroom.type=2 
+		order by stockroom.id
+	</select>
+	
+	<!-- 新建返厂单显示用 By LiuQingGang-->
+	<select id="selectCreateBuyBackGoodsInfo.seteclInfo" parameterClass="buyBackGoodsEntity" resultClass="createBuyBackGoodsInfo">
+		
+		select          
+			instock_product.product_id as productId,<!--产品编号 -->
+			product.code as code,<!--产品编码 -->
+			product.name as productName,<!--产品名称-->
+			product.type as productType,<!--规格型号-->
+			product.unit as productUnit,<!--单位 -->
+			IFNULL(instock_product.price,0) as price,<!--采购单价-->
+			instock_product.count as inStockCount ,<!--#入库数-->
+			IFNULL(instock_product.count,0)*IFNULL(instock_product.price,0) as  inStockMoney,<!--#入库金额-->
+			IFNULL(ma.money,0) as paymentMoney,<!--指定金额-->
+			IFNULL(mb.money,0) as receiveMoney,<!--收票金额 --> 
+			sum(IFNULL(MAcount.count,0)) as	alreadyBackCount,<!--已返厂数  -->
+			sum(IFNULL(MAcount.count,0)) *IFNULL(instock_product.price,0) as	backMoney,<!--返厂金额  -->
+			IFNULL(stock.num,0 ) as 	stockNum <!--库存数  -->
+		
+		from 	
+			<!--入库单所有的产品 -->
+			(select in_stock.id as in_stock_id ,
+				in_stock_detail.product_id as product_id ,
+			in_stock_detail.count as count,
+			in_stock_detail.price as price 
+			from  in_stock left join in_stock_detail    on
+				in_stock.id=in_stock_detail.in_stock_id
+			) instock_product  
+			left JOIN product on 
+			instock_product.product_id=product.id 
+		
+		LEFT JOIN  
+			<!--指定金额 -->
+			(
+			SELECT payment_detail.product_id as product_id ,sum(payment_detail.money) as money
+			from payment_detail,payment,in_stock_detail 
+			where payment_detail.payment_id =payment.id and 
+			payment.status= 13 and payment_detail.in_stock_id=#inStockId# and
+			payment_detail.appoint_type=1 and
+			payment_detail.product_id = in_stock_detail.product_id
+			and in_stock_detail.in_stock_id = payment_detail.in_stock_id
+			group by payment_detail.product_id ) ma 
+			on instock_product.product_id=ma.product_id
+		
+		left JOIN 
+			<!--收费金额 -->
+			(SELECT receive_invoice_detail.product_id as product_id ,
+			sum(receive_invoice_detail.money) as money
+			from receive_invoice_detail , receive_invoice ,in_stock_detail  
+			where  receive_invoice_detail.receive_invoice_id =receive_invoice.id and 
+			receive_invoice.status= 1 and  
+			receive_invoice_detail.product_id = in_stock_detail.product_id and 
+			in_stock_detail.in_stock_id = receive_invoice_detail.in_stock_id  and
+			receive_invoice_detail.in_stock_id=#inStockId# 
+			group by receive_invoice_detail.product_id ) mb   
+			on instock_product.product_id=mb.product_id 
+			 
+		left JOIN ( 
+			<!--入库单产品的已返厂数合计 -->
+			SELECT 
+			buy_back_goods.in_stock_id as in_stock_id,
+			IFNULL(buy_back_goods_detail.product_id,'') as product_id,
+			sum(IFNULL(buy_back_goods_detail.count,0) ) as count
+			FROM buy_back_goods left JOIN buy_back_goods_detail
+			on   
+			buy_back_goods.id =buy_back_goods_detail.buy_back_goods_id 
+			and buy_back_goods.status in (2,4,6,8,9,11)
+			group by 
+				buy_back_goods.in_stock_id,
+				buy_back_goods_detail.product_id
+			) MAcount
+		
+			on instock_product.in_stock_id =MAcount.in_stock_id and
+				instock_product.product_id=MAcount.product_id
+		
+		left JOIN 
+			<!--库存数量 -->
+			stock on stock.product_id=instock_product.product_id and 
+			stock.stockroom_id=#stockroomId#
+		WHERE	instock_product.in_stock_id=#inStockId# and stock.num>0
+		
+		group by instock_product.in_stock_id,
+			instock_product.product_id 
+	
+	</select>
+	<!-- 新建返厂单显示用 分页 By LiuQingGang-->
+	<select id="selectCreateBuyBackGoodsInfo.recordCount" parameterClass="buyBackGoodsEntity" resultClass="java.lang.Integer">
+		
+		select          
+			count(*)
+		from (select          
+			instock_product.product_id as productId,<!--产品编码 -->
+			product.code as code,<!--产品编码 -->
+			product.name as productName,<!--产品名称-->
+			product.type as productType,<!--规格型号-->
+			product.unit as productUnit,<!--单位 -->
+			IFNULL(instock_product.price,0) as price,<!--采购单价-->
+			instock_product.count as inStockCount ,<!--#入库数-->
+			IFNULL(instock_product.count,0)*IFNULL(instock_product.price,0) as  inStockMoney,<!--#入库金额-->
+			IFNULL(ma.money,0) as paymentMoney,<!--指定金额-->
+			IFNULL(mb.money,0) as receiveMoney,<!--收票金额 --> 
+			sum(IFNULL(MAcount.count,0)) as	alreadyBackCount,<!--已返厂数  -->
+			sum(IFNULL(MAcount.count,0)) *IFNULL(instock_product.price,0) as	backMoney,<!--返厂金额  -->
+			IFNULL(stock.num,0 ) as 	stockNum <!--库存数  -->
+		
+		from 	
+			<!--入库单所有的产品 -->
+			(select in_stock.id as in_stock_id ,
+				in_stock_detail.product_id as product_id ,
+			in_stock_detail.count as count,
+			in_stock_detail.price as price 
+			from  in_stock left join in_stock_detail    on
+				in_stock.id=in_stock_detail.in_stock_id
+			) instock_product  
+			left JOIN product on 
+			instock_product.product_id=product.id 
+		
+		LEFT JOIN  
+			<!--指定金额 -->
+			(
+			SELECT payment_detail.product_id as product_id ,sum(payment_detail.money) as money
+			from payment_detail,payment,in_stock_detail 
+			where payment_detail.payment_id =payment.id and 
+			payment.status= 13 and payment_detail.in_stock_id=#inStockId# and
+			payment_detail.appoint_type=1 and
+			payment_detail.product_id = in_stock_detail.product_id
+			and in_stock_detail.in_stock_id = payment_detail.in_stock_id
+			group by payment_detail.product_id ) ma 
+			on instock_product.product_id=ma.product_id
+		
+		left JOIN 
+			<!--收费金额 -->
+			(SELECT receive_invoice_detail.product_id as product_id ,
+			sum(receive_invoice_detail.money) as money
+			from receive_invoice_detail , receive_invoice ,in_stock_detail  
+			where  receive_invoice_detail.receive_invoice_id =receive_invoice.id and 
+			receive_invoice.status= 1 and  
+			receive_invoice_detail.product_id = in_stock_detail.product_id and 
+			in_stock_detail.in_stock_id = receive_invoice_detail.in_stock_id  and
+			receive_invoice_detail.in_stock_id=#inStockId# 
+			group by receive_invoice_detail.product_id ) mb   
+			on instock_product.product_id=mb.product_id 
+			 
+		left JOIN ( 
+			<!--入库单产品的已返厂数合计 -->
+			SELECT 
+			buy_back_goods.in_stock_id as in_stock_id,
+			IFNULL(buy_back_goods_detail.product_id,'') as product_id,
+			sum(IFNULL(buy_back_goods_detail.count,0) ) as count
+			FROM buy_back_goods left JOIN buy_back_goods_detail
+			on   
+			buy_back_goods.id =buy_back_goods_detail.buy_back_goods_id 
+			and buy_back_goods.status in (2,4,6,8,9,11)
+			group by 
+				buy_back_goods.in_stock_id,
+				buy_back_goods_detail.product_id
+			) MAcount
+		
+			on instock_product.in_stock_id =MAcount.in_stock_id and
+				instock_product.product_id=MAcount.product_id
+		
+		left JOIN 
+			<!--库存数量 -->
+			stock on stock.product_id=instock_product.product_id and 
+			stock.stockroom_id=#stockroomId#
+		WHERE	instock_product.in_stock_id=#inStockId#  and stock.num>0
+		
+		group by instock_product.in_stock_id,
+			instock_product.product_id ) as ma
+		 
+	</select>
+	<!-- 发货地址 By LiuQingGang -->
+	<select id="selecSupplierAddressForBuyBack.selectInfo" parameterClass="java.lang.String" resultClass="supplierAddressEntity">
+		SELECT  supplier_address.id as id,
+			supplier_address.supplier_id as supplierId,
+			supplier_address.name as name ,
+			supplier_address.address as address,
+			supplier_address.postcode as postcode,
+			supplier_address.linkman as linkman,
+			supplier_address.tel as tel,
+			supplier_address.mobile as mobile
+
+		FROM   supplier_address
+		WHERE  supplier_address.supplier_id=#supplierId# order by supplier_address.id
+	
+	</select>
+	
+	<!-- 发货地址分页  By LiuQingGang -->
+	<select id="selecSupplierAddressForBuyBack.recordCount" parameterClass="java.lang.String" resultClass="java.lang.Integer">
+		SELECT  count(*) 
+		FROM   supplier_address
+		WHERE  supplier_address.supplier_id=#supplierId# order by supplier_address.id
+	
+	</select>
+	
+	<!-- 修改显示  By zhangzx -->
+	<select id="selectModifyBuyBackGoodsInfo" parameterClass="java.lang.String" resultClass="modifyBuyBackGoodsInfoDto">
+		SELECT BUY_BACK_GOODS.ID,
+		       STOCKROOM.NAME                     AS STOCKROOMNAME,
+		       BUY_BACK_GOODS.STOCKROOM_ID        AS STOCKROOMID,
+		       BUY_CONTRACT.PRODUCT_CONTRACT_CODE AS PRODUCTCONTRACTCODE,
+		       BUY_CONTRACT.COMPANY_CONTRACT_CODE AS COMPANYCONTRACTCODE,
+		       PRODUCT_TYPE.ID                    AS PRODUCTTYPEID,
+		       PRODUCT_TYPE.NAME                  AS PRODUCTTYPENAME,
+		       SUPPLIER.NAME                      AS SUPPLIERNAME,
+			   BUY_BACK_GOODS.request_date        AS REQUESTDATE,
+			   BUY_BACK_GOODS.transport_way       AS TRANSPORTWAY,
+			   BUY_BACK_GOODS.take_name           AS TAKENAME,
+			   BUY_BACK_GOODS.take_number         AS TAKENUMBER,	
+		       BUY_BACK_GOODS.MONEY,
+		       BUY_BACK_GOODS.USER_NAME           AS USERNAME,
+		       BUY_BACK_GOODS.DATE,
+		       BUY_BACK_GOODS.SEND_DATE           AS SENDDATE,
+		       BUY_BACK_GOODS.STATUS,
+		       BUY_BACK_GOODS.IN_STOCK_ID         AS INSTOCKID,
+		       BUY_BACK_GOODS.TEXT,
+		       BUY_BACK_GOODS.PRO_MAJ_ID          AS PROMAJID,
+		       BUY_BACK_GOODS.PRO_MAJ_NAME        AS PROMAJNAME,
+		       BUY_BACK_GOODS.PRO_MAJ_DATE        AS PROMAJDATE,
+		       BUY_BACK_GOODS.PRO_MAJ_IDEA        AS PROMAJIDEA,
+		       BUY_BACK_GOODS.PRO_MAJ_TEXT        AS PROMAJTEXT,
+		       BUY_BACK_GOODS.BUY_MAN_ID          AS BUYMANID,
+		       BUY_BACK_GOODS.BUY_MAN_NAME        AS BUYMANNAME,
+		       BUY_BACK_GOODS.BUY_MAN_DATE        AS BUYMANDATE,
+		       BUY_BACK_GOODS.BUY_MAN_IDEA        AS BUYMANIDEA,
+		       BUY_BACK_GOODS.BUY_MAN_TEXT        AS BUYMANTEXT,
+		       BUY_BACK_GOODS.OPE_MAJ_ID          AS OPEMAJID,
+		       BUY_BACK_GOODS.OPE_MAJ_NAME        AS OPEMAJNAME,
+		       BUY_BACK_GOODS.OPE_MAJ_DATE        AS OPEMAJDATE,
+		       BUY_BACK_GOODS.OPE_MAJ_IDEA        AS OPEMAJIDEA,
+		       BUY_BACK_GOODS.OPE_MAJ_TEXT        AS OPEMAJTEXT,
+		       BUY_BACK_GOODS.STK_ADM_ID          AS STKADMID,
+		       BUY_BACK_GOODS.STK_ADM_NAME        AS STKADMNAME,
+		       BUY_BACK_GOODS.STK_ADM_DATE        AS STKADMDATE,
+		       BUY_BACK_GOODS.STK_ADM_IDEA        AS STKADMIDEA,
+		       BUY_BACK_GOODS.STK_ADM_TEXT        AS STKADMTEXT,
+			   BUY_BACK_GOODS.STOCKROOM_ID        AS STOCKROOMID,
+		   	   BUY_BACK_GOODS.SUPPLIER_ADDRESS_ID AS SUPPLIERADDRESSID,
+		       BUY_BACK_GOODS.SUPPLIER_ID         AS SUPPLIERID,
+		       SUPPLIER_ADDRESS.LINKMAN           AS SUPPLIERLINKMAN,
+		       SUPPLIER_ADDRESS.MOBILE            AS SUPPLIERMOBILE,
+		       SUPPLIER_ADDRESS.NAME              AS RECEIVENAME,
+		       SUPPLIER_ADDRESS.POSTCODE          AS SUPPLIERPOSTCODE,
+		       SUPPLIER_ADDRESS.ADDRESS           AS SUPPLIERADDRESS,
+		       SUPPLIER_ADDRESS.TEL               AS SUPPLIERTEL
+		FROM   BUY_BACK_GOODS
+		       LEFT JOIN STOCKROOM
+		         ON BUY_BACK_GOODS.STOCKROOM_ID = STOCKROOM.ID
+		       LEFT JOIN IN_STOCK
+		         ON BUY_BACK_GOODS.IN_STOCK_ID = IN_STOCK.ID
+		       LEFT JOIN BUY_CONTRACT
+		         ON IN_STOCK.BUY_CONTRACT_ID = BUY_CONTRACT.ID
+		       LEFT JOIN PRODUCT_TYPE
+		         ON BUY_BACK_GOODS.PRODUCT_TYPE_ID = PRODUCT_TYPE.ID
+		       LEFT JOIN SUPPLIER
+		         ON BUY_BACK_GOODS.SUPPLIER_ID = SUPPLIER.ID
+		       left join supplier_address
+				on BUY_BACK_GOODS.supplier_address_id = supplier_address.id
+		WHERE  BUY_BACK_GOODS.ID = #buyBackGoodsId#
+	
+	</select>
+	
+	<!-- 修改-保存 By zhangzx-->
+	<update id="updateBuyBackGoodsSave" parameterClass="buyBackGoodsEntity">
+		UPDATE BUY_BACK_GOODS
+		SET    STOCKROOM_ID = #stockroomId#,
+		       REQUEST_DATE = #requestDate#,
+		       TRANSPORT_WAY = #transportWay#,
+		       TAKE_NAME = #takeName#,
+		       TAKE_NUMBER = #takeNumber#,
+			   date = date_format(now(),'%Y-%m-%d'),
+		       TEXT = #text#,
+		       STATUS = #status#,
+			   MONEY=#money#,
+			   supplier_address_id = #supplierAddressId#,
+		       pro_maj_id = #proMajId#,
+		       buy_man_id = #buyManId#,
+			   ope_maj_id = #opeMajId#,
+			   stk_adm_id = #stkAdmId#
+		WHERE  ID = #id#
+	</update>	
+	
+	<!-- 修改-提交 By zhangzx-->
+	<update id="updateBuyBackGoods" parameterClass="buyBackGoodsEntity">
+		UPDATE BUY_BACK_GOODS
+		SET    STOCKROOM_ID = #stockroomId#,
+		       REQUEST_DATE = #requestDate#,
+		       TRANSPORT_WAY = #transportWay#,
+		       TAKE_NAME = #takeName#,
+		       TAKE_NUMBER = #takeNumber#,
+			   date = date_format(now(),'%Y-%m-%d'),
+		       TEXT = #text#,
+		       STATUS = #status#,
+			   MONEY=#money#,
+			   supplier_address_id = #supplierAddressId#,
+		       PRO_MAJ_NAME = '',
+		       PRO_MAJ_DATE = '',
+		       PRO_MAJ_IDEA = '',
+		       PRO_MAJ_TEXT = '',
+		       BUY_MAN_NAME = '',
+		       BUY_MAN_DATE = '',
+		       BUY_MAN_IDEA = '',
+		       BUY_MAN_TEXT = '',
+		       OPE_MAJ_NAME = '',
+		       OPE_MAJ_DATE = '',
+		       OPE_MAJ_IDEA = '',
+		       OPE_MAJ_TEXT = '',
+		       STK_ADM_NAME = '',
+		       STK_ADM_DATE = '',
+		       STK_ADM_IDEA = '',
+		       STK_ADM_TEXT = '',
+		       pro_maj_id = #proMajId#,
+		       buy_man_id = #buyManId#,
+			   ope_maj_id = #opeMajId#,
+			   stk_adm_id = #stkAdmId#
+		WHERE  ID = #id#
+	</update>	
+	
+	<!-- 修改返厂删除初始返厂明细  By zhangzx-->
+	<delete id="deleteBuyBackGoodsDetail" parameterClass="java.lang.String">
+		DELETE FROM BUY_BACK_GOODS_DETAIL
+		WHERE       BUY_BACK_GOODS_ID = #buyBackGoodsId#
+	</delete>	
+		
+	
+	<!-- 新建返厂提交  By LiuQingGang -->
+	<insert id="insertBuyBackGoods" parameterClass="buyBackGoodsEntity">
+		insert into  buy_back_goods(
+		id,
+		product_type_id,
+		supplier_id,
+		supplier_name,
+		in_stock_id,
+		date,
+		request_date,
+		send_date,
+		money,
+		status,
+		stockroom_id,
+		supplier_address_id,
+		transport_way,
+		take_name,
+		take_number,
+		user_id,
+		user_name,
+		text,
+		pro_maj_id,
+		buy_man_id,
+		ope_maj_id,
+		stk_adm_id,
+		datetime)
+		values(
+		#id#,
+		#productTypeId#,
+		#supplierId#,
+		#supplierName#,
+		#inStockId#,
+		date_format(now(),'%Y-%m-%d'),
+		#requestDate#,
+		#sendDate#,
+		#money#,
+		#status#,
+		#stockroomId#,
+		#supplierAddressId#,
+		#transportWay#,
+		#takeName#,
+		#takeNumber#,
+		#userId#,
+		#userName#,
+		#text#,
+		#proMajId#,
+		#buyManId#,
+		#opeMajId#,
+		#stkAdmId#,
+		date_format(now(),'%Y-%m-%d'))
+
+	</insert>	
+	
+	<!-- 新建返厂提交返厂明细  By LiuQingGang-->
+	<insert id="insertBuyBackGoodsDetail" parameterClass="buyBackGoodsDetailEntity">
+		insert into buy_back_goods_detail(
+		buy_back_goods_id, 
+		product_id,
+		count)
+		values(
+		#buyBackGoodsId#, 
+		#productId#,
+		#count#
+		)
+	</insert>	
+	
+	<!-- 修改返厂单显示（返厂单明细） By zhangzx-->
+	<select id="selectBuyBackGoodsDetail" parameterClass="modifyBuyBackGoodsInfoDto" resultClass="createBuyBackGoodsInfo">
+		
+		  select          
+				buy_back_goods_product.product_id as productId,<!--产品编码 -->
+				product.code as code,<!--产品编码 -->
+				product.name as productName,<!--产品名称-->
+				product.type as productType,<!--规格型号-->
+				product.unit as productUnit,<!--单位 -->
+				IFNULL(in_stock_detail.price,0) as price,<!--采购单价-->
+				buy_back_goods_product.count as backCount ,<!--返厂数-->
+				in_stock_detail.count as inStockCount ,<!--#入库数-->	
+				IFNULL(in_stock_detail.count,0)*IFNULL(in_stock_detail.price,0) as  inStockMoney,<!--#入库金额-->
+				sum(IFNULL(buy_back_goods_product.count,0)) *IFNULL(in_stock_detail.price,0) as	backMoney,<!--返厂金额  -->				
+				IFNULL(ma.money,0) as paymentMoney,<!--指定金额-->
+				IFNULL(mb.money,0) as receiveMoney,<!--收票金额 --> 
+				<!-- sum(IFNULL(MAcount.count-buy_back_goods_product.count,0)) as	alreadyBackCount, 已返厂数-->	
+  				( case 
+	 				when   buy_back_goods_product.status in(2,4,6,8,9,11) then  sum(IFNULL(MAcount.count-buy_back_goods_product.count,0)) 
+	 				else   sum(IFNULL(MAcount.count,0))
+  				end 
+				) as alreadyBackCount,<!--已返厂数-->
+				
+				IFNULL(stock.num,0 ) as 	stockNum <!--库存数  -->
+		
+		from 				
+			( select 
+			buy_back_goods.status AS STATUS,
+			buy_back_goods.id as buy_back_goods_id ,
+				buy_back_goods.in_stock_id,
+				buy_back_goods_detail.product_id as product_id ,
+			        buy_back_goods_detail.count as count			
+			from    buy_back_goods_detail ,   buy_back_goods    
+                        where  buy_back_goods.id=buy_back_goods_detail.buy_back_goods_id 
+			and buy_back_goods.id=#id#
+			) buy_back_goods_product 			
+       
+	    LEFT JOIN product on 
+			buy_back_goods_product.product_id=product.id 		
+		LEFT JOIN <!--指定金额--> 			
+			(
+			SELECT payment_detail.product_id as product_id ,sum(payment_detail.money) as money
+			from payment_detail,payment ,in_stock_detail  		
+			where  payment_detail.payment_id =payment.id and 
+			payment.status= 13 and payment_detail.product_id = in_stock_detail.product_id
+			and in_stock_detail.in_stock_id = payment_detail.in_stock_id and
+			payment_detail.in_stock_id=#instockId# and
+			payment_detail.appoint_type=1
+			group by payment_detail.product_id ) ma 
+			on buy_back_goods_product.product_id=ma.product_id		
+		LEFT JOIN 	<!--收票金额 --> 		
+			(SELECT receive_invoice_detail.product_id as product_id ,
+			sum(receive_invoice_detail.money) as money
+			from receive_invoice_detail,receive_invoice,in_stock_detail   
+			where  
+			receive_invoice_detail.receive_invoice_id =receive_invoice.id and 
+			receive_invoice.status= 1   and 
+			receive_invoice_detail.product_id = in_stock_detail.product_id
+			and in_stock_detail.in_stock_id = receive_invoice_detail.in_stock_id and
+			receive_invoice_detail.in_stock_id=#instockId#
+			group by receive_invoice_detail.product_id ) mb   
+			on buy_back_goods_product.product_id=mb.product_id 			 
+		LEFT JOIN ( 			
+			SELECT 
+			buy_back_goods.in_stock_id as in_stock_id,
+			IFNULL(buy_back_goods_detail.product_id,'') as product_id,
+			sum(IFNULL(buy_back_goods_detail.count,0) ) as count
+			FROM buy_back_goods left JOIN buy_back_goods_detail
+			on   
+			buy_back_goods.id =buy_back_goods_detail.buy_back_goods_id 
+				and buy_back_goods.status in (2,4,6,8,9,11)
+			group by 
+				buy_back_goods.in_stock_id,
+				buy_back_goods_detail.product_id
+			) MAcount		
+			on buy_back_goods_product.in_stock_id =MAcount.in_stock_id and
+				buy_back_goods_product.product_id=MAcount.product_id		
+		LEFT JOIN 			
+			stock 
+			on stock.product_id=buy_back_goods_product.product_id and 
+			  stock.stockroom_id=#stockroomId#
+		LEFT JOIN 
+			in_stock_detail
+			on buy_back_goods_product.in_stock_id = in_stock_detail.in_stock_id
+			and buy_back_goods_product.product_id = in_stock_detail.product_id
+				
+		WHERE	buy_back_goods_product.in_stock_id=#instockId#
+		
+		group by buy_back_goods_product.in_stock_id,
+			buy_back_goods_product.product_id 
+	
+	</select>	
+	
+	<!-- 删除返厂 By LiuQingGang -->
+	<delete id="deleteBuyBackGoods" parameterClass="java.lang.String" >
+		DELETE from buy_back_goods where buy_back_goods.id=#id# 
+	</delete>
+	<delete id="deleteBuyBackGoodsDetailT" parameterClass="java.lang.String" >
+		DELETE from buy_back_goods_detail
+			where buy_back_goods_detail.buy_back_goods_id=#id#
+	</delete>	
+	
+	
+</sqlMap>

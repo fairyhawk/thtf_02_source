@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:dwr="http://www.directwebremoting.org/schema/spring-dwr"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd   
+     http://www.directwebremoting.org/schema/spring-dwr http://www.directwebremoting.org/schema/spring-dwr-2.0.xsd">
+	<!-- datasourceProperty 
+	<bean id="propertyConfig"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<value>classpath:db.properties</value>
+			</list>
+		</property>
+	</bean> -->
+
+	<!-- datasource 
+	<bean id="dataSource"
+		class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName">
+			<value>${jdbc.driver}</value>
+		</property>
+		<property name="url">
+			<value>${jdbc.url}</value>
+		</property>
+		<property name="username">
+			<value>${jdbc.username}</value>
+		</property>
+		<property name="password">
+			<value>${jdbc.password}</value>
+		</property>
+		<property name="defaultAutoCommit" value="false"/>
+	</bean> -->
+
+	<!-- sqlMapClient -->
+	<bean id="sqlMapClient"
+		class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation">
+			<value>classpath:cn/com/thtf/egov/cms/ibatis/sqlMapConfig.xml</value>
+		</property>
+		<!-- <property name="dataSource">
+			<ref local="dataSource" />
+		</property> -->
+	</bean>
+
+	<!-- transcationManager 
+	<bean id="transcationManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource">
+			<ref local="dataSource" />
+		</property> 
+	</bean> -->
+	<import resource="classpath:cn/com/thtf/egov/cms/spring/appBeans.xml" />
+	<import resource="classpath:cn/com/thtf/egov/cms/spring/service.xml" />
+</beans>

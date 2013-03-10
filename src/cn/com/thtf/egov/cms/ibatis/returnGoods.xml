@@ -1,0 +1,1003 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="returnGoods_sqlMap">
+	<!-- 退货列表 -->
+	<typeAlias alias="saleReturnGoodsListDto" type="cn.com.thtf.egov.cms.dto.SaleReturnGoodsListDto"></typeAlias>
+	<typeAlias alias="saleReturnsAddressSelectDto" type="cn.com.thtf.egov.cms.dto.SaleReturnsAddressSelectDto"></typeAlias>
+	<!-- 退货检索 -->
+	<typeAlias alias="returnGoodsListQueryDto" type="cn.com.thtf.egov.cms.dto.ReturnGoodsListQueryDto"></typeAlias>
+	<!-- 新建退货单产品信息 -->	
+	<typeAlias alias="newReturnsProductDto" type="cn.com.thtf.egov.cms.dto.NewReturnsProductDto"></typeAlias>
+	<!--	退货查看 -->
+	<typeAlias alias="saleReturnGoodsViewSelfDto" type="cn.com.thtf.egov.cms.dto.SaleReturnGoodsViewSelfDto"></typeAlias>
+	<!--	新建退货单 -->
+	<typeAlias alias="sellBackGoodsEntity" type="cn.com.thtf.egov.cms.entity.SellBackGoodsEntity" /> 
+	<typeAlias alias="sellBackGoodsDetailEntity" type="cn.com.thtf.egov.cms.entity.SellBackGoodsDetailEntity" /> 
+	<!--	销售退货Entity -->
+	<typeAlias alias="sellBackGoodsEntity" type="cn.com.thtf.egov.cms.entity.SellBackGoodsEntity"></typeAlias>
+	<!-- 	退货列表检索 -->
+	<select id="selectReturnGoodsList.search" parameterClass="returnGoodsListQueryDto" resultClass="saleReturnGoodsListDto" >
+	SELECT
+	  sbg.id                    AS id,
+	  sbg.send_goods_id         AS sendGoodsId,
+	  sbg.product_type_id       AS productTypeId,
+	  pt.name            	    AS productTypeName,
+	  sbg.customer_id           AS customerId,
+	  cus.name     		    AS customerName,
+	  sbg.date                  AS DATE,
+	  sbg.money                 AS money,
+	  sbg.status                AS STATUS,
+	  sbg.stockroom_id          AS stockRoomId,
+	  sk.name                   AS stockRoomName,
+	  sbg.user_id               AS userId,
+	  sbg.user_name             AS userName,
+	  sbc.productContractCode   AS productContractCode,
+	  sbc.companyContarctCode   AS companyContarctCode,
+	  CASE sbg.status
+	  WHEN 8 THEN (sbg.stk_adm_date) 
+	  ELSE ''
+	  END            			AS sbcDate
+	FROM 
+		<isEqual compareValue="19" property="roleId"> 
+			user_area_mapping as uam,
+		</isEqual>
+		<isEqual compareValue="20" property="roleId"> 
+			user_area_mapping as uam,
+		</isEqual>
+		<isEqual compareValue="3" property="roleId"> 
+			user_area_product AS uap,
+		</isEqual>
+		<isEqual compareValue="9" property="roleId"> 
+			user_product AS up,
+		</isEqual>
+		<isEqual compareValue="10" property="roleId"> 
+			user_product AS up,
+		</isEqual>
+		<isEqual compareValue="6" property="roleId"> 
+			user_product AS up,
+		</isEqual>
+		<isEqual compareValue="11" property="roleId"> 
+			user_product AS up,
+		</isEqual>
+		<isEqual compareValue="5" property="roleId"> 
+			user_product AS up,
+		</isEqual> 
+		sell_back_goods AS sbg
+			  LEFT JOIN stockroom AS sk
+			             ON sk.id = sbg.stockroom_id
+			  LEFT JOIN (SELECT
+			  				sbg.id                    AS sbgId,
+			  				sc.product_contract_code AS productContractCode,
+			  				sc.company_contract_code AS companyContarctCode
+						FROM sell_back_goods AS sbg,
+			  				sell_contract AS sc,
+			  				send_goods AS sg
+						WHERE sbg.send_goods_id = sg.id
+			    			AND sg.sell_contract_id = sc.id) sbc
+			    ON sbg.id = sbc.sbgId
+			  LEFT JOIN product_type AS pt
+			             ON sbg.product_type_id = pt.id
+			  LEFT JOIN customer AS cus
+			    ON sbg.customer_id = cus.id
+		WHERE sbg.id = sbg.id
+		<isEqual compareValue="3" property="roleId"> 
+			AND uap.product_type_id = sbg.product_type_id
+		</isEqual>
+		<isEqual compareValue="9" property="roleId"> 
+			 AND up.product_type_id = sbg.product_type_id
+		</isEqual>
+		<isEqual compareValue="10" property="roleId"> 
+			 AND up.product_type_id = sbg.product_type_id
+		</isEqual>
+		<isEqual compareValue="6" property="roleId"> 
+			 AND up.product_type_id = sbg.product_type_id
+		</isEqual>
+		<isEqual compareValue="11" property="roleId"> 
+			 AND up.product_type_id = sbg.product_type_id
+		</isEqual>
+		<isEqual compareValue="5" property="roleId"> 
+			 AND up.product_type_id = sbg.product_type_id
+		</isEqual>
+	<!-- 	退货单ID -->
+		<isNotEmpty prepend="and" property="id">
+	    	sbg.id LIKE '%$id$%'
+		</isNotEmpty>
+	<!-- 	发货单ID -->
+		<isNotEmpty prepend="and" property="sendGoodsId">
+	    	sbg.send_goods_id LIKE '%$sendGoodsId$%'
+		</isNotEmpty>
+	<!-- 	库房 -->
+		<isNotEmpty prepend="and" property="stockRoomId">
+	    	sbg.stockroom_id = #stockRoomId#
+		</isNotEmpty>
+	<!-- 	产品合同号 -->
+		<isNotEmpty prepend="and" property="productContractCode">
+	    	sbc.productContractCode LIKE '%$productContractCode$%'
+		</isNotEmpty>
+	<!-- 	公司合同号 -->
+		<isNotEmpty prepend="and" property="companyContarctCode">
+	    	sbc.companyContarctCode LIKE '%$companyContarctCode$%'
+		</isNotEmpty>
+	<!-- 	产品分类 -->
+		<isNotEmpty prepend="and" property="productTypeId">
+	    	sbg.product_type_id = #productTypeId# 
+		</isNotEmpty>
+	<!-- 	客户名称 -->
+		<isNotEmpty prepend="and" property="customerName">
+	    	sbg.customer_name LIKE '%$customerName$%'
+		</isNotEmpty>
+	<!-- 	用户名称 -->
+		<isNotEmpty prepend="and" property="userName">
+	    	sbg.user_name LIKE '%$userName$%'
+		</isNotEmpty>
+	<!--     /*>=申请起始日期  <=申请终止日期*/ -->
+	    <isNotEmpty prepend="and" property="startDate">
+	    	<![CDATA[ sbg.date >= #startDate# ]]>
+		</isNotEmpty>
+		 <isNotEmpty prepend="and" property="endDate">
+	    	<![CDATA[ sbg.date <= #endDate# ]]>
+		</isNotEmpty>
+	<!--     /*>=退货起始日期  <=退货终止日期*/ -->
+	    <isNotEmpty prepend="and" property="startSBCDate">
+	    	<![CDATA[ sbg.stk_adm_date >= #startSBCDate# ]]>
+		</isNotEmpty>
+		 <isNotEmpty prepend="and" property="endSBCDate">
+	    	<![CDATA[ sbg.stk_adm_date <= #endSBCDate# ]]>
+		</isNotEmpty>
+	<!-- 	退货状态 -->
+		<isNotEmpty prepend="and" property="status">
+	    	sbg.status = #status#
+		</isNotEmpty>
+		
+		<!-- 	权限判断 -->
+		<isNotEmpty prepend="and" property="nowUserId">
+	<!-- 		销售助理 -->
+			<isEqual compareValue="3" property="roleId"> 
+				uap.user_area_id = sbg.user_area_id 
+				AND uap.product_type_id = sbg.product_type_id  
+				AND uap.user_id = #nowUserId#
+			</isEqual>
+	<!-- 		销售经理 -->
+			<isEqual compareValue="4" property="roleId"> 
+				sbg.user_id=#nowUserId#
+			</isEqual>
+	<!-- 		库房管理员 -->
+			<isEqual compareValue="12" property="roleId"> 
+				usp.stockroom_id = sbg.stockroom_id
+				AND usp.product_type_id = sbg.product_type_id  
+				AND   usp.user_id = #nowUserId# 
+			</isEqual>
+			
+	<!-- 		销售总监、信用专员、采购主管、产品总监 -->
+			<isEqual compareValue="5" property="roleId">
+				up.product_type_id = sbg.product_type_id
+					AND up.user_id = #nowUserId#  
+			</isEqual>
+			<isEqual compareValue="6" property="roleId"> 
+				up.product_type_id = sbg.product_type_id
+						AND up.user_id = #nowUserId# 
+			</isEqual>
+			<isEqual compareValue="11" property="roleId">
+				up.product_type_id = sbg.product_type_id
+						AND up.user_id = #nowUserId#  
+			</isEqual>
+			<isEqual compareValue="10" property="roleId">
+				up.product_type_id = sbg.product_type_id
+					AND up.user_id = #nowUserId#  
+			</isEqual>
+			<!-- 区域总监 -->
+			<isEqual compareValue="9" property="roleId"> 
+				sbg.user_area_id = #nowUserAreaId#
+				AND up.product_type_id = sbg.product_type_id
+				and up.user_id = #nowUserId#
+			</isEqual>
+			<isEqual compareValue="19" property="roleId">
+				uam.user_id = #nowUserId#
+				and uam.user_area_id = sbg.user_area_id  
+			</isEqual>
+			<isEqual compareValue="20" property="roleId"> 
+				uam.user_id = #nowUserId#
+				and uam.user_area_id = sbg.user_area_id  
+			</isEqual>
+			<!-- 初始化  -->
+			<isEmpty property="init">
+				<isEqual  compareValue="17" property="roleId">
+						 sbg.status = 4
+				</isEqual>
+				<isEqual prepend="AND" compareValue="5" property="roleId">
+						 sbg.status = 2
+				</isEqual>
+			</isEmpty>
+		</isNotEmpty>
+		ORDER BY sbg.id desc
+	</select>	
+	<!--  退货列表检索分页	 -->
+	<select id="selectReturnGoodsList.recordCount" parameterClass="returnGoodsListQueryDto"  resultClass="java.lang.Integer" >
+	SELECT
+	  COUNT(sbg.id)
+	FROM 
+		<isEqual compareValue="19" property="roleId"> 
+			user_area_mapping as uam,
+		</isEqual>
+		<isEqual compareValue="20" property="roleId"> 
+			user_area_mapping as uam,
+		</isEqual>
+		<isEqual compareValue="3" property="roleId"> 
+			user_area_product AS uap,
+		</isEqual>
+		<isEqual compareValue="9" property="roleId"> 
+			user_product AS up,
+		</isEqual>
+		<isEqual compareValue="10" property="roleId"> 
+			user_product AS up,
+		</isEqual>
+		<isEqual compareValue="6" property="roleId"> 
+			user_product AS up,
+		</isEqual>
+		<isEqual compareValue="11" property="roleId"> 
+			user_product AS up,
+		</isEqual>
+		<isEqual compareValue="5" property="roleId"> 
+			user_product AS up,
+		</isEqual> 
+		sell_back_goods AS sbg
+  			  LEFT JOIN stockroom AS sk
+			             ON sk.id = sbg.stockroom_id
+			  LEFT JOIN (SELECT
+			  				sbg.id                    AS sbgId,
+			  				sc.product_contract_code AS productContractCode,
+			  				sc.company_contract_code AS companyContarctCode
+						FROM sell_back_goods AS sbg,
+			  				sell_contract AS sc,
+			  				send_goods AS sg
+						WHERE sbg.send_goods_id = sg.id
+			    			AND sg.sell_contract_id = sc.id) sbc
+			    ON sbg.id = sbc.sbgId
+			  LEFT JOIN product_type AS pt
+			             ON sbg.product_type_id = pt.id
+			  LEFT JOIN customer AS cus
+			    ON sbg.customer_id = cus.id
+		
+		WHERE sbg.id = sbg.id
+		<isEqual compareValue="3" property="roleId"> 
+			AND uap.product_type_id = sbg.product_type_id
+		</isEqual>
+		<isEqual compareValue="9" property="roleId"> 
+			 AND up.product_type_id = sbg.product_type_id
+		</isEqual>
+		<isEqual compareValue="10" property="roleId"> 
+			 AND up.product_type_id = sbg.product_type_id
+		</isEqual>
+		<isEqual compareValue="6" property="roleId"> 
+			 AND up.product_type_id = sbg.product_type_id
+		</isEqual>
+		<isEqual compareValue="11" property="roleId"> 
+			 AND up.product_type_id = sbg.product_type_id
+		</isEqual>
+		<isEqual compareValue="5" property="roleId"> 
+			 AND up.product_type_id = sbg.product_type_id
+		</isEqual>
+	<!-- 	退货单ID -->
+		<isNotEmpty prepend="and" property="id">
+	    	sbg.id LIKE '%$id$%'
+		</isNotEmpty>
+	<!-- 	发货单ID -->
+		<isNotEmpty prepend="and" property="sendGoodsId">
+	    	sbg.send_goods_id LIKE '%$sendGoodsId$%'
+		</isNotEmpty>
+	<!-- 	库房 -->
+		<isNotEmpty prepend="and" property="stockRoomId">
+	    	sbg.stockroom_id = #stockRoomId#
+		</isNotEmpty>
+	<!-- 	产品合同号 -->
+	<isNotEmpty prepend="and" property="productContractCode">
+	    	sbc.productContractCode LIKE '%$productContractCode$%'
+		</isNotEmpty>
+	<!-- 	公司合同号 -->
+		<isNotEmpty prepend="and" property="companyContarctCode">
+	    	sbc.companyContarctCode LIKE '%$companyContarctCode$%'
+		</isNotEmpty>
+	<!-- 	产品分类 -->
+		<isNotEmpty prepend="and" property="productTypeId">
+	    	sbg.product_type_id = #productTypeId# 
+		</isNotEmpty>
+	<!-- 	客户名称 -->
+		<isNotEmpty prepend="and" property="customerName">
+    	sbg.customer_name LIKE '%$customerName$%'
+		</isNotEmpty>
+	<!-- 	用户名称 -->
+		<isNotEmpty prepend="and" property="userName">
+		    	sbg.user_name LIKE '%$userName$%'
+		</isNotEmpty>
+	<!--     /*>=申请起始日期  <=申请终止日期*/ -->
+	    <isNotEmpty prepend="and" property="startDate">
+	    	<![CDATA[ sbg.date >= #startDate# ]]>
+		</isNotEmpty>
+		 <isNotEmpty prepend="and" property="endDate">
+	    	<![CDATA[ sbg.date <= #endDate# ]]>
+		</isNotEmpty>
+	<!--     /*>=退货起始日期  <=退货终止日期*/ -->
+	    <isNotEmpty prepend="and" property="startSBCDate">
+	    	<![CDATA[ sbg.stk_adm_date >= #startSBCDate# ]]>
+		</isNotEmpty>
+		 <isNotEmpty prepend="and" property="endSBCDate">
+	    	<![CDATA[ sbg.stk_adm_date <= #endSBCDate# ]]>
+		</isNotEmpty>
+	<!-- 	退货状态 -->
+		<isNotEmpty prepend="and" property="status">
+	    	sbg.status = #status#
+		</isNotEmpty>
+		
+		<!-- 	权限判断 -->
+		<isNotEmpty prepend="and" property="nowUserId">
+	<!-- 		销售助理 -->
+			<isEqual compareValue="3" property="roleId"> 
+				uap.user_area_id = sbg.user_area_id 
+				and uap.product_type_id = sbg.product_type_id  
+				and uap.user_id = #nowUserId#
+			</isEqual>
+	<!-- 		销售经理 -->
+			<isEqual compareValue="4" property="roleId"> 
+				sbg.user_id=#nowUserId#
+			</isEqual>
+	<!-- 		库房管理员 -->
+			<isEqual compareValue="12" property="roleId"> 
+				usp.stockroom_id = sbg.stockroom_id
+				and usp.product_type_id = sbg.product_type_id  
+				and   usp.user_id = #nowUserId# 
+			</isEqual>
+			
+	<!-- 		销售总监、信用专员、采购主管、产品总监 -->
+			<isEqual compareValue="5" property="roleId">
+				up.product_type_id = sbg.product_type_id
+					and up.user_id = #nowUserId#  
+			</isEqual>
+			<isEqual compareValue="6" property="roleId"> 
+				up.product_type_id = sbg.product_type_id
+						and up.user_id = #nowUserId# 
+			</isEqual>
+			<isEqual compareValue="11" property="roleId">
+				up.product_type_id = sbg.product_type_id
+						and up.user_id = #nowUserId#  
+			</isEqual>
+			<isEqual compareValue="10" property="roleId">
+				up.product_type_id = sbg.product_type_id
+					and up.user_id = #nowUserId#  
+			</isEqual>
+			<!-- 区域总监 -->
+			<isEqual compareValue="9" property="roleId"> 
+				sbg.user_area_id = #nowUserAreaId#
+				AND up.product_type_id = sbg.product_type_id
+				and up.user_id = #nowUserId#
+			</isEqual>
+			<isEqual compareValue="19" property="roleId">
+				uam.user_id = #nowUserId#
+				and uam.user_area_id = sbg.user_area_id  
+			</isEqual>
+			<isEqual compareValue="20" property="roleId"> 
+				uam.user_id = #nowUserId#
+				and uam.user_area_id = sbg.user_area_id  
+			</isEqual>
+			<!-- 初始化  -->
+			<isEmpty property="init">
+				<isEqual compareValue="17" property="roleId">
+						 sbg.status = 4
+				</isEqual>
+				<isEqual prepend="AND" compareValue="5" property="roleId">
+						 sbg.status = 2
+				</isEqual>
+			</isEmpty>
+		</isNotEmpty>
+		
+	</select>
+		
+		<!--   收货地址小页面   -->
+	<select id="selectSaleReturnsAddress.search" resultClass="saleReturnsAddressSelectDto">
+			SELECT
+			  sk.name     AS stockRoomName,
+			  sa.name     AS stockRoomAddressName,
+			  sa.address  AS address,
+			  sa.postcode AS postcode,
+			  sa.linkman  AS linkman,
+			  sa.tel      AS tel,
+			  sa.mobile   AS mobile
+			FROM stockroom sk,
+			  stockroom_address sa
+			WHERE sk.id = sa.stockroom_id 
+			ORDER BY sk.name, sa.name 
+	</select>
+		
+	<select id="selectSaleReturnsAddress.recordCount" resultClass="java.lang.Integer">
+			SELECT
+			  COUNT(*)
+			FROM stockroom sk,
+			  stockroom_address sa
+			WHERE sk.id = sa.stockroom_id
+			ORDER BY sk.name, sa.name 
+	</select>
+	<!--  新建退货单产品信息检索小页面	-->
+	<select id="selectNewReturnsProductList.search" parameterClass="java.util.Map" resultClass="newReturnsProductDto">
+	    SELECT
+		  cpxx.sendGoodsId AS sendGoodsId,
+		  cpxx.productId   AS productId,
+		  cpxx.productCode AS productCode,
+		  cpxx.productName AS productName,
+		  cpxx.productType AS productType,
+		  cpxx.productUnit AS productUnit,
+		  cgdj.price       AS price,
+		  IFNULL(cpxx.ffcount,0)     AS ffcount,
+		  IFNULL(cgdj.price*cpxx.ffcount,0) AS ffMoney,
+		  IFNULL(zdje.ztmoney,0)     AS zdmoney,
+		  IFNULL(kpje.kpmoney,0)     AS kpmoney,
+		  IFNULL(ths.yBackCount,0)   AS yBackCount
+		FROM send_goods_detail sgd
+		  LEFT JOIN (SELECT
+			       sgd.send_goods_id AS sendGoodsId,
+			       p.code            AS productCode,
+			       p.name            AS productName,
+			       p.type            AS productType,
+			       p.unit            AS productUnit,
+			       sgd.product_id    AS productId,
+			       sgd.count         AS ffcount
+			     FROM send_goods_detail sgd,
+			       product p
+			     WHERE sgd.product_id = p.id
+			     AND sgd.send_goods_id = #sendGoodsId#) AS cpxx
+		    ON cpxx.productId = sgd.product_id
+		  LEFT JOIN (SELECT
+			       sgd.send_goods_id AS sendGoodsId,
+			       sgd.product_id    AS productId,
+			       scd.price         AS price
+			     FROM send_goods sg,
+			       send_goods_detail sgd,
+			       sell_contract_detail scd
+			     WHERE sgd.product_id = scd.product_id
+				 AND sgd.send_goods_id = sg.id
+				 AND sg.sell_contract_id = scd.sell_contract_id
+				 AND sgd.send_goods_id = #sendGoodsId#
+				 ) AS cgdj
+		    ON cgdj.productId = sgd.product_id
+		  LEFT JOIN (SELECT
+			       sgd.send_goods_id AS sendGoodsId,
+			       sgd.product_id    AS product_id,
+			       SUM(hkrd.money)   AS ztmoney
+			     FROM mreturn hkm,
+			       return_detail hkrd,
+			       send_goods_detail sgd
+			     WHERE hkm.id = hkrd.return_id
+				 AND hkrd.product_id = sgd.product_id
+				 AND hkrd.send_goods_id = sgd.send_goods_id
+				 AND hkrd.appoint_type = 4
+				 AND sgd.send_goods_id =#sendGoodsId#
+				 GROUP BY sendGoodsId,product_id) AS zdje
+		    ON zdje.product_id = sgd.product_id
+		      LEFT JOIN (
+				SELECT
+				  sgd.send_goods_id AS sendGoodsId,
+				  sgd.product_id    AS productId,
+				  SUM(sd.money)     AS kpmoney
+				FROM sell_invoice_detail sd,
+				  sell_invoice si,
+				  send_goods_detail sgd
+				WHERE sd.product_id = sgd.product_id
+				    AND si.id = sd.sell_invoice_id
+				    AND sd.send_goods_id = sgd.send_goods_id
+				    AND si.status != 7
+				    AND sgd.send_goods_id =#sendGoodsId#
+				    GROUP BY sendGoodsId,productId
+		      )AS kpje ON kpje.productId = sgd.product_id
+		      LEFT JOIN (
+			    SELECT
+				  send_goods_detail.send_goods_id AS sendGoodsId,
+				  sellBackGoods.productId         AS productId,
+				  IFNULL(sellBackGoods.count,0)   AS yBackCount
+				FROM send_goods_detail
+			LEFT JOIN (
+			    SELECT
+			       sell_back_goods.send_goods_id     AS sendGoodsId,
+			       sell_back_goods_detail.product_id AS productId,
+			       IFNULL(SUM(sell_back_goods_detail.count),0) AS COUNT
+			     FROM sell_back_goods,
+			       sell_back_goods_detail
+			     WHERE (sell_back_goods.status = 2
+				     OR sell_back_goods.status = 4
+				     OR sell_back_goods.status = 6
+				     OR sell_back_goods.status = 8)
+				 AND sell_back_goods.id = sell_back_goods_detail.sell_back_goods_id
+				     GROUP BY sell_back_goods.send_goods_id,sell_back_goods_detail.product_id) AS sellBackGoods
+			    ON send_goods_detail.send_goods_id = sellBackGoods.sendGoodsId
+			      AND sellBackGoods.productId = send_goods_detail.product_Id
+			      WHERE send_goods_detail.send_goods_id = #sendGoodsId#
+			    ) AS ths ON ths.productId = sgd.product_id
+			    WHERE 
+			    sgd.send_goods_id = #sendGoodsId# AND (IFNULL(cpxx.ffcount,0)-IFNULL(ths.yBackCount,0)>0)
+	</select>
+	
+	<select id="selectNewReturnsProductList.recordCount" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+		SELECT
+		  COUNT(sgd.id)
+		FROM send_goods_detail sgd
+		  LEFT JOIN (SELECT
+			       sgd.send_goods_id AS sendGoodsId,
+			       p.code            AS productCode,
+			       p.name            AS productName,
+			       p.type            AS productType,
+			       p.unit            AS productUnit,
+			       sgd.product_id    AS productId,
+			       sgd.count         AS ffcount
+			     FROM send_goods_detail sgd,
+			       product p
+			     WHERE sgd.product_id = p.id
+			     AND sgd.send_goods_id = #sendGoodsId#) AS cpxx
+		    ON cpxx.productId = sgd.product_id
+		  LEFT JOIN (SELECT
+			       sgd.send_goods_id AS sendGoodsId,
+			       sgd.product_id    AS productId,
+			       scd.price         AS price
+			     FROM send_goods sg,
+			       send_goods_detail sgd,
+			       sell_contract_detail scd
+			     WHERE sgd.product_id = scd.product_id
+				 AND sgd.send_goods_id = sg.id
+				 AND sg.sell_contract_id = scd.sell_contract_id
+				 AND sgd.send_goods_id = #sendGoodsId#
+				 ) AS cgdj
+		    ON cgdj.productId = sgd.product_id
+		  LEFT JOIN (SELECT
+			       sgd.send_goods_id AS sendGoodsId,
+			       sgd.product_id    AS product_id,
+			       SUM(hkrd.money)   AS ztmoney
+			     FROM mreturn hkm,
+			       return_detail hkrd,
+			       send_goods_detail sgd
+			     WHERE hkm.id = hkrd.return_id
+				 AND hkrd.product_id = sgd.product_id
+				 AND hkrd.send_goods_id = sgd.send_goods_id
+				 AND hkrd.appoint_type = 4
+				 AND sgd.send_goods_id =#sendGoodsId#
+				 GROUP BY sendGoodsId,product_id) AS zdje
+		    ON zdje.product_id = sgd.product_id
+		      LEFT JOIN (
+				SELECT
+				  sgd.send_goods_id AS sendGoodsId,
+				  sgd.product_id    AS productId,
+				  SUM(sd.money)     AS kpmoney
+				FROM sell_invoice_detail sd,
+				  sell_invoice si,
+				  send_goods_detail sgd
+				WHERE sd.product_id = sgd.product_id
+				    AND si.id = sd.sell_invoice_id
+				    AND sd.send_goods_id = sgd.send_goods_id
+				    AND si.status != 7
+				    AND sgd.send_goods_id =#sendGoodsId#
+				    GROUP BY sendGoodsId,productId
+		      )AS kpje ON kpje.productId = sgd.product_id
+		      LEFT JOIN (
+			    SELECT
+				  send_goods_detail.send_goods_id AS sendGoodsId,
+				  sellBackGoods.productId         AS productId,
+				  IFNULL(sellBackGoods.count,0)   AS yBackCount
+				FROM send_goods_detail
+			LEFT JOIN (
+			    SELECT
+			       sell_back_goods.send_goods_id     AS sendGoodsId,
+			       sell_back_goods_detail.product_id AS productId,
+			       IFNULL(SUM(sell_back_goods_detail.count),0) AS COUNT
+			     FROM sell_back_goods,
+			       sell_back_goods_detail
+			     WHERE (sell_back_goods.status = 2
+				     OR sell_back_goods.status = 4
+				     OR sell_back_goods.status = 6
+				     OR sell_back_goods.status = 8)
+				 AND sell_back_goods.id = sell_back_goods_detail.sell_back_goods_id
+				     GROUP BY sell_back_goods.send_goods_id,sell_back_goods_detail.product_id) AS sellBackGoods
+			    ON send_goods_detail.send_goods_id = sellBackGoods.sendGoodsId
+			      AND sellBackGoods.productId = send_goods_detail.product_Id
+			      WHERE send_goods_detail.send_goods_id = #sendGoodsId#
+			    ) AS ths ON ths.productId = sgd.product_id
+			    WHERE 
+			    sgd.send_goods_id = #sendGoodsId# AND (IFNULL(cpxx.ffcount,0)-IFNULL(ths.yBackCount,0)>0)
+	</select>
+	
+	<!--  退货单查看退货信息   -->
+	<select id="getReturnGoodsById" parameterClass="java.lang.String" resultClass="saleReturnGoodsViewSelfDto">
+	SELECT
+	  sbg.id                   AS id,
+	  sbg.send_goods_id        AS sendGoodsId,
+	  sbg.product_type_id      AS productTypeId,
+	  pt.productTypeName       AS productTypeName,
+	  sbg.customer_id          AS customeId,
+	  customer.name	           AS customeName,
+	  sbg.stockroom_id         AS stockroomId,
+	  sk.skName                AS stockroomName,
+	  sbg.stockroom_address_id AS stockroomAddressId,
+	  sk.untiName              AS untiName,
+	  sk.address               AS address,
+	  sk.postcode              AS postcode,
+	  sk.linkman               AS linkman,
+	  sk.tel                   AS tel,
+	  sk.mobile                AS mobile,
+	  sbg.text                 AS TEXT,
+	  sbg.money                AS money,
+	  sbg.sell_maj_id           AS sellMajId,
+	  sbg.sell_maj_name         AS sellMajName,
+	  sbg.sell_maj_date         AS sellMajDate,
+	  sbg.sell_maj_idea         AS sellMajIdea,
+	  sbg.sell_maj_text         AS sellMajText,
+	  sbg.ope_maj_id           AS opeMajId,
+	  sbg.ope_maj_name         AS opeMajName,
+	  sbg.ope_maj_date         AS opeMajDate,
+	  sbg.ope_maj_idea         AS opeMajIdea,
+	  sbg.ope_maj_text         AS opeMajText,
+	  sbg.stk_adm_id           AS stkMajId,
+	  sbg.stk_adm_name         AS stkMajName,
+	  sbg.stk_adm_date         AS stkMajDate,
+	  sbg.stk_adm_idea         AS stkMajIdea,
+	  sbg.stk_adm_text         AS stkMajText
+	FROM sell_back_goods sbg
+	  LEFT JOIN (SELECT
+	               sbg.id            AS sbgId,
+	               pt.name           AS productTypeName
+	             FROM product_type pt,
+	               sell_back_goods sbg
+	             WHERE sbg.product_type_id = pt.id) AS pt
+	    ON pt.sbgId = sbg.id
+	  LEFT JOIN (SELECT
+	               sbg.id            AS sbgId,
+	               sk.name           AS skName,
+	               ska.NAME          AS untiName,
+	               ska.address       AS address,
+	               ska.postcode      AS postcode,
+	               ska.linkman       AS linkman,
+	               ska.tel           AS tel,
+	               ska.mobile        AS mobile
+	             FROM stockroom_address ska,
+	               stockroom sk,
+	               sell_back_goods sbg
+	             WHERE sbg.stockroom_address_id = ska.id
+	                 AND sk.id = ska.stockroom_id) AS sk
+	    ON sk.sbgId = sbg.id
+	   LEFT JOIN customer ON customer.id = sbg.customer_id
+		WHERE sbg.id = #returnGoodsId#
+	</select>
+	
+	<select id="selectProductAndCustomeName" parameterClass="java.lang.String" resultClass="saleReturnGoodsViewSelfDto">
+		SELECT
+		  send_goods.id                       AS sendGoodsId,
+		  send_goods.stockroom_id             AS stockroomId,
+		  product_type.id                     AS productTypeId,
+		  product_type.name                   AS productTypeName,
+		  send_goods.customer_id              AS customeId,
+		  customer.name                       AS customeName,
+		  sell_contract.product_contract_code AS productContractCode,
+		  sell_contract.company_contract_code AS companyContractCode
+		FROM send_goods
+		  LEFT JOIN product_type
+		    ON product_type.id = send_goods.product_type_id
+		  LEFT JOIN sell_contract
+		    ON sell_contract.id = send_goods.sell_contract_id
+		  LEFT JOIN customer
+		    ON customer.id = send_goods.customer_id
+		WHERE send_goods.id = #id#
+	</select>
+	<!-- 新增退货单  -->
+	<insert id="insertReturnGoods" parameterClass="sellBackGoodsEntity">
+	INSERT INTO sell_back_goods
+            (id,
+             send_goods_id,
+             product_type_id,
+             customer_id,
+             customer_name,
+             DATE,
+             money,
+             STATUS,
+             stockroom_id,
+             stockroom_address_id,
+             user_id,
+             user_name,
+             user_area_id,
+             TEXT,
+             DATETIME)
+	VALUES (#id#,
+	        #sendGoodsId#,
+	        #productTypeId#,
+	        #customerId#,
+	        #customerName#,
+	        #date#,
+	        #money#,
+	        #status#,
+	        #stockroomId#,
+	        #stockroomAddressId#,
+	        #userId#,
+	        #userName#,
+			#userAreaId#,
+	        #text#,
+	        #dateTime#);
+	</insert>
+	<!--  新增退货明细     -->
+	<insert id="insertReturnGoodsDetail" parameterClass="sellBackGoodsDetailEntity">
+		INSERT INTO sell_back_goods_detail
+	            (id,
+	             sell_back_goods_id,
+	             product_id,
+	             COUNT)
+		VALUES (
+			#id#,#sellBackGoodsId#,#productId#,#count#
+			)
+	</insert>
+	<!-- 退货评审  -->
+	<update id="modifySaleReturnGoodsAudit" parameterClass="sellBackGoodsEntity" >
+		UPDATE `sell_back_goods` 
+		SET
+		<isNotEmpty property="sellMajId">
+		`sell_maj_id` = #sellMajId# , 
+		`sell_maj_name` = #sellMajName#, 
+		`sell_maj_date` = #sellMajDate#, 
+		`sell_maj_idea` = #sellMajIdea# , 
+		`sell_maj_text` = #sellMajText#  ,
+		</isNotEmpty>
+		<isNotEmpty property="opeMajId">
+		`ope_maj_id` = #opeMajId# , 
+		`ope_maj_name` = #opeMajName# , 
+		`ope_maj_date` = #opeMajDate# , 
+		`ope_maj_idea` = #opeMajIdea# , 
+		`ope_maj_text` = #opeMajText# ,
+		</isNotEmpty>
+		`status` = #status#
+		WHERE
+		`id` = #id# ;
+	</update>
+	
+	<!--  更新退货单   -->
+	<update id="modifyReturnGoods" parameterClass="sellBackGoodsEntity" >
+		UPDATE sell_back_goods
+			SET customer_id =#customerId# ,
+				customer_name = #customerName# ,
+				DATE = #date# , 
+				money = #money# ,
+				STATUS=#status# ,
+				stockroom_id=#stockroomId# ,
+				stockroom_address_id =#stockroomAddressId# , 
+				TEXT = #text#
+			WHERE id = #id#
+	</update>
+	
+	<!--  删除退货单明细    -->
+	<delete id="deleteReturnsGoodDetail" parameterClass="java.lang.String">	
+		delete from sell_back_goods_detail where sell_back_goods_id=#id#
+	</delete>	
+	<!--  删除退货单   -->
+	<delete id="deleteReturnsGood" parameterClass="java.lang.String">	
+		delete from sell_back_goods where id=#id#
+	</delete>
+	
+	<!--  新建退货单查看产品信息      -->
+	<select id="viewSelectReturnGoods" parameterClass="java.util.Map" resultClass="newReturnsProductDto">
+		SELECT
+		  cpxx.sendGoodsId AS sendGoodsId,
+		  cpxx.productId   AS productId,
+		  cpxx.productCode AS productCode,
+		  cpxx.productName AS productName,
+		  cpxx.productType AS productType,
+		  cpxx.productUnit AS productUnit,
+		  cgdj.price       AS price,
+		  IFNULL(cpxx.ffcount,0)     AS ffcount,
+		  IFNULL(cgdj.price*cpxx.ffcount,0) AS ffMoney,
+		  IFNULL(zdje.ztmoney,0)     AS zdmoney,
+		  IFNULL(kpje.kpmoney,0)     AS kpmoney,
+		  (CASE 
+		  WHEN sbg.status IN (2,4,6,8) THEN IFNULL(yths.yBackCount,0)-IFNULL(sbgd.count,0)
+		  ELSE IFNULL(yths.yBackCount,0)
+		  END)                            AS yBackCount,
+		  IFNULL(sbgd.count,0)            AS thcount,
+		  IFNULL(sbgd.count*cgdj.price,0) AS thmoney
+
+		FROM send_goods_detail sgd
+		  LEFT JOIN (SELECT
+			       sgd.send_goods_id AS sendGoodsId,
+			       p.code            AS productCode,
+			       p.name            AS productName,
+			       p.type            AS productType,
+			       p.unit            AS productUnit,
+			       sgd.product_id    AS productId,
+			       sgd.count         AS ffcount
+			     FROM send_goods_detail sgd,
+			       product p
+			     WHERE sgd.product_id = p.id
+			     AND sgd.send_goods_id = #sendGoodsId#
+			     ) AS cpxx
+		    ON cpxx.productId = sgd.product_id
+		  LEFT JOIN (SELECT
+			       sgd.send_goods_id AS sendGoodsId,
+			       sgd.product_id    AS productId,
+			       scd.price         AS price
+			     FROM send_goods sg,
+			       send_goods_detail sgd,
+			       sell_contract_detail scd
+			     WHERE sgd.product_id = scd.product_id
+				 AND sgd.send_goods_id = sg.id
+				 AND sg.sell_contract_id = scd.sell_contract_id
+				 AND sgd.send_goods_id = #sendGoodsId#
+				 ) AS cgdj
+		    ON cgdj.productId = sgd.product_id
+		  LEFT JOIN (SELECT
+			       sgd.send_goods_id AS sendGoodsId,
+			       sgd.product_id    AS product_id,
+			       SUM(hkrd.money)   AS ztmoney
+			     FROM mreturn hkm,
+			       return_detail hkrd,
+			       send_goods_detail sgd
+			     WHERE hkm.id = hkrd.return_id
+				 AND hkrd.product_id = sgd.product_id
+				 AND hkrd.send_goods_id = sgd.send_goods_id
+				 AND hkrd.appoint_type = 4
+				 AND sgd.send_goods_id = #sendGoodsId#
+				 GROUP BY sendGoodsId,product_id) AS zdje
+		    ON zdje.product_id = sgd.product_id
+		      LEFT JOIN (
+				SELECT
+				  sgd.send_goods_id AS sendGoodsId,
+				  sgd.product_id    AS productId,
+				  SUM(sd.money)     AS kpmoney
+				FROM sell_invoice_detail sd,
+				  sell_invoice si,
+				  send_goods_detail sgd
+				WHERE sd.product_id = sgd.product_id
+				    AND si.id = sd.sell_invoice_id
+				    AND sd.send_goods_id = sgd.send_goods_id
+				    AND si.status != 7
+				    AND sgd.send_goods_id =#sendGoodsId#
+				    GROUP BY sendGoodsId,productId
+		      )AS kpje ON kpje.productId = sgd.product_id 
+		      LEFT JOIN (
+			    SELECT
+				  send_goods_detail.send_goods_id AS sendGoodsId,
+				  sellBackGoods.productId         AS productId,
+				  IFNULL(sellBackGoods.yBackCount,0)   AS yBackCount
+				FROM send_goods_detail 
+			LEFT JOIN (
+			    SELECT
+			       sell_back_goods.send_goods_id     AS sendGoodsId,
+			       sell_back_goods_detail.product_id AS productId,
+			       IFNULL(SUM(sell_back_goods_detail.count),0) AS yBackCount
+			     FROM sell_back_goods,
+			       sell_back_goods_detail
+			     WHERE (sell_back_goods.status = 2
+				     OR sell_back_goods.status = 4
+				     OR sell_back_goods.status = 6
+				     OR sell_back_goods.status = 8)
+				 AND sell_back_goods.id = sell_back_goods_detail.sell_back_goods_id
+				     GROUP BY sell_back_goods.send_goods_id,sell_back_goods_detail.product_id) AS sellBackGoods
+			    ON send_goods_detail.send_goods_id = sellBackGoods.sendGoodsId
+			    WHERE send_goods_detail.send_goods_id = #sendGoodsId#
+			      AND sellBackGoods.productId = send_goods_detail.product_Id
+			    ) AS yths ON yths.productId = sgd.product_id 
+			    ,sell_back_goods_detail sbgd,sell_back_goods sbg
+			    WHERE 
+			    sgd.send_goods_id = #sendGoodsId#
+			    AND sbgd.sell_back_goods_id = #backGoodsId#
+			    AND sgd.product_id = sbgd.product_id
+			    AND sbg.id = sbgd.sell_back_goods_id
+	</select>
+	<update id="updateAudtoBackGoods" parameterClass="sellBackGoodsEntity" >
+		UPDATE sell_back_goods
+		SET
+		sell_maj_id = #sellMajId#, 
+		sell_maj_name = #sellMajName#, 
+		sell_maj_date = #sellMajDate#, 
+		sell_maj_idea = #sellMajIdea#, 
+		sell_maj_text = #sellMajText#,
+		ope_maj_id = #opeMajId#, 
+		ope_maj_name = #opeMajName#, 
+		ope_maj_date = #opeMajDate#, 
+		ope_maj_idea = #opeMajIdea#, 
+		ope_maj_text = #opeMajText#,
+		stk_adm_id = #stkAdmId#,
+		stk_adm_name = #stkAdmName#,
+		stk_adm_date = #stkAdmDate#,
+		stk_adm_idea = #stkAdmIdea#,
+		stk_adm_text = #stkAdmText#
+		WHERE
+		id = #id#
+	</update>
+	<!--  新建退货单产品信息检索小页面	-->
+	<select id="selectNewReturnsProductList1" parameterClass="java.util.Map" resultClass="newReturnsProductDto">
+	     SELECT
+		  cpxx.sendGoodsId AS sendGoodsId,
+		  cpxx.productId   AS productId,
+		  cpxx.productCode AS productCode,
+		  cpxx.productName AS productName,
+		  cpxx.productType AS productType,
+		  cpxx.productUnit AS productUnit,
+		  cgdj.price       AS price,
+		  IFNULL(cpxx.ffcount,0)     AS ffcount,
+		  IFNULL(cgdj.price*cpxx.ffcount,0) AS ffMoney,
+		  IFNULL(zdje.ztmoney,0)     AS zdmoney,
+		  IFNULL(kpje.kpmoney,0)     AS kpmoney,
+		  IFNULL(ths.yBackCount,0)   AS yBackCount
+		FROM send_goods_detail sgd
+		  LEFT JOIN (SELECT
+			       sgd.send_goods_id AS sendGoodsId,
+			       p.code            AS productCode,
+			       p.name            AS productName,
+			       p.type            AS productType,
+			       p.unit            AS productUnit,
+			       sgd.product_id    AS productId,
+			       sgd.count         AS ffcount
+			     FROM send_goods_detail sgd,
+			       product p
+			     WHERE sgd.product_id = p.id
+			     AND sgd.send_goods_id = #sendGoodsId#) AS cpxx
+		    ON cpxx.productId = sgd.product_id
+		  LEFT JOIN (SELECT
+			       sgd.send_goods_id AS sendGoodsId,
+			       sgd.product_id    AS productId,
+			       scd.price         AS price
+			     FROM send_goods sg,
+			       send_goods_detail sgd,
+			       sell_contract_detail scd
+			     WHERE sgd.product_id = scd.product_id
+				 AND sgd.send_goods_id = sg.id
+				 AND sg.sell_contract_id = scd.sell_contract_id
+				 AND sgd.send_goods_id =#sendGoodsId#) AS cgdj
+		    ON cgdj.productId = sgd.product_id
+		  LEFT JOIN (SELECT
+			       sgd.send_goods_id AS sendGoodsId,
+			       sgd.product_id    AS product_id,
+			       SUM(hkrd.money)   AS ztmoney
+			     FROM mreturn hkm,
+			       return_detail hkrd,
+			       send_goods_detail sgd
+			     WHERE hkm.id = hkrd.return_id
+				 AND hkrd.product_id = sgd.product_id
+				 AND hkrd.send_goods_id = sgd.send_goods_id
+				 AND hkrd.appoint_type = 4
+				 AND sgd.send_goods_id =#sendGoodsId#
+				 GROUP BY sendGoodsId,product_id) AS zdje
+		    ON zdje.product_id = sgd.product_id
+		      LEFT JOIN (
+				SELECT
+				  sgd.send_goods_id AS sendGoodsId,
+				  sgd.product_id    AS productId,
+				  SUM(sd.money)     AS kpmoney
+				FROM sell_invoice_detail sd,
+				  sell_invoice si,
+				  send_goods_detail sgd
+				WHERE sd.product_id = sgd.product_id
+				    AND si.id = sd.sell_invoice_id
+				    AND sd.send_goods_id = sgd.send_goods_id
+				    AND si.status != 7
+				    AND sgd.send_goods_id = #sendGoodsId#
+				    GROUP BY sendGoodsId,productId
+		      )AS kpje ON kpje.productId = sgd.product_id 
+		      LEFT JOIN (
+			    SELECT
+				  send_goods_detail.send_goods_id AS sendGoodsId,
+				  sellBackGoods.productId         AS productId,
+				  IFNULL(sellBackGoods.count,0)   AS yBackCount
+				FROM send_goods_detail
+			LEFT JOIN (
+			    SELECT
+			       sell_back_goods.send_goods_id     AS sendGoodsId,
+			       sell_back_goods_detail.product_id AS productId,
+			       IFNULL(SUM(sell_back_goods_detail.count),0) AS COUNT
+			     FROM sell_back_goods,
+			       sell_back_goods_detail
+			     WHERE (sell_back_goods.status = 2
+				     OR sell_back_goods.status = 4
+				     OR sell_back_goods.status = 6
+				     OR sell_back_goods.status = 8)
+				 AND sell_back_goods.id = sell_back_goods_detail.sell_back_goods_id
+				     GROUP BY sell_back_goods.send_goods_id,sell_back_goods_detail.product_id) AS sellBackGoods
+			    ON send_goods_detail.send_goods_id = sellBackGoods.sendGoodsId
+			      AND sellBackGoods.productId = send_goods_detail.product_Id
+			      WHERE send_goods_detail.send_goods_id = #sendGoodsId#
+			    ) AS ths ON ths.productId = sgd.product_id AND ths.sendGoodsId = sgd.send_goods_id
+			    WHERE 
+			    sgd.send_goods_id = #sendGoodsId# AND (IFNULL(cpxx.ffcount,0)-IFNULL(ths.yBackCount,0)>0)
+	</select>
+	
+</sqlMap>

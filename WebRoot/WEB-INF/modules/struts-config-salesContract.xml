@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="prodSearchForm" type="cn.com.thtf.egov.cms.form.ProductSearchForm"/>
+		<form-bean name="salesContractForm" type="cn.com.thtf.egov.cms.form.SalesContractListForm"/> 
+		<form-bean name="customerLinkmanForm" type="cn.com.thtf.egov.cms.entity.CustomerLinkmanEntity"/> 
+		<form-bean name="customerAddressForm" type="cn.com.thtf.egov.cms.entity.CustomerAddressEntity"/> 
+		<form-bean name="salesConSendGoodsForm" type="cn.com.thtf.egov.cms.dto.SalesConSendGoodsDto"/> 
+		<form-bean name="salesConProductForm" type="cn.com.thtf.egov.cms.dto.SalesConProductDto"/> 
+		<form-bean name="salesContractAssessForm" type="cn.com.thtf.egov.cms.form.SalesContractForm"/> 
+		<form-bean name="salesContractsForm" type="cn.com.thtf.egov.cms.form.SalesContractForm"/> 
+	</form-beans>
+	<global-exceptions />
+	<global-forwards >
+		<forward name="showSalesContractForAssess"
+				path="/jsp/salescontract/salesContractAssess.jsp" /> 		
+	
+	</global-forwards>
+	
+	<action-mappings> 
+		<!-- 销售合同列表 -->
+		<action path="/checkCompanycontractcode"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			parameter="checkCompanycontractcode"
+			name="salesContractForm"
+			scope="request"
+			validate="false"> 
+		</action>
+		<!-- 销售合同列表 -->
+		<action path="/getSalesContractsList"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractListAction"
+			parameter="getSalesContractsList" name="salesContractForm" scope="request" validate="false">
+			<forward name="salesContractList"
+				path="/jsp/salescontract/salesContractManagement.jsp" /> 
+		</action>
+		<!-- 根据客户Id获取联系人信息-->
+		<action path="/getLinkManByCustomerId"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			parameter="getLinkManByCustomerId" name="salesContractForm" scope="request" validate="false">
+		</action> 
+		
+		<!--销售合同查看 -->
+		<action path="/salesContractPreview"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			parameter="getSalesContractInfoById" name="salesContractForm" scope="request" validate="false" >
+			<forward name="success"
+				path="/jsp/salescontract/salesContractPreview.jsp" />
+			<forward name="preview"
+			path="/jsp/salescontract/salesContractPreviewDetail.jsp"/>
+			<forward name="effective"
+		    	path="/jsp/salescontract/salesContractEffect.jsp?" />
+		    <forward name="orderConfirm"
+		    	path="/jsp/salescontract/orderConfirm.jsp"/>
+		</action>
+		<!--评审表查看 -->
+		<action path="/auditPreview"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			parameter="getSalesContractInfoById" name="salesContractForm" scope="request" validate="false" >
+			<forward name="success"
+				path="/jsp/salescontract/auditPreview.jsp" />			
+		</action>
+		<!--文件下载-->
+		<action path="/downloadFile"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			parameter="downloadFile" 
+			scope="request"
+			validate="false">
+			<forward name="fail"
+				path="/jsp/salescontract/redirect.jsp" />
+		</action>
+		
+		<!-- 获取联系人信息-->
+		<action path="/getLinkMsgByLinkManId"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			parameter="getLinkMsgByLinkManId" name="customerLinkmanForm" scope="request" validate="false">
+		</action> 
+		<!-- 新建销售合同页面-->
+		<action path="/salesContractCreate"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			parameter="createSellContract" name="salesContractForm" scope="request" validate="false">
+			
+			<forward name="preview"
+					path="/showSalesContract.do?command=preview" />	
+			<forward name="success"
+				path="/jsp/salescontract/salesContracCreate.jsp" /> 
+		</action> 
+		<!-- 新建销售合同    客户发货地址选择-->
+		<action path="/getSendGoodsAddress"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			parameter="getSendGoodsAddress" name="customerAddressForm" scope="request" validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/sendGoodsAddressSelectSub.jsp" /> 
+		</action> 
+		<!-- 新建销售合同    付款方式选择-->
+		<action path="/getPaymentWay"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			parameter="getPaymentWay" name="salesConSendGoodsForm" scope="request" validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/paymentTypeSelectSub.jsp" /> 
+		</action> 
+		
+		<!-- 新建销售合同    产品选择-->
+		<action path="/getProduct"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			parameter="getProdInfoByCondition" 
+			name="prodSearchForm" 
+			scope="request" 
+			validate="false">
+			<forward name="success"	path="/jsp/salescontract/productSelectSub.jsp" /> 
+		</action> 
+		
+		<!-- 根据产品分类查看产品系列-->
+		<action path="/getProSerieByProTypeId"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			parameter="getProSerieByProTypeId" name="salesContractForm" scope="request" validate="false">
+		</action>
+
+		<!-- 新建销售合同 -->
+		<action path="/addSalesContract"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			parameter="addSalesContract" name="salesContractsForm" scope="request" validate="false">
+			<forward name="success"
+				path="/getSalesContractsList.do?" /> 
+				<forward name="fail"
+				path="/salesContractCreate.do?" /> 
+				<forward name="preview"
+				path="/showSalesContract.do?command=preview"/>
+		</action>
+
+		
+		
+		<!-- 显示要修改的销售合同 by llw-->
+		<action path="/showSalesContract"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			parameter="showSalesContractForUpdate"  scope="request" validate="false" name="salesContractsForm">
+				
+			<forward name="success"
+				path="/jsp/salescontract/salesContractModify.jsp" />							
+			<forward name="fail"
+				path="/getSalesContractsList.do?init=true" />
+				 
+							
+		</action>
+		
+		<!-- 显示要评审的销售合同 by llw-->
+		<action path="/showSalesContractForAssess"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			parameter="showSalesContractForAssess"  scope="request" validate="false">			
+ 				
+			<forward name="fail"
+				path="/getSalesContractsList.do?init=true" redirect="true"/> 				
+			 	
+		</action>
+
+		
+		<!-- 销售合同评审  by llw-->
+		<action path="/assessSalesContract"
+			type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+			name="salesContractAssessForm" 
+			parameter="assessSalesContract"  scope="request" validate="false">			
+			
+			<forward name="salesContractList"
+				path="/getSalesContractsList.do?init=true" redirect="true"/> 				
+			<forward name="fail"
+				path="/jsp/invoice/redirect.jsp" /> 	
+						
+				
+		</action>
+		
+		<!-- 销售合同评审文件下载(自定义模板)  by llw-->
+		<action path="/downLoadContractFile"  
+		        type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+		        parameter="downLoadContractFile">
+		    	
+		    	<forward name="fail"
+					path="/jsp/salescontract/salesContractAssess.jsp" />
+		</action>       
+		
+		<!-- 销售合同删除 by zzx-->
+		<action path="/deleteSalesContract"  
+		        type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+		        parameter="deleteSalesContract">
+		    	<forward name="success"
+				path="/getSalesContractsList.do?" /> 
+		    	<forward name="fail"
+				path="/getSalesContractsList.do?" />
+		</action> 
+		
+		<!-- 更新合同状态信息（待打印->待确认）by zzx-->
+		<action path="/modifyContractStatus"  
+		        type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+		        parameter="modifyContractStatus">
+		    	
+		    	<forward name="fail"
+				path="/auditPreview.do? " />
+		    	<forward name="success"
+				path="/auditPreview.do?" />
+		</action> 
+		
+		<!-- 更新合同状态信息（待确认->待合同生效）by zzx-->
+		<action path="/modifyContractStatusEffect"  
+		        type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+		        parameter="modifyContractStatusEffect">
+		    	
+		    	<forward name="fail"
+				path="/getSalesContractsList.do?init=true " />
+		    	<forward name="success"
+				path="/getSalesContractsList.do?init=true " />
+		</action> 
+		<!-- 合同取消by zzx-->
+		<action path="/salesContractCancel"  
+		        type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+		        parameter="salesContractCancel">
+		    	
+		    	<forward name="fail"
+				path="/getSalesContractsList.do?init=true" />
+		    	<forward name="success"
+				path="/getSalesContractsList.do?init=true" />
+		</action> 
+
+		<!-- 销售合同修改（保存，提交，预览）  by llw-->
+		<action path="/dealwithSalesContract"  
+		        type="cn.com.thtf.egov.cms.action.sell.SalesContractAction"
+		        parameter="dealwithSalesContract" name="salesContractsForm">
+		    	
+		    	<forward name="salesContractList"
+					path="/getSalesContractsList.do?init=true" redirect="true"/> 		
+		    	<forward name="fail"
+					path="/showSalesContract.do" />
+				<forward name="preview"
+					path="/showSalesContract.do?command=preview" />	
+		</action> 
+	</action-mappings>
+
+</struts-config>

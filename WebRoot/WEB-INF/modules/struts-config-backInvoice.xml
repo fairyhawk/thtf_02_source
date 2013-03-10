@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="searchBackIncoiceForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="searchBackIncoice" type="cn.com.thtf.egov.cms.dto.BackInvoicSearchDto"/>	 
+		</form-bean>
+		<form-bean name="backInvoiceviewForm" type="org.apache.struts.action.DynaActionForm"></form-bean>
+		
+		<form-bean name="backInvoiceForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="backInvoiceAssess" type="cn.com.thtf.egov.cms.dto.SellInvoiceDto"/>
+		</form-bean>
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>
+		<!-- 申请、修改、查看发票明细列表-->
+		<action path="/getSellInvoiceList"
+			type="cn.com.thtf.egov.cms.action.sell.BackInvoiceAction"
+			parameter="getSellInvoiceList"
+			scope="request" validate="false"   >
+			<forward name="success"
+				path="/jsp/backInvoice/backInvoiceView.jsp" />
+			<forward name="modify"
+				path="/jsp/backInvoice/backInvoiceModify.jsp" />
+			<forward name="add"
+				path="/jsp/backInvoice/backInvoiceAdd.jsp"/>
+		</action>
+		<!-- 保存提交退票-->
+		<action path="/modifyBackInvoice"
+			type="cn.com.thtf.egov.cms.action.sell.BackInvoiceAction"
+			parameter="modifyBackInvoice"
+			name="backInvoiceviewForm"
+			scope="request" validate="false">
+			<forward name="success"
+				path="/getBackInvoiceByUserId.do" />
+			<forward name="fail"
+				path="/getSellInvoiceList.do" />	
+		</action>
+		
+				
+			<!-- 显示退票评审      by jiangmx   -->
+		<action path="/showBackInvoiceJudge" 
+				type="cn.com.thtf.egov.cms.action.sell.BackInvoiceAction" 
+				parameter="showBackInvoiceJudge" scope="request" validate="false">
+			<forward name="success" path="/jsp/backInvoice/backInvoiceAssess.jsp"/>
+			<forward name="failure" path="/getBackInvoiceByUserId.do"/>			
+		</action>
+		
+			<!-- 退票评审     by jiangmx   -->
+		<action path="/backInvoiceJudge" 
+				type="cn.com.thtf.egov.cms.action.sell.BackInvoiceAction" 
+				parameter="backInvoiceJudge" scope="request" validate="false" name="backInvoiceForm">
+			<forward name="success" path="/getBackInvoiceByUserId.do"/>
+			<forward name="failure" path="/showBackInvoiceJudge.do"/>
+			<forward name="failureToList" path="/getBackInvoiceByUserId.do"/>
+		</action>
+		
+	 	<!--销售退票一览  by liuqg-->  
+	 		
+	  	<action path="/getBackInvoiceByUserId" type="cn.com.thtf.egov.cms.action.sell.BackInvoiceAction" parameter="getBackInvoiceByUserId" scope="request" validate="false">
+	  	   <forward name="success" path="/jsp/backInvoice/backInvoiceManager.jsp"/>
+	  	</action> 
+	  	
+	  	<!--销售退票检索  by liuqg--> 
+	    <action path="/searchBackIncoice" type="cn.com.thtf.egov.cms.action.sell.BackInvoiceAction" parameter="getBackInvoiceByCondition" scope="request" name="searchBackIncoiceForm" validate="false">
+	  	   <forward name="success" path="/jsp/backInvoice/backInvoiceManager.jsp"/>
+	  	
+	  	</action> 
+	  	
+	  	<!--销售退票确认  by liuqg--> 
+	    <action path="/confirmBackIncoice" type="cn.com.thtf.egov.cms.action.sell.BackInvoiceAction" parameter="confirmBackIncoice" scope="request"  validate="false">
+	  	   <forward name="success" path="/getBackInvoiceByUserId.do"/>
+	  	
+	  	</action> 
+	  		
+	</action-mappings>
+	<message-resources
+		parameter="com.tsinghua.mp.web.conf.i18n.ApplicationResources"
+		/>
+</struts-config>

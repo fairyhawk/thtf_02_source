@@ -1,0 +1,1076 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="salesBackContract_sqlMap">		
+	
+	<!--销售退货合同dto  by lilewei-->
+	<typeAlias alias="salesBackContractDto"
+		       type="cn.com.thtf.egov.cms.dto.SalesBackContractDto" />
+	
+	<!--销售退货合同查询dto  by lilewei-->
+	<typeAlias alias="salesBackQueryDto"
+		       type="cn.com.thtf.egov.cms.dto.SalesBackQueryDto" />		       
+		       
+	<!--销售退货合同明细dto  by lilewei-->
+	<typeAlias alias="salesBackContractDetailDto"
+		       type="cn.com.thtf.egov.cms.dto.SalesBackContractDetailDto" />
+		<!--销售退货合同显示dto  -->
+	<typeAlias alias="salesBackContractOfShowDto"
+		       type="cn.com.thtf.egov.cms.dto.SalesBackContractOfShowDto" />	
+
+	<!--销售退货合同之产品信息dto  -->
+	<typeAlias alias="salesBackContractOfGoodInfoDto"
+		       type="cn.com.thtf.egov.cms.dto.SalesBackContractOfGoodInfoDto" />
+	<!--库房dto  -->
+	<typeAlias alias="stockRoomOfSellBack"
+		       type="cn.com.thtf.egov.cms.dto.StockRoomOfSellBack" />
+	<!--库房收获地址dto  -->
+	<typeAlias alias="stockroomAnAddressOfSellBackDto"
+		       type="cn.com.thtf.egov.cms.dto.StockroomAndAddressDto" />	
+	<!--销售退货合同明细  -->
+	<typeAlias alias="sellBackGoodsDetailEntity"
+		       type="cn.com.thtf.egov.cms.entity.SellBackGoodsDetailEntity" />	
+	<!--销售退货合同  -->
+	<typeAlias alias="saleBackContractOfAddDto"
+		       type="cn.com.thtf.egov.cms.dto.SaleBackContractOfAddDto" />			       
+	
+	<!--销售退货合同 列表页  by lilewei-->
+	<select id="salesBackContract.selectAllSalesBackContractByCondition" parameterClass="salesBackQueryDto" resultClass="salesBackContractDto">
+		
+		SELECT BACK.ID                    AS ID,
+		       BACK.SELL_CONTRACT_ID      AS SALESCONTRACTID,
+		       PTYPE.NAME                 AS PRODUCTTYPENAME,
+		       CONTRACT.PRODUCT_TYPE_ID   AS PRODUCTTYPEID,
+		       CUSTOMER.NAME              AS CUSTOMERNAME,
+		       BACK.COMPANY_CONTRACT_CODE AS COMPANYCONTRACTCODE,
+		       BACK.PRODUCT_CONTRACT_CODE AS PRODUCTCONTRACTCODE,
+		       BACK.STATUS                AS STATUS,
+		       BACK.MONEY                 AS MONEY,
+		       BACK.TEMPLATE_TYPE         AS TEMPLATETYPE,
+		       BACK.USER_NAME             AS USERNAME,
+		       BACK.DATE                  AS DATE
+		       
+		FROM   SELL_BACK_CONTRACT AS BACK
+		       LEFT JOIN SELL_CONTRACT AS CONTRACT
+		         ON BACK.SELL_CONTRACT_ID = CONTRACT.ID
+		       LEFT JOIN PRODUCT_TYPE AS PTYPE
+		         ON CONTRACT.PRODUCT_TYPE_ID = PTYPE.ID
+		       LEFT JOIN CUSTOMER
+		         ON CONTRACT.CUSTOMER_ID = CUSTOMER.ID		
+			<dynamic prepend="where">			
+			<!--检索条件-->
+				<isNotEmpty prepend="and" property="productTypeId">
+					contract.product_type_id = #productTypeId#
+				</isNotEmpty>
+				
+				<isNotEmpty prepend="and" property="productContractCode">
+					back.product_contract_code like concat('%', #productContractCode#, '%')
+				</isNotEmpty>
+				
+				<isNotEmpty prepend="and" property="companyContractCode">
+					back.company_contract_code like concat('%', #companyContractCode#, '%')
+				</isNotEmpty> 
+				
+				<isNotEmpty prepend="and" property="customerName">
+					contract.customer_name like concat('%',#customerName#,'%')
+				</isNotEmpty> 
+				
+				<isNotEmpty prepend="and" property="templateType">
+					back.template_type = #templateType#
+				</isNotEmpty>		
+				
+				<isNotEmpty prepend="and" property="userName">
+					back.user_name  like concat('%',#userName#,'%')
+				</isNotEmpty> 
+				
+				<isNotEmpty prepend="and" property="startTime">
+					<![CDATA[ str_to_date(back.date,'%Y-%m-%d') >= str_to_date(#startTime#,'%Y-%m-%d') ]]>					 
+				</isNotEmpty>
+				
+				<isNotEmpty prepend="and" property="endTime">
+					<![CDATA[str_to_date(back.date,'%Y-%m-%d') <= str_to_date(#endTime#,'%Y-%m-%d') ]]>					
+				</isNotEmpty> 
+				
+				<isNotEmpty prepend="and" property="status">
+					back.status = #status#
+				</isNotEmpty> 				 
+			
+				<!--销售助理-->
+				<isEqual prepend="and" property="roleId" compareValue="3">
+					<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						(back.user_area_id=$userAreaProductList[].userAreaId$ and contract.product_type_id=$userAreaProductList[].productTypeId$)
+					</iterate>	
+					<isNotEmpty prepend="and" property="initStr">
+						back.status in (8,9)  
+					</isNotEmpty>
+				</isEqual>
+				
+				<!--区域总监-->
+				<isEqual prepend="and" property="roleId" compareValue="9">
+					<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						(back.user_area_id=$userAreaProductList[].userAreaId$ and contract.product_type_id=$userAreaProductList[].productTypeId$)
+					</iterate>		
+					<isNotEmpty prepend="and" property="initStr">
+						back.status = 12 
+					</isNotEmpty>
+				</isEqual>									
+				<!--大区经理  区域经理 -->
+				<isEqual prepend="and" property="roleId" compareValue="19">	
+					back.user_area_id in (select user_area_id from user_area_mapping where user_id=#currentUserId#)
+					<isNotEmpty prepend="and" property="initStr">
+						back.status = 12 
+					</isNotEmpty>
+				</isEqual>
+				<!--销售经理-->
+				<isEqual prepend="and" property="roleId" compareValue="4">
+					back.user_id = #currentUserId#					
+				</isEqual>
+				
+				<!--法务专员-->
+				<isEqual prepend="and" property="roleId" compareValue="15">
+					<isNotEmpty property="initStr">
+						back.status = 2 
+					</isNotEmpty> 
+				</isEqual>
+				
+				<!--销售总监-->
+				<isEqual prepend="and" property="roleId" compareValue="5">
+					contract.product_type_id in (
+													select  product_type_id 
+													from    user_product
+													where   user_id = #currentUserId#
+												)
+					<isNotEmpty prepend="and" property="initStr">
+						back.status = 4 
+					</isNotEmpty>							
+				</isEqual>
+				
+				<!--运营总监-->
+				<isEqual prepend="and" property="roleId" compareValue="17">
+					<isNotEmpty property="initStr">
+						back.status = 6 
+					</isNotEmpty>
+				</isEqual>
+				
+				<!--信用主管、运营总监助理、总经理-->
+				<isEqual prepend="and" property="roleId" compareValue="7">					
+					<isNotEmpty property="initStr">
+						back.status = 11 
+					</isNotEmpty>
+				</isEqual>			
+					
+				
+				<!--信用专员, 采购主管-->
+				<isEqual prepend="and" property="roleId" compareValue="6">
+					contract.product_type_id in (
+													select  product_type_id 
+													from    user_product
+													where   user_id = #currentUserId#
+												)
+					<isNotEmpty prepend="and" property="initStr">
+						back.status = 11
+					</isNotEmpty>
+				</isEqual>
+			 
+			</dynamic>	
+			ORDER BY BACK.ID DESC       
+	</select>		
+	<!-- 销售退货合同  分页 by lilewei -->
+	<select id="salesBackContract.recordCount"  parameterClass="salesBackQueryDto"	resultClass="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM   SELL_BACK_CONTRACT AS BACK
+		       LEFT JOIN SELL_CONTRACT AS CONTRACT
+		         ON BACK.SELL_CONTRACT_ID = CONTRACT.ID
+		       LEFT JOIN PRODUCT_TYPE AS PTYPE
+		         ON CONTRACT.PRODUCT_TYPE_ID = PTYPE.ID
+		       LEFT JOIN CUSTOMER
+		         ON CONTRACT.CUSTOMER_ID = CUSTOMER.ID			
+			<dynamic prepend="where">			
+			<!--检索条件-->
+				<isNotEmpty prepend="and" property="productTypeId">
+					contract.product_type_id = #productTypeId#
+				</isNotEmpty>
+				
+				<isNotEmpty prepend="and" property="productContractCode">
+					back.product_contract_code like concat('%', #productContractCode#, '%')
+				</isNotEmpty>
+				
+				<isNotEmpty prepend="and" property="companyContractCode">
+					back.company_contract_code like concat('%', #companyContractCode#, '%')
+				</isNotEmpty> 
+				
+				<isNotEmpty prepend="and" property="customerName">
+					contract.customer_name like concat('%',#customerName#,'%')
+				</isNotEmpty> 
+				
+				<isNotEmpty prepend="and" property="templateType">
+					back.template_type = #templateType#
+				</isNotEmpty>		
+				
+				<isNotEmpty prepend="and" property="userName">
+					back.user_name  like concat('%',#userName#,'%')
+				</isNotEmpty> 
+				
+				<isNotEmpty prepend="and" property="startTime">
+					<![CDATA[ str_to_date(back.date,'%Y-%m-%d') >= str_to_date(#startTime#,'%Y-%m-%d') ]]>					 
+				</isNotEmpty>
+				
+				<isNotEmpty prepend="and" property="endTime">
+					<![CDATA[str_to_date(back.date,'%Y-%m-%d') <= str_to_date(#endTime#,'%Y-%m-%d') ]]>					
+				</isNotEmpty> 
+				
+				<isNotEmpty prepend="and" property="status">
+					back.status = #status#
+				</isNotEmpty> 				 
+			
+				<!--销售助理-->
+				<isEqual prepend="and" property="roleId" compareValue="3">
+					<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						(back.user_area_id=$userAreaProductList[].userAreaId$ and contract.product_type_id=$userAreaProductList[].productTypeId$)
+					</iterate>
+					<isNotEmpty prepend="and" property="initStr">
+						back.status in (8,9)  
+					</isNotEmpty>						  						
+				</isEqual>
+				
+				<!--区域总监-->
+				<isEqual prepend="and" property="roleId" compareValue="9">
+					<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						(back.user_area_id=$userAreaProductList[].userAreaId$ and contract.product_type_id=$userAreaProductList[].productTypeId$)
+					</iterate>			
+					<isNotEmpty prepend="and" property="initStr">
+						back.status = 12 
+					</isNotEmpty>
+				</isEqual>									
+				<!--大区经理  区域经理 -->
+				<isEqual prepend="and" property="roleId" compareValue="19">	
+					back.user_area_id in (select user_area_id from user_area_mapping where user_id=#currentUserId#)
+					<isNotEmpty prepend="and" property="initStr">
+						back.status = 12 
+					</isNotEmpty>
+				</isEqual>
+				<!--销售经理-->
+				<isEqual prepend="and" property="roleId" compareValue="4">
+					back.user_id = #currentUserId#					
+				</isEqual>
+				
+				<!--法务专员-->
+				<isEqual prepend="and" property="roleId" compareValue="15">
+					<isNotEmpty property="initStr">
+						back.status = 2 
+					</isNotEmpty> 
+				</isEqual>
+				
+				<!--销售总监-->
+				<isEqual prepend="and" property="roleId" compareValue="5">
+					contract.product_type_id in (
+													select  product_type_id 
+													from    user_product
+													where   user_id = #currentUserId#
+												)
+					<isNotEmpty prepend="and" property="initStr">
+						back.status = 4 
+					</isNotEmpty>							
+				</isEqual>
+				
+				<!--运营总监-->
+				<isEqual prepend="and" property="roleId" compareValue="17">
+					<isNotEmpty property="initStr">
+						back.status = 6 
+					</isNotEmpty>
+				</isEqual>
+				
+				<!--信用主管、运营总监助理、总经理-->
+				<isEqual prepend="and" property="roleId" compareValue="7">					
+					<isNotEmpty property="initStr">
+						back.status = 11 
+					</isNotEmpty>
+				</isEqual>			
+					
+				
+				<!--信用专员, 采购主管-->
+				<isEqual prepend="and" property="roleId" compareValue="6">
+					contract.product_type_id in (
+													select  product_type_id 
+													from    user_product
+													where   user_id = #currentUserId#
+												)
+					<isNotEmpty prepend="and" property="initStr">
+						back.status = 11
+					</isNotEmpty>
+				</isEqual>
+			 
+			</dynamic>	       
+		
+	</select>		       
+	
+	<!--根据id查询销售退货合同  by lilewei-->
+	<select id="selectSalesBackContractById" parameterClass="java.lang.String" resultClass="salesBackContractDto"> 
+		
+		SELECT SBC.ID,			 
+			   SBC.file                                                                as FILE,
+			   SBC.money                                                               as money,
+		       SC.DATE                                                                 AS SIGNDATE,
+		       PT.NAME                                                                 AS PRODUCTTYPENAME,
+		       SC.PRODUCT_CONTRACT_CODE                                                AS PRODUCTCONTRACTCODE,
+		       SC.COMPANY_CONTRACT_CODE                                                AS COMPANYCONTRACTCODE,
+		       SC.MONEY                                                                AS CONTRACTMONEY,
+		       IFNULL(VSAA.ADVANCE_AMOUNT_MONEY,0) + IFNULL(VFA.FREEZE_AMOUNT_MONEY,0) AS ADVANCEMONEY,
+		       SC.CUSTOMER_NAME                                                        AS CUSTOMERNAME,
+		       CL.NAME                                                                 AS LINKMAN,
+		       C.PROVINCE                                                              AS CUSTOMERPROVINCE,
+		       CL.TEL                                                                  AS LINKMANTEL,
+		       C.CITY                                                                  AS CUSTOMERCITY,
+		       CL.FAX                                                                  AS LINKMANFAX,
+		       C.INVOICE_BANK_NAME                                                     AS INVOICEBANKNAME,
+		       C.INVOICE_BANK_ACCOUNT                                                  AS INVOICEBANKACCOUNT,
+		       C.TAX_NUMBER                                                            AS CUSTOMERTAXNUMBER,
+		       (CASE 
+		          WHEN C.INVOICE_TYPE = 0 THEN '普通'
+		          ELSE '增值税'
+		        END)      															   AS INVOICETYPE,
+		       SBC.TEMPLATE_TYPE                                                       AS TEMPLATETYPE,
+		       SBC.DATE                                                                AS DATE,
+		       SBC.PLACE                                                               AS PLACE,
+		       SBC.BACK_WAY                                                            AS BACKWAY,
+		       TEMPADRS.STOCKROOMNAME,
+		       TEMPADRS.RECIPIENTSNAME                                                 AS RECEIVERUNITNAME,
+		       TEMPADRS.RECEIPTADDRESS                                                 AS RECEIVERADDRESS,
+		       TEMPADRS.RECEIVERLINKMAN                                                AS RECEIVERLINKMAN,
+		       TEMPADRS.POSTCODE                                                       AS RECEIVERPOSTCODE,
+		       TEMPADRS.RECEIPTTEL                                                     AS RECEIVERTEL,
+		       TEMPADRS.RECEIPTMOBILE                                                  AS RECEIVERMOBILE,
+		       SBC.TEXT,
+		       SBC.LEGAL_ID                                                            AS LEGALID,
+		       SBC.LEGAL_NAME                                                          AS LEGALNAME,
+		       SBC.LEGAL_DATE                                                          AS LEGALDATE,
+		       SBC.LEGAL_IDEA                                                          AS LEGALIDEA,
+		       SBC.LEGAL_TEXT                                                          AS LEGALTEXT,
+		       SBC.SELL_MAJ_ID                                                         AS SELLMAJID,
+		       SBC.SELL_MAJ_NAME                                                       AS SELLMAJNAME,
+		       SBC.SELL_MAJ_DATE                                                       AS SELLMAJDATE,
+		       SBC.SELL_MAJ_IDEA                                                       AS SELLMAJIDEA,
+		       SBC.SELL_MAJ_TEXT                                                       AS SELLMAJTEXT,
+		       SBC.OPE_MAJ_ID                                                          AS OPEMAJID,
+		       SBC.OPE_MAJ_NAME                                                        AS OPEMAJNAME,
+		       SBC.OPE_MAJ_DATE                                                        AS OPEMAJDATE,
+		       SBC.OPE_MAJ_IDEA                                                        AS OPEMAJIDEA,
+		       SBC.OPE_MAJ_TEXT                                                        AS OPEMAJTEXT,
+		       SBC.AREA_MAJ_ID														   AS AREAMAJID,
+		       SBC.AREA_MAJ_NAME                                                       AS AREAMAJNAME,
+		       SBC.AREA_MAJ_DATE                                                       AS AREAMAJDATE,
+		       SBC.AREA_MAJ_IDEA                                                       AS AREAMAJIDEA,
+		       SBC.AREA_MAJ_TEXT                                                       AS AREAMAJTEXT,
+		       PD.ACCOUNT                                                              AS PRODUCTDEPTACCOUNT,
+		       PD.FAX																   AS PRODUCTDEPTFAX,
+		       USER.TEL 															   AS USERTEL,
+		       SC.PLACE																   AS SIGNPLACE,
+		       SBC.BACK_DATE														   AS BACKDATE,
+		       SBC.USER_NAME															   AS USERNAME,
+		       SbC.PRODUCT_CONTRACT_CODE                                             AS productContractCodeOfBack,
+		       SbC.COMPANY_CONTRACT_CODE  as companyContractCodeOfBack
+		
+		FROM    SELL_BACK_CONTRACT      as SBC
+		       INNER JOIN SELL_CONTRACT as SC
+		         ON SBC.SELL_CONTRACT_ID = SC.ID
+		       INNER JOIN PRODUCT_TYPE as PT
+		         ON SC.PRODUCT_TYPE_ID = PT.ID
+		       INNER JOIN CUSTOMER as C
+		         ON SC.CUSTOMER_ID = C.ID
+		       INNER JOIN CUSTOMER_LINKMAN  as CL
+		         ON SC.CUSTOMER_LINKMAN_ID = CL.ID
+		       LEFT JOIN PRODUCT_DEPT AS PD
+		       	 ON PT.PRODUCT_DEPT_ID = PD.ID  
+		       left join user 
+		       	 on sbc.user_id = user.id	 
+		       LEFT JOIN VIEW_SALESCONTRACT_ADVANCE_AMOUNT as VSAA
+		         ON SC.ID = VSAA.ID
+		       LEFT JOIN VIEW_FREEZE_AMOUNT  as VFA
+		         ON SC.ID = VFA.ID
+		       LEFT JOIN (SELECT   SR.ID AS STOCKROOMID,
+		                           SR.NAME AS STOCKROOMNAME,
+		                           SRA.ID AS ADDRESSID,
+		                           SRA.NAME AS RECIPIENTSNAME,
+		                           SRA.ADDRESS AS RECEIPTADDRESS,
+		                           SRA.POSTCODE,
+		                           SRA.LINKMAN AS RECEIVERLINKMAN,
+		                           SRA.TEL AS RECEIPTTEL,
+		                           SRA.MOBILE AS RECEIPTMOBILE
+		                  FROM     STOCKROOM as SR,
+		                           STOCKROOM_ADDRESS as SRA
+		                  WHERE    SR.TYPE != 0
+		                           AND SR.ID = STOCKROOM_ID
+		                  ORDER BY SR.NAME,
+		                           SRA.NAME) as TEMPADRS
+		         ON SBC.STOCKROOM_ADDRESS_ID = TEMPADRS.ADDRESSID
+		   WHERE  sbc.ID = #salesBackContractId#      
+         
+	</select>    
+	
+	<!--根据销售退货合同id查询对应的全部销售退货合同明细  by lilewei-->
+	<select id="selectSalesBackContractDetailBySalesContractId" parameterClass="java.lang.String" resultClass="salesBackContractDetailDto">
+		SELECT P.CODE AS PRODUCTCODE,
+		       P.ID AS PRODUCTID,
+		       P.NAME AS PRODUCTNAME,
+		       P.TYPE AS PRODUCTTYPE,
+		       P.UNIT AS PRODUCTUNIT,
+		       IFNULL(SCD.COUNT,0) AS SELLCOUNT,
+		       IFNULL(SCD.PRICE,0) AS SELLPRICE,
+		       IFNULL(SCD.COUNT
+		                * SCD.PRICE,0) AS SELLMONEY,
+		       IFNULL(VSPGM.SENDGOODSMONEY,0) AS SENDGOODSMONEY,
+		       IFNULL(VSPGM.PREGOODSMONEY,0) AS PREPAREDGOODSMONEY,
+		       IFNULL(VAM.APPOINTMONEY,0) AS APPOINTMONEY,
+		       IFNULL(VIM.INVOICEMONEY,0) AS MAKEINVOICEMONEY,
+		       IFNULL(TMPRE.COUNT,0) AS BACKEDCONTRACTCOUNT,
+		       IFNULL(TMPBKCNT.COUNT,0) AS BACKCOUNT,
+		       IFNULL(TMPCT.COUNT,0) AS BACKCONTRACTCOUNT,
+		       IFNULL(SCD.PRICE
+		                * TMPCT.COUNT,0) AS BACKCONTRACTMONEY
+		FROM   (SELECT SBC.SELL_CONTRACT_ID,
+		               SBCD.PRODUCT_ID
+		        FROM   SELL_BACK_CONTRACT SBC,
+		               SELL_BACK_CONTRACT_DETAIL SBCD
+		        WHERE  SBC.ID = SBCD.SELL_BACK_CONTRACT_ID
+		               AND SBC.ID = #salesBackContractId#) SBCD
+		       INNER JOIN PRODUCT P
+		         ON SBCD.PRODUCT_ID = P.ID
+		       INNER JOIN SELL_CONTRACT_DETAIL SCD
+		         ON SBCD.SELL_CONTRACT_ID = SCD.SELL_CONTRACT_ID
+		            AND SBCD.PRODUCT_ID = SCD.PRODUCT_ID
+		       LEFT JOIN VIEW_APPOINT_MONEY VAM
+		         ON SBCD.SELL_CONTRACT_ID = VAM.CONTRACTID
+		            AND SBCD.PRODUCT_ID = VAM.PRODID
+		       LEFT JOIN (SELECT   SBC.SELL_CONTRACT_ID,
+		                           SBCD.PRODUCT_ID,
+		                           SUM(SBCD.COUNT) COUNT
+		                  FROM     SELL_BACK_CONTRACT SBC,
+		                           SELL_BACK_CONTRACT_DETAIL SBCD
+		                  WHERE    SBC.STATUS IN (2,4,6,8,
+		                                          9,11,12)
+		                           AND SBC.ID = SBCD.SELL_BACK_CONTRACT_ID
+		                  GROUP BY SBC.SELL_CONTRACT_ID,SBCD.PRODUCT_ID) TMPRE
+		         ON SBCD.SELL_CONTRACT_ID = TMPRE.SELL_CONTRACT_ID
+		            AND SBCD.PRODUCT_ID = TMPRE.PRODUCT_ID
+		       LEFT JOIN VIEW_SEND_PREPARED_GOODS_MONEY VSPGM
+		         ON SBCD.SELL_CONTRACT_ID = VSPGM.CONTRACTID
+		            AND SBCD.PRODUCT_ID = VSPGM.PRODID
+		       LEFT JOIN VIEW_INVOICE_MONEY VIM
+		         ON SBCD.SELL_CONTRACT_ID = VIM.SELL_CONTRACT_ID
+		            AND SBCD.PRODUCT_ID = VIM.PRODID
+		       LEFT JOIN (SELECT   SBG.SEND_GOODS_ID,
+		                           SG.SELL_CONTRACT_ID,
+		                           SBGD.PRODUCT_ID,
+		                           SUM(SBGD.COUNT) COUNT
+		                  FROM     SELL_BACK_GOODS SBG,
+		                           SELL_BACK_GOODS_DETAIL SBGD,
+		                           SEND_GOODS SG
+		                  WHERE    SBG.STATUS = 8
+		                           AND SG.STATUS IN (2,3,5,6,10)
+		                           AND SG.ID = SBG.SEND_GOODS_ID
+		                           AND SBG.ID = SBGD.SELL_BACK_GOODS_ID
+		                  GROUP BY SBG.SEND_GOODS_ID,SBGD.PRODUCT_ID) TMPBKCNT
+		         ON SBCD.PRODUCT_ID = TMPBKCNT.PRODUCT_ID
+		            AND SBCD.SELL_CONTRACT_ID = TMPBKCNT.SELL_CONTRACT_ID
+		       LEFT JOIN (SELECT   SBC.SELL_CONTRACT_ID,
+		                           SBCD.PRODUCT_ID,
+		                           SUM(SBCD.COUNT) COUNT
+		                  FROM     SELL_BACK_CONTRACT SBC,
+		                           SELL_BACK_CONTRACT_DETAIL SBCD
+		                  WHERE    SBC.ID = SBCD.SELL_BACK_CONTRACT_ID
+		                           AND SBC.ID = #salesBackContractId#
+		                  GROUP BY SBC.SELL_CONTRACT_ID,SBCD.PRODUCT_ID) TMPCT
+		         ON TMPCT.SELL_CONTRACT_ID = SBCD.SELL_CONTRACT_ID
+		            AND TMPCT.PRODUCT_ID = SBCD.PRODUCT_ID
+	</select>         
+	<!-- 销售合同信息、客户信息 Begin -->	              
+	<select id="getSalesContractOfBack"  parameterClass="string" resultClass="salesBackContractOfShowDto">
+		SELECT
+			   SC.PRODUCT_TYPE_ID AS productTypeId,					<!-- 产品分类ID -->
+			   SC.ID AS salesContractId,	 						<!-- 销售合同id -->
+			   SC.SIGNDATE AS date,									<!-- 签订日期 -->
+		       PT.NAME AS productTypeName,							<!-- 产品分类名称 -->
+		       SC.PRODCNTRCTCD AS productContractCode,				<!-- 产品合同号 -->
+		       SC.COMPCNTRCTCD AS companyContractCode,				<!-- 公司合同号 -->
+		       SC.CONTRACTMONEY AS money,							<!-- 合同金额 -->
+		       IFNULL(VSAA.ADVANCE_AMOUNT_MONEY,0)
+		         + IFNULL(VFA.FREEZE_AMOUNT_MONEY,0) AS preMoney,	<!-- 预收金额 -->
+		       SC.CUSTOMERNAME,										<!-- 客户名称 -->
+		       CL.NAME AS customerLinkmanName,						<!-- 客户联系人姓名 -->
+		       C.PROVINCE AS customerProvince,						<!-- 客户省份 -->
+		       CL.TEL AS customerLinkmanTel,						<!-- 客户联系人电话 -->
+		       C.CITY AS customerCity,								<!-- 客户城市 -->
+		       CL.FAX AS customerLinkmanFax,						<!-- 客户联系人传真 -->
+		       C.INVOICE_BANK_NAME AS customerInvoiceBankName,		<!-- 客户开票银行名称 -->
+		       C.INVOICE_BANK_ACCOUNT AS customerInvoiceBankAccount,<!-- 客户开票银行帐号 -->
+		       C.TAX_NUMBER AS customerTaxNumber,					<!-- 客户税号 -->
+		       C.INVOICE_TYPE AS customerInvoiceType,				<!-- 客户发票类型 -->
+		       SC.TEMPLATE_TYPE AS templateType						<!-- 模板类型 -->
+		FROM   (SELECT SC.ID,
+		               SC.PRODUCT_TYPE_ID,
+		               SC.CUSTOMER_ID,
+		               SC.CUSTOMER_LINKMAN_ID,
+		               SC.DATE AS SIGNDATE,
+		               SC.PRODUCT_CONTRACT_CODE AS PRODCNTRCTCD,
+		               SC.COMPANY_CONTRACT_CODE AS COMPCNTRCTCD,
+		               SC.CUSTOMER_NAME AS CUSTOMERNAME,
+		               SC.TEMPLATE_TYPE,
+		               SC.MONEY AS CONTRACTMONEY
+		        FROM   SELL_CONTRACT SC
+		        WHERE  SC.ID = #id#) SC
+		       LEFT JOIN PRODUCT_TYPE PT
+		         ON SC.PRODUCT_TYPE_ID = PT.ID
+		       LEFT JOIN CUSTOMER C
+		         ON SC.CUSTOMER_ID = C.ID
+		       LEFT JOIN CUSTOMER_LINKMAN CL
+		         ON SC.CUSTOMER_LINKMAN_ID = CL.ID
+		       LEFT JOIN VIEW_SALESCONTRACT_ADVANCE_AMOUNT VSAA
+		         ON SC.ID = VSAA.ID
+		       LEFT JOIN VIEW_FREEZE_AMOUNT VFA
+		         ON SC.ID = VFA.ID
+	</select>
+	<!-- 销售合同信息、客户信息 End -->
+	<!-- 销售合同之产品信息 Begin -->	              
+	<select id="getGoodsInfoById.getDate"  parameterClass="string" resultClass="salesBackContractOfGoodInfoDto">
+			SELECT P.CODE AS productCode,						<!-- 产品编码 -->
+			       P.ID AS productId,							<!-- 产品ID -->
+			       P.NAME AS productName,						<!-- 产品名称 -->
+			       P.TYPE AS specModel,							<!-- 规格型号 -->
+			       P.UNIT AS unit,								<!-- 单位 -->
+			       IFNULL(SCD.SELLCOUNT,0) AS SELLCOUNT,			<!-- 销售数 -->
+			       IFNULL(SCD.SELLPRICE,0) AS SELLPRICE,			<!-- 销售单价 -->
+			       IFNULL(SCD.SELLMONEY,0) AS SELLMONEY,			<!-- 销售金额 -->
+			       IFNULL(VSPGM.SENDGOODSMONEY,0) AS SENDGOODSMONEY, <!-- 发货金额 -->
+			       IFNULL(VSPGM.PREGOODSMONEY,0) AS PREGOODSMONEY,	<!-- 备货金额 -->
+			       IFNULL(VAM.APPOINTMONEY,0) AS APPOINTMONEY,		<!-- 指定金额 -->
+			       IFNULL(VIM.INVOICEMONEY,0) AS makeInvoiceMoney,	<!-- 开票金额 -->
+			       IFNULL(TMPRE.COUNT,0) AS alreadyReturnCount,     <!-- 已退货合同数 -->
+			       IFNULL(TMPBKCNT.COUNT,0) AS returnCount			<!-- 退货数 -->
+			FROM   (SELECT SC.ID AS SELL_CONTRACT_ID,
+			               SCD.PRODUCT_ID,
+			               SCD.COUNT AS SELLCOUNT,
+			               SCD.PRICE AS SELLPRICE,
+			               SCD.COUNT
+			                 * SCD.PRICE AS SELLMONEY
+			        FROM   SELL_CONTRACT SC,
+			               SELL_CONTRACT_DETAIL SCD
+			        WHERE  SC.ID = #id#
+			               AND SC.ID = SCD.SELL_CONTRACT_ID) SCD
+			       LEFT JOIN PRODUCT P
+			         ON SCD.PRODUCT_ID = P.ID
+			       LEFT JOIN VIEW_SEND_PREPARED_GOODS_MONEY VSPGM
+			         ON SCD.SELL_CONTRACT_ID = VSPGM.CONTRACTID
+			            AND SCD.PRODUCT_ID = VSPGM.PRODID
+			       LEFT JOIN VIEW_APPOINT_MONEY VAM
+			         ON SCD.SELL_CONTRACT_ID = VAM.CONTRACTID
+			            AND VAM.PRODID = SCD.PRODUCT_ID
+			       LEFT JOIN VIEW_INVOICE_MONEY VIM
+			         ON SCD.SELL_CONTRACT_ID = VIM.SELL_CONTRACT_ID
+			            AND SCD.PRODUCT_ID = VIM.PRODID
+			       LEFT JOIN (SELECT   SBC.SELL_CONTRACT_ID,
+			                           SBCD.PRODUCT_ID,
+			                           SUM(SBCD.COUNT) COUNT
+			                  FROM     
+			                           SELL_BACK_CONTRACT SBC,
+			                           SELL_BACK_CONTRACT_DETAIL SBCD
+			                  WHERE    SBC.STATUS IN (2,4,6,8,9, 11,12)
+			                           AND SBC.ID = SBCD.SELL_BACK_CONTRACT_ID
+			                           AND SBC.SELL_CONTRACT_ID =  #Id#
+			                  GROUP BY SBC.SELL_CONTRACT_ID,SBCD.PRODUCT_ID) TMPRE
+			         ON SCD.SELL_CONTRACT_ID = TMPRE.SELL_CONTRACT_ID
+			            AND SCD.PRODUCT_ID = TMPRE.PRODUCT_ID	            
+			       LEFT JOIN (SELECT   SBG.SEND_GOODS_ID,
+			                           SBGD.PRODUCT_ID,
+			                           SUM(SBGD.COUNT) COUNT
+			                  FROM     SEND_GOODS SG,
+			                           SELL_BACK_GOODS SBG,
+			                           SELL_BACK_GOODS_DETAIL SBGD
+			                  WHERE    SBG.STATUS = 8
+			                           AND SBG.ID = SBGD.SELL_BACK_GOODS_ID
+			                           AND SG.SELL_CONTRACT_ID = #Id#
+			                           AND SG.ID = SBG.SEND_GOODS_ID
+			                  GROUP BY SBG.SEND_GOODS_ID,SBGD.PRODUCT_ID) TMPBKCNT
+			         ON TMPBKCNT.PRODUCT_ID = SCD.PRODUCT_ID
+          WHERE SCD.SELLCOUNT>IFNULL(TMPRE.COUNT,0)	
+          ORDER BY P.CODE ASC	            
+	</select>
+	<!-- 销售合同之产品信息 End -->
+		<!-- 查询区域编号 -->	
+	<select id="getAreaIdBySalesBackContractId" parameterClass="java.lang.String" resultClass="java.lang.Integer">
+		select 
+			ifnull(sc.user_area_id,0) as userAreaId 
+		from  sell_back_contract as sbc,
+			  sell_contract as sc
+		where sbc.sell_contract_id=sc.id
+			 and sbc.id=#backContractId#
+	</select>
+	<!-- 销售合同之产品信息分页 Begin -->	              
+	<select id="getGoodsInfoById.recordCount"  parameterClass="string" resultClass="java.lang.Integer">
+			SELECT COUNT(*)
+			FROM   (SELECT SC.ID AS SELL_CONTRACT_ID,
+			               SCD.PRODUCT_ID,
+			               SCD.COUNT AS SELLCOUNT,
+			               SCD.PRICE AS SELLPRICE,
+			               SCD.COUNT
+			                 * SCD.PRICE AS SELLMONEY
+			        FROM   SELL_CONTRACT SC,
+			               SELL_CONTRACT_DETAIL SCD
+			        WHERE  SC.ID = #id#
+			               AND SC.ID = SCD.SELL_CONTRACT_ID) SCD
+			       LEFT JOIN PRODUCT P
+			         ON SCD.PRODUCT_ID = P.ID
+			       LEFT JOIN VIEW_SEND_PREPARED_GOODS_MONEY VSPGM
+			         ON SCD.SELL_CONTRACT_ID = VSPGM.CONTRACTID
+			            AND SCD.PRODUCT_ID = VSPGM.PRODID
+			       LEFT JOIN VIEW_APPOINT_MONEY VAM
+			         ON SCD.SELL_CONTRACT_ID = VAM.CONTRACTID
+			            AND VAM.PRODID = SCD.PRODUCT_ID
+			       LEFT JOIN VIEW_INVOICE_MONEY VIM
+			         ON SCD.SELL_CONTRACT_ID = VIM.SELL_CONTRACT_ID
+			            AND SCD.PRODUCT_ID = VIM.PRODID
+			       LEFT JOIN (SELECT   SBC.SELL_CONTRACT_ID,
+			                           SBCD.PRODUCT_ID,
+			                           SUM(SBCD.COUNT) COUNT
+			                  FROM     
+			                           SELL_BACK_CONTRACT SBC,
+			                           SELL_BACK_CONTRACT_DETAIL SBCD
+			                  WHERE    SBC.STATUS IN (2,4,6,8,9, 11,12)
+			                           AND SBC.ID = SBCD.SELL_BACK_CONTRACT_ID
+			                           AND SBC.SELL_CONTRACT_ID =  #Id#
+			                  GROUP BY SBC.SELL_CONTRACT_ID,SBCD.PRODUCT_ID) TMPRE
+			         ON SCD.SELL_CONTRACT_ID = TMPRE.SELL_CONTRACT_ID
+			            AND SCD.PRODUCT_ID = TMPRE.PRODUCT_ID	            
+			       LEFT JOIN (SELECT   SBG.SEND_GOODS_ID,
+			                           SBGD.PRODUCT_ID,
+			                           SUM(SBGD.COUNT) COUNT
+			                  FROM     SEND_GOODS SG,
+			                           SELL_BACK_GOODS SBG,
+			                           SELL_BACK_GOODS_DETAIL SBGD
+			                  WHERE    SBG.STATUS = 8
+			                           AND SBG.ID = SBGD.SELL_BACK_GOODS_ID
+			                           AND SG.SELL_CONTRACT_ID = #Id#
+			                           AND SG.ID = SBG.SEND_GOODS_ID
+			                  GROUP BY SBG.SEND_GOODS_ID,SBGD.PRODUCT_ID) TMPBKCNT
+			         ON TMPBKCNT.PRODUCT_ID = SCD.PRODUCT_ID
+          WHERE SCD.SELLCOUNT>IFNULL(TMPRE.COUNT,0)				            
+	</select>
+	<!-- 销售合同之产品分页 End -->
+	<!-- 销售合同之收获地址选择 Begin -->	              
+	<select id="getReceiveInfo"  parameterClass="string" resultClass="stockroomAnAddressOfSellBackDto">
+			SELECT   SR.ID AS stockRoomId,
+			         SR.NAME AS STOCKROOMNAME,
+			         SRA.ID AS stockRoomAddressId,
+			         SRA.NAME AS goodsName,
+			         SRA.ADDRESS AS goodsAddress,
+			         SRA.POSTCODE,
+			         SRA.LINKMAN,
+			         SRA.TEL,
+			         SRA.MOBILE
+			FROM     STOCKROOM SR,
+			         STOCKROOM_ADDRESS SRA
+			WHERE    SR.TYPE != 0
+			         AND SR.ID = STOCKROOM_ID
+			         AND stockroom_id=#id#
+			ORDER BY SR.NAME,
+			         SRA.NAME
+	</select>
+	<!-- 销售合同之收获地址选择 End -->	
+	<!-- 库房名称 Begin -->	              
+	<select id="getStoreRoom"  resultClass="stockRoomOfSellBack">
+			SELECT   NAME,ID
+			FROM     STOCKROOM
+			WHERE    TYPE=2
+	</select>
+	<!-- 库房名称 End -->	
+	<!-- 添加销售退货合同 Begin -->	              
+	<insert id="addSaleBackContract" parameterClass="saleBackContractOfAddDto">
+		INSERT INTO SELL_BACK_CONTRACT
+	           (ID,
+	            SELL_CONTRACT_ID,
+	            STATUS,
+	            TEMPLATE_TYPE,
+	            PLACE,
+	            FILE,
+	            STOCKROOM_ID,
+	            STOCKROOM_ADDRESS_ID,
+	            BACK_WAY,
+	            USER_ID,
+	            USER_NAME,
+	            USER_AREA_ID,
+	            TEXT,
+	            MONEY,
+	            LEGAL_ID,
+	            SELL_MAJ_ID,
+	            area_maj_id,
+	            DATETIME,
+	            BACK_DATE,
+	            product_type_id)
+		VALUES(#id#,#sellContractId#,
+				#status#,#templateType#,#place#,#fileName#,#stockroomId#,
+				#stockroomAddressId#,#backWay#,#userId#,#userName#,#userAreaId#,
+				#text#,#money#,#legalId#,#sellMajId#,#areaMajId#,#datetime#,#backDate#,#productTypeId#)
+	</insert>
+	<!-- 添加销售退货合同 End -->	
+	<!-- 添加销售退货合同明细 Begin -->	              
+	<insert id="addSaleBackContractDetail" parameterClass="sellBackGoodsDetailEntity">
+		INSERT INTO SELL_BACK_CONTRACT_DETAIL
+           (SELL_BACK_CONTRACT_ID,
+            PRODUCT_ID,
+            COUNT)VALUES(#sellBackGoodsId#,#productId#,#count#)
+	</insert>
+	<!-- 添加销售退货合同明细 End -->	
+	<!-- 修改销售退货合同 显示 Begin -->	              
+	<select id="getModifySalesContractOfBack"  parameterClass="string" resultClass="salesBackContractOfShowDto">
+			SELECT 
+			   SBC.sell_contract_id as salesContractId,										   	   <!-- 销售合同id -->
+			   SBC.status as status,										   	   				   <!-- 状态 -->
+			   SBC.ID AS salesBackContractId,													   <!-- 销售退货合同id -->
+			   SBC.file as FILE,																   <!-- file -->
+			   SBC.money as backMoney,															   <!-- 退货金额合计 -->
+			   SBC.TEMPLATE_TYPE AS TEMPLATETYPE,												   <!-- 模板类型 -->
+		       SBC.BACK_DATE AS backDate,														   <!-- 签订退货时间 -->
+		       SBC.PLACE AS PLACE,															       <!-- 签订地点 -->
+		       SBC.BACK_WAY AS BACKWAY,															   <!-- 退货退款方式 -->
+		       SC.DATE AS DATE,																   <!-- 签订日期 -->
+		       PT.NAME AS productTypeName,														   <!-- 产品分类名称 -->
+		       PT.ID as productTypeId,															   <!-- 产品分类编号 -->
+		       SC.PRODUCT_CONTRACT_CODE AS PRODUCTCONTRACTCODE,									   <!-- 产品合同号 -->
+		       SC.COMPANY_CONTRACT_CODE AS COMPANYCONTRACTCODE,									   <!-- 公司合同号 -->
+		       SC.MONEY AS money,																   <!-- 合同金额 -->
+		       IFNULL(VSAA.ADVANCE_AMOUNT_MONEY,0) + IFNULL(VFA.FREEZE_AMOUNT_MONEY,0) AS preMoney,<!-- 预收金额 -->
+		       SC.CUSTOMER_NAME AS CUSTOMERNAME,												   <!-- 客户名称 -->
+		       CL.NAME AS customerLinkmanName,													   <!-- 客户联系人姓名 -->
+		       C.PROVINCE AS customerProvince,													   <!-- 客户省份 -->
+		       CL.TEL AS customerLinkmanTel,													   <!-- 客户联系人电话 -->
+		       C.CITY AS customerCity,															   <!-- 客户城市 -->
+		       CL.FAX AS customerLinkmanFax,													   <!-- 客户联系人传真 -->
+		       C.INVOICE_BANK_NAME AS customerInvoiceBankName,									   <!-- 客户开票银行名称 -->
+		       C.INVOICE_BANK_ACCOUNT AS customerInvoiceBankAccount,							   <!-- 客户开票银行帐号 -->
+		       C.TAX_NUMBER AS customerTaxNumber,												   <!-- 客户税号 -->
+		       C.INVOICE_TYPE AS customerInvoiceType,											   <!-- 客户发票类型 -->
+		       TEMPADRS.STOCKROOMNAME as stockRoomName,											   <!-- 库房名称 -->
+		       TEMPADRS.RECIPIENTSNAME AS goodsName,											   <!-- 货物接收单位名称 -->
+		       TEMPADRS.RECEIPTADDRESS AS goodsAddress,											   <!-- 收货地址 -->
+		       TEMPADRS.RECEIVERLINKMAN AS linkman,												   <!-- 联系人 -->
+		       TEMPADRS.POSTCODE AS postcode,											   		   <!-- 邮编 -->
+		       TEMPADRS.RECEIPTTEL AS tel,												   		   <!-- 电话 -->
+		       TEMPADRS.RECEIPTMOBILE AS MOBILE,												   <!-- 手机 -->
+		       SBC.TEXT,																		   <!-- 说明 -->
+			   TEMPADRS.STOCKROOMID as stockRoomId,												   <!-- 库房id -->
+			   TEMPADRS.ADDRESSID as stockRoomAddressId,										   <!-- 库房收货地址ID -->
+			   
+			   SBC.LEGAL_ID AS LEGALID,															   <!-- 法务专员登录名 -->
+		       SBC.LEGAL_NAME AS LEGALNAME,														   <!-- 法务专员用户名 -->
+		       SBC.LEGAL_DATE AS LEGALDATE,														   <!-- 法务专员评审日期 -->
+		       SBC.LEGAL_IDEA AS LEGALIDEA,														   <!-- 法务专员评审意见 -->
+		       SBC.LEGAL_TEXT AS LEGALTEXT,														   <!-- 法务专员补充说明 -->
+		       SBC.SELL_MAJ_ID AS SELLMAJID,													   <!-- 销售总监登录名 -->
+		       SBC.SELL_MAJ_NAME AS SELLMAJNAME,												   <!-- 销售总监用户名 -->
+		       SBC.SELL_MAJ_DATE AS SELLMAJDATE,												   <!-- 销售总监评审日期 -->
+		       SBC.SELL_MAJ_IDEA AS SELLMAJIDEA,												   <!-- 销售总监评审意见 -->
+		       SBC.SELL_MAJ_TEXT AS SELLMAJTEXT,												   <!-- 销售总监补充说明 -->
+		       SBC.OPE_MAJ_ID AS OPEMAJID,														   <!-- 运营总监登录名 -->
+		       SBC.OPE_MAJ_NAME AS OPEMAJNAME,													   <!-- 运营总监用户名 -->
+		       SBC.OPE_MAJ_DATE AS OPEMAJDATE,													   <!-- 运营总监评审日期 -->
+		       SBC.OPE_MAJ_IDEA AS OPEMAJIDEA,													   <!-- 运营总监评审意见 -->
+		       SBC.OPE_MAJ_TEXT AS OPEMAJTEXT,													   <!-- 运营总监补充说明 -->
+		       SBC.AREA_MAJ_ID	 AS AREAMAJID,
+		       SBC.AREA_MAJ_NAME AS AREAMAJNAME,
+		       SBC.AREA_MAJ_DATE AS AREAMAJDATE,
+		       SBC.AREA_MAJ_IDEA AS AREAMAJIDEA,
+		       SBC.AREA_MAJ_TEXT AS AREAMAJTEXT,
+		       
+		       SBC.user_area_id	       as userAreaId,
+		       SBC.PRODUCT_CONTRACT_CODE as backProductContractCode,
+		       SBC.COMPANY_CONTRACT_CODE as backCompanyContractCode
+		FROM    SELL_BACK_CONTRACT      as SBC
+		       INNER JOIN SELL_CONTRACT as SC
+		         ON SBC.SELL_CONTRACT_ID = SC.ID
+		       INNER JOIN PRODUCT_TYPE as PT
+		         ON SC.PRODUCT_TYPE_ID = PT.ID
+		       INNER JOIN CUSTOMER as C
+		         ON SC.CUSTOMER_ID = C.ID
+		       INNER JOIN CUSTOMER_LINKMAN  as CL
+		         ON SC.CUSTOMER_LINKMAN_ID = CL.ID
+		       LEFT JOIN VIEW_SALESCONTRACT_ADVANCE_AMOUNT as VSAA
+		         ON SC.ID = VSAA.ID
+		       LEFT JOIN VIEW_FREEZE_AMOUNT  as VFA
+		         ON SC.ID = VFA.ID
+		       LEFT JOIN (SELECT   SR.ID AS STOCKROOMID,
+		                           SR.NAME AS STOCKROOMNAME,
+		                           SRA.ID AS ADDRESSID,
+		                           SRA.NAME AS RECIPIENTSNAME,
+		                           SRA.ADDRESS AS RECEIPTADDRESS,
+		                           SRA.POSTCODE,
+		                           SRA.LINKMAN AS RECEIVERLINKMAN,
+		                           SRA.TEL AS RECEIPTTEL,
+		                           SRA.MOBILE AS RECEIPTMOBILE
+		                  FROM     STOCKROOM as SR,
+		                           STOCKROOM_ADDRESS as SRA
+		                  WHERE    SR.TYPE != 0
+		                           AND SR.ID = STOCKROOM_ID
+		                  ORDER BY SR.NAME,
+		                           SRA.NAME) as TEMPADRS
+		         ON SBC.STOCKROOM_ADDRESS_ID = TEMPADRS.ADDRESSID
+		   WHERE  sbc.ID = #id#      
+	</select>
+	<!-- 修改销售退货合同 显示 End -->		
+	<!-- 修改销售退货合同产品信息 显示 Begin -->
+	<select id="getGoodsInfoByIdOfShow" parameterClass="string" resultClass="salesBackContractOfGoodInfoDto">
+		SELECT P.CODE AS PRODUCTCODE,										<!-- 产品编码 -->
+		       P.ID AS productId,											<!-- 产品id -->
+		       P.NAME AS PRODUCTNAME,										<!-- 产品名称 -->
+		       P.TYPE AS specModel,											<!-- 规格型号 -->
+		       P.UNIT AS unit,												<!-- 单位 -->
+		       ifnull(SCD.COUNT, 0) AS SELLCOUNT,							<!-- 销售数 -->
+		       ifnull(SCD.PRICE,0) AS SELLPRICE,							<!-- 销售单价 -->
+		       ifnull(SCD.COUNT * SCD.PRICE,0)    AS SELLMONEY,				<!-- 销售金额 -->
+		       ifnull(VSPGM.SENDGOODSMONEY,0)     AS SENDGOODSMONEY,		<!-- 发货金额 -->
+		       ifnull(VSPGM.PREGOODSMONEY,0)      AS preGoodsMoney,			<!-- 备货金额 -->
+		       ifnull(VAM.APPOINTMONEY,0)         AS appointMoney,			<!-- 指定金额 -->
+		       ifnull(VIM.INVOICEMONEY,0)         AS makeInvoiceMoney,		<!-- 开票金额 -->
+		       ifnull(TMPRE.COUNT,0)              AS alreadyReturnCount,	<!-- 已退货合同数 -->
+		       ifnull(TMPBKCNT.COUNT,0)           AS returnCount,			<!-- 退货数 -->
+		       ifnull(TMPCT.COUNT,0)              AS backContractGoodsCount,<!-- 退货合同数 -->
+		       ifnull(SCD.PRICE * TMPCT.COUNT,0)  AS backContractGoodsMoney	<!-- 退货合同金额 -->
+		
+		FROM   (SELECT SBC.SELL_CONTRACT_ID,
+		               SBCD.PRODUCT_ID
+		        FROM   SELL_BACK_CONTRACT SBC,
+		               SELL_BACK_CONTRACT_DETAIL SBCD
+		        WHERE  SBC.ID = SBCD.SELL_BACK_CONTRACT_ID
+		               AND SBC.ID = #id#) SBCD
+		       INNER JOIN PRODUCT P
+		         ON SBCD.PRODUCT_ID = P.ID
+		       INNER JOIN SELL_CONTRACT_DETAIL SCD
+		         ON SBCD.SELL_CONTRACT_ID = SCD.SELL_CONTRACT_ID
+		            AND SBCD.PRODUCT_ID = SCD.PRODUCT_ID
+		       LEFT JOIN VIEW_APPOINT_MONEY VAM
+		         ON SBCD.SELL_CONTRACT_ID = VAM.CONTRACTID
+		            AND SBCD.PRODUCT_ID = VAM.PRODID
+		       LEFT JOIN (SELECT   SBC.SELL_CONTRACT_ID,
+		                           SBCD.PRODUCT_ID,
+		                           SUM(SBCD.COUNT) COUNT
+		                  FROM     SELL_BACK_CONTRACT SBC,
+		                           SELL_BACK_CONTRACT_DETAIL SBCD
+		                  WHERE    SBC.STATUS IN (2,4,6,8,
+		                                          9,11,12)
+		                           AND SBC.ID = SBCD.SELL_BACK_CONTRACT_ID
+		                  GROUP BY SBC.SELL_CONTRACT_ID,SBCD.PRODUCT_ID) TMPRE
+		         ON SBCD.SELL_CONTRACT_ID = TMPRE.SELL_CONTRACT_ID
+		            AND SBCD.PRODUCT_ID = TMPRE.PRODUCT_ID
+		       LEFT JOIN VIEW_SEND_PREPARED_GOODS_MONEY VSPGM
+		         ON SBCD.SELL_CONTRACT_ID = VSPGM.CONTRACTID
+		            AND SBCD.PRODUCT_ID = VSPGM.PRODID
+		       LEFT JOIN VIEW_INVOICE_MONEY VIM
+		         ON SBCD.SELL_CONTRACT_ID = VIM.SELL_CONTRACT_ID
+		            AND SBCD.PRODUCT_ID = VIM.PRODID
+		       LEFT JOIN (SELECT   SBG.SEND_GOODS_ID,
+		                           SG.SELL_CONTRACT_ID,
+		                           SBGD.PRODUCT_ID,
+		                           SUM(SBGD.COUNT) COUNT
+		                  FROM     SELL_BACK_GOODS SBG,
+		                           SELL_BACK_GOODS_DETAIL SBGD,
+		                           SEND_GOODS SG
+		                  WHERE    SBG.STATUS = 8
+		                           AND SG.STATUS IN (2,3,5,6,10)
+		                           AND SG.ID = SBG.SEND_GOODS_ID
+		                           AND SBG.ID = SBGD.SELL_BACK_GOODS_ID
+		                  GROUP BY SBG.SEND_GOODS_ID,SBGD.PRODUCT_ID) TMPBKCNT
+		         ON SBCD.PRODUCT_ID = TMPBKCNT.PRODUCT_ID
+		            AND SBCD.SELL_CONTRACT_ID = TMPBKCNT.SELL_CONTRACT_ID
+		       LEFT JOIN (SELECT   SC.ID,
+		                           SBCD.PRODUCT_ID,
+		                           SBCD.COUNT
+		                  FROM     SELL_CONTRACT SC,
+		                           SELL_BACK_CONTRACT SBC,
+		                           SELL_BACK_CONTRACT_DETAIL SBCD
+		                  WHERE    SC.ID = SBC.SELL_CONTRACT_ID
+		                           AND SBC.ID = SBCD.SELL_BACK_CONTRACT_ID
+		                           AND SBC.ID = #id#
+		                  GROUP BY SC.ID,SBCD.PRODUCT_ID) TMPCT
+		         ON TMPCT.ID = SBCD.SELL_CONTRACT_ID
+		            AND TMPCT.PRODUCT_ID = SBCD.PRODUCT_ID
+	</select>
+    <!-- 修改销售退货合同产品信息 显示 End -->   
+    <!-- 删除销售退货合同明细 Begin --> 
+    <delete id="deleteSaleBackContractDetail" parameterClass="string">
+    	delete from sell_back_contract_detail where sell_back_contract_id=#id#
+    </delete> 
+    <!-- 删除销售退货合同明细 End -->
+    <!-- 修改销售退货合同 Begin -->
+    <update id="modifySaleBackContract" parameterClass="saleBackContractOfAddDto">
+    	UPDATE SELL_BACK_CONTRACT SET
+	            SELL_CONTRACT_ID=#sellContractId#,
+	            
+	            
+	            BACK_DATE=#backDate#,
+	            STATUS=#status#,
+	            TEMPLATE_TYPE=#templateType#,
+	            PLACE=#place#,
+	            FILE=#fileName#,
+	            STOCKROOM_ID=#stockroomId#,
+	            STOCKROOM_ADDRESS_ID=#stockroomAddressId#,
+	            BACK_WAY=#backWay#,
+	            USER_ID=#userId#,
+	            USER_NAME=#userName#,
+	            USER_AREA_ID=#userAreaId#,
+	            TEXT=#text#,
+	            MONEY=#money#,
+	            LEGAL_ID=#legalId#,
+	            area_maj_id=#areaMajId#,
+	            SELL_MAJ_ID=#sellMajId#,
+	            product_type_id=#productTypeId#
+	            
+	         <isEqual prepend="," property="submitType" compareValue="submit">
+	        	product_contract_code = null,
+	        	date = null,
+	         	legal_name=#legalName#,
+				legal_date=#legalDate#,
+	            legal_idea=#legalIdea#,
+	            legal_text=#legalText#,
+	            
+	            sell_maj_name=#sellMajName#,
+	            sell_maj_date=#sellMajDate#,
+	            sell_maj_idea=#sellMajIdea#,
+	            sell_maj_text=#sellMajText#,
+	            ope_maj_id=#opeMajId#,
+	            
+	            ope_maj_name=#opeMajName#,
+	            ope_maj_date=#opeMajDate#,
+	            ope_maj_idea=#opeMajIdea#,
+	            ope_maj_text=#opeMajText#,
+	            
+	            area_maj_name=#areaMajName#,
+	            area_maj_date=#areaMajDate#,
+	            area_maj_idea=#areaMajIdea#,
+	            area_maj_text=#areaMajText#
+	         </isEqual>
+	           
+		WHERE ID=#id#
+    </update>
+    <!-- 修改销售退货合同 End -->
+    <!-- 评审销售退货合同 执行 Begin -->
+    <update id="modifySaleBackContractOfComment" parameterClass="saleBackContractOfAddDto">
+		UPDATE SELL_BACK_CONTRACT SET
+				status=#status#
+		<isNotEmpty prepend="," property="legalName">
+				legal_name=#legalName#,
+				legal_date=#legalDate#,
+	            legal_idea=#legalIdea#,
+	            legal_text=#legalText#,
+	            sell_maj_id=#sellMajId#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="sellMajName">
+				sell_maj_name=#sellMajName#,
+	            sell_maj_date=#sellMajDate#,
+	            sell_maj_idea=#sellMajIdea#,
+	            sell_maj_text=#sellMajText#,
+	            ope_maj_id=#opeMajId#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="opeMajName">
+				ope_maj_name=#opeMajName#,
+	            ope_maj_date=#opeMajDate#,
+	            ope_maj_idea=#opeMajIdea#,
+	            PRODUCT_CONTRACT_CODE=#productContractCode#,
+	            ope_maj_text=#opeMajText#,
+	            date=#date#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="areaMajName">
+				area_maj_name=#areaMajName#,
+	            area_maj_date=#areaMajDate#,
+	            area_maj_idea=#areaMajIdea#,
+	            area_maj_text=#areaMajText#,
+	            area_maj_id=#areaMajId#
+		</isNotEmpty>
+		WHERE ID=#id#
+    </update>
+    <!-- 评审销售退货合同 执行 End -->
+    <!-- 删除销售退货合同 Begin -->
+    <delete id="deleteSalesBackContract" parameterClass="string">
+    	delete from sell_back_contract where id=#id#
+    </delete>
+    <!-- 删除销售退货合同 End -->
+    <!-- 销售退货合同 查看评审表 Begin -->
+    <select id="getCommentTable" parameterClass="string" resultClass="salesBackContractOfShowDto">
+		 SELECT SELL_BACK_CONTRACT.ID,										<!-- 销售退货合同id -->
+		       SELL_CONTRACT.CUSTOMER_NAME AS CUSTOMERNAME,					<!-- 客户名称 -->
+		       PRODUCT_DEPT.NAME AS PRODUCTDEPTNAME,						<!-- 部门名称 -->
+		       SELL_BACK_CONTRACT.PRODUCT_CONTRACT_CODE AS PRODUCTCONTRACTCODE,	<!-- 产品合同号 -->
+		       SELL_BACK_CONTRACT.COMPANY_CONTRACT_CODE AS COMPANYCONTRACTCODE,	<!-- 公司合同号 -->
+		       SELL_CONTRACT.STAMP_TYPE AS STAMPTYPE,						<!-- 盖章类型 -->
+		       SELL_BACK_CONTRACT.TEMPLATE_TYPE AS TEMPLATETYPE,			<!-- 模板类型 -->
+		       PRODUCT_TYPE.NAME AS PRODUCTTYPENAME,						<!-- 产品分类 -->
+		       PRODUCT_TYPE.NO AS PRODUCTTYPENO,							<!-- 产品分类编号 -->
+		       PRODUCT_DEPT.NO AS PRODUCTDEPTNO,							<!-- 产品部门编号 -->
+		       CUSTOMER.INVOICE_TYPE AS CUSTOMERINVOICETYPE,				<!-- 发票类型 -->
+		       SELL_BACK_CONTRACT.MONEY AS MONEY,							<!-- 总计 -->
+		       SELL_BACK_CONTRACT.BACK_DATE AS BACKDATE,					<!-- 要求发货日期 -->
+		       SELL_BACK_CONTRACT.TEXT AS TEXT,								<!-- 说明 -->
+		       SELL_BACK_CONTRACT.DATETIME AS DATETIME,						<!--送审人 日期 -->
+		       SELL_BACK_CONTRACT.USER_NAME AS USERNAME,					<!-- 送审人 -->
+		       SELL_BACK_CONTRACT.LEGAL_NAME AS LEGALNAME,					<!-- 法务专员用户名 -->
+		       SELL_BACK_CONTRACT.LEGAL_DATE AS LEGALDATE,					<!-- 法务专员评审日期 -->
+		       SELL_BACK_CONTRACT.LEGAL_IDEA AS LEGALIDEA,					<!-- 法务专员评审意见 -->
+		       SELL_BACK_CONTRACT.LEGAL_TEXT AS LEGALTEXT,					<!-- 法务专员补充说明 -->
+		       SELL_BACK_CONTRACT.SELL_MAJ_NAME AS SELLMAJNAME,				<!-- 销售总监用户名 -->
+		       SELL_BACK_CONTRACT.SELL_MAJ_DATE AS SELLMAJDATE,				<!-- 销售总监评审日期 -->
+		       SELL_BACK_CONTRACT.SELL_MAJ_IDEA AS SELLMAJIDEA,				<!-- 销售总监评审意见 -->
+		       SELL_BACK_CONTRACT.SELL_MAJ_TEXT AS SELLMAJTEXT,				<!-- 销售总监补充说明 -->
+		       SELL_BACK_CONTRACT.OPE_MAJ_NAME AS OPEMAJNAME,				<!-- 运营总监用户名 -->
+		       SELL_BACK_CONTRACT.OPE_MAJ_DATE AS OPEMAJDATE,				<!-- 运营总监评审日期 -->
+		       SELL_BACK_CONTRACT.OPE_MAJ_IDEA AS OPEMAJIDEA,				<!-- 运营总监评审意见 -->
+		       SELL_BACK_CONTRACT.OPE_MAJ_TEXT AS OPEMAJTEXT,				<!-- 运营总监补充说明 -->
+		       SELL_BACK_CONTRACT.AREA_MAJ_ID  AS AREAMAJID,
+		       SELL_BACK_CONTRACT.AREA_MAJ_NAME AS AREAMAJNAME,
+		       SELL_BACK_CONTRACT.AREA_MAJ_DATE AS AREAMAJDATE,
+		       SELL_BACK_CONTRACT.AREA_MAJ_IDEA AS AREAMAJIDEA,
+		       SELL_BACK_CONTRACT.AREA_MAJ_TEXT AS AREAMAJTEXT
+		       
+		FROM   SELL_BACK_CONTRACT
+		       LEFT JOIN SELL_CONTRACT
+		         ON SELL_CONTRACT.ID = SELL_BACK_CONTRACT.SELL_CONTRACT_ID
+		       LEFT JOIN CUSTOMER
+		         ON CUSTOMER.ID = SELL_CONTRACT.CUSTOMER_ID
+		       LEFT JOIN PRODUCT_TYPE
+		         ON PRODUCT_TYPE.ID = SELL_CONTRACT.PRODUCT_TYPE_ID
+		       LEFT JOIN PRODUCT_DEPT
+		         ON PRODUCT_DEPT.ID = PRODUCT_TYPE.PRODUCT_DEPT_ID
+		WHERE  SELL_BACK_CONTRACT.ID = #id#
+
+    </select>
+    <!-- 销售退货合同 查看评审表 End -->
+    <!-- 销售退货合同 修改评审表 改状态 Begin -->
+    <update id="modifyCommentTableOfStatus" parameterClass="string">
+    	update sell_back_contract set status=9 where id=#id#
+    </update>
+    <!-- 销售退货合同 修改评审表 改状态 End -->
+    <!-- 确认销售合同 Begin -->
+    <update id="modifySaleBackContractOfDecide" parameterClass="saleBackContractOfAddDto">
+    	update sell_back_contract set status=#status#,COMPANY_CONTRACT_CODE=#companyContractCode# where id=#id#
+    </update>
+    <!-- 确认销售合同 End -->
+    <!-- 判断合同号是否存在 Begin -->
+    <select id="getSalesBackContractIsExist" parameterClass="saleBackContractOfAddDto" resultClass="saleBackContractOfAddDto">
+    	select id from sell_back_contract where COMPANY_CONTRACT_CODE=#companyContractCode#
+    </select>
+    <!-- 判断合同号是否存在 End -->
+    <!-- 判断状态为待打印 的是否存在 Begin -->
+    <select id="selectStatusOfSaleBack" parameterClass="string" resultClass="string">
+    	select status from sell_back_contract where id=#id#
+    </select>
+    <!-- 判断状态为待打印 的是否存在 End -->
+    <!-- 根据销售助理用户获取区域、产品分类id Begin -->
+	<select id="getAreaIdAndProductTypeIdOfRoldIs3" parameterClass="string" resultClass="userAreaProductEntity">
+		select user_area_id as userAreaId,product_type_id as productTypeId from user_area_product where user_id=#userId#
+	</select>	          
+	<!-- 根据销售助理用户获取区域、产品分类id End -->
+	<!-- 根据用户id（区域总监 销售经理）获取区域、产品id  Begin -->
+	<select id="getAreaIdAndProductTypeIdOfRoldIs9" parameterClass="string" resultClass="userAreaProductEntity">
+		select  user_product.product_type_id as productTypeId,user.user_area_id as userAreaId
+													from    user_product,user
+													where   user_product.user_id = #userId# and user.id =#userId#
+	</select>	          
+	<!--根据用户id（区域总监 销售经理）获取区域、产品id  End -->
+</sqlMap>

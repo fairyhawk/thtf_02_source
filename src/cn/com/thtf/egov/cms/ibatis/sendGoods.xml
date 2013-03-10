@@ -1,0 +1,1380 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="sendGoods_sqlMap">
+	<typeAlias alias="sendGoodsList" type="cn.com.thtf.egov.cms.dto.SendGoodsListInfoDto" /> 
+	<typeAlias alias="view" type="cn.com.thtf.egov.cms.dto.SendGoodInfoDto" /> 
+	<typeAlias alias="querySendGoodsList" type="cn.com.thtf.egov.cms.dto.SendGoodsListQueryDto" />  
+
+	<typeAlias alias="sgProductType" type="cn.com.thtf.egov.cms.entity.ProductTypeEntity" />
+	<typeAlias alias="sellContractEntity" type="cn.com.thtf.egov.cms.entity.SellContractEntity" />
+	<typeAlias alias="sgStockRoom" type="cn.com.thtf.egov.cms.entity.StockroomEntity" />
+	<typeAlias alias="StockE" type="cn.com.thtf.egov.cms.entity.StockEntity" />
+
+	<typeAlias alias="sendgoodsProductSelect" type="cn.com.thtf.egov.cms.dto.SendgoodsProductSelectDto" /> 
+	<typeAlias alias="sendGoodsEntity" type="cn.com.thtf.egov.cms.entity.SendGoodsEntity" /> 
+	<typeAlias alias="sendGoodsDetailEntity" type="cn.com.thtf.egov.cms.entity.SendGoodsDetailEntity" /> 
+	<typeAlias alias="SendgoodViewProduct" type="cn.com.thtf.egov.cms.dto.SendgoodViewSelectProductDto" /> 
+	<typeAlias alias="SauditPrepare" type="cn.com.thtf.egov.cms.dto.SendgoodSauditPrepareDto" /> 
+	<typeAlias alias="sendGoodsAddDto" type="cn.com.thtf.egov.cms.dto.SendGoodsAddDto" />
+	
+	<!-- 查询所有发货单信息  -->
+	<select id="querySendGoodsListZ" parameterClass="java.lang.String" resultClass="java.lang.String" >
+		select ifnull(sgbackmoney,0) from view_send_goods_back_goods_money where sgid = #id#
+	</select>
+	
+	<!-- 查询所有发货单信息  -->
+	<select id="querySendGoodsList.search" parameterClass="querySendGoodsList" resultClass="sendGoodsList" >
+			SELECT
+				  sg.id                    AS sgid,
+				  sk.name                  AS sgskname,
+				  pt.name                  AS sgptname,
+				  sc.product_contract_code AS sgpcontractcode,
+				  sc.company_contract_code AS sgccontractcode,
+				  cst.name                 AS sgcustomername,
+				 
+				  sg.money                 AS sgmoney,
+				  sg.DATE                  AS sgdate,
+				  sg.request_date          AS sgrequestdate,
+				  sg.user_name             AS sgusername,
+				  sg.send_goods_type       AS sgsgtype,
+				  sg.status                AS sgstatus,
+				  sg.send_date             AS sgsenddate,
+				  sg.arterm                AS sgarterm,
+				  sc.contract_pro_name     as contractProName
+				FROM 
+				<isEqual compareValue="19" property="userrole"> 
+					user_area_mapping as uam,
+				</isEqual>
+				<isEqual compareValue="20" property="userrole"> 
+					user_area_mapping as uam,
+				</isEqual>
+				<isEqual compareValue="3" property="userrole"> 
+					user_area_product as uap,
+				</isEqual>
+			   <isEqual compareValue="9" property="userrole"> 
+					user_product as up,
+				</isEqual>
+				<isEqual compareValue="10" property="userrole"> 
+					user_product as up,
+				</isEqual>
+				<isEqual compareValue="6" property="userrole"> 
+					user_product as up,
+				</isEqual>
+				<isEqual compareValue="11" property="userrole"> 
+					user_product as up,
+				</isEqual>
+				<isEqual compareValue="5" property="userrole"> 
+					user_product as up,
+				</isEqual> 
+				  send_goods sg
+				  LEFT JOIN stockroom AS sk
+				    ON sg.stockroom_id = sk.id
+				  LEFT JOIN product_type AS pt
+				    ON sg.product_type_id = pt.id
+				  LEFT JOIN sell_contract AS sc
+				    ON sg.sell_contract_id = sc.id
+				  LEFT JOIN customer cst
+				    ON sg.customer_id = cst.id
+		where  sg.id = sg.id
+			<!-- 销售助理 -->
+				<isEqual compareValue="3" property="userrole"> 
+					and uap.product_type_id = sg.product_type_id
+				</isEqual>
+			   <isEqual compareValue="9" property="userrole"> 
+					 and up.product_type_id = sg.product_type_id
+				</isEqual>
+			  	<isEqual compareValue="10" property="userrole"> 
+					 and up.product_type_id = sg.product_type_id
+				</isEqual>
+				<isEqual compareValue="6" property="userrole"> 
+					 and up.product_type_id = sg.product_type_id
+				</isEqual>
+				<isEqual compareValue="11" property="userrole"> 
+					 and up.product_type_id = sg.product_type_id
+				</isEqual>
+				<isEqual compareValue="5" property="userrole"> 
+					 and up.product_type_id = sg.product_type_id
+				</isEqual> 
+			<!-- 根据发货单ID  -->
+			<isNotEmpty prepend="and" property="sgid">
+				sg.id like '%$sgid$%'
+			</isNotEmpty>
+			<!-- 根据库房ID -->
+			<isNotEmpty prepend="and" property="stockroomid">
+				sg.stockroom_id = #stockroomid#
+			</isNotEmpty>
+			<!-- 根据产品分类ID -->
+			<isNotEmpty prepend="and" property="producttypeid">
+				sg.product_type_id = #producttypeid#
+			</isNotEmpty>
+			<!-- 根据产品合同号 -->
+			<isNotEmpty prepend="and" property="pcontractcode">
+				sc.product_contract_code like '%$pcontractcode$%'
+			</isNotEmpty>
+			<!-- 根据公司合同号 -->
+			<isNotEmpty prepend="and" property="ccontractcode">
+				sc.company_contract_code like '%$ccontractcode$%'
+			</isNotEmpty>
+			<!-- 根据人员名称 -->
+			<isNotEmpty prepend="and" property="sgusername">
+				sg.user_name like '%$sgusername$%' 
+			</isNotEmpty>
+			<!-- 根据发货单类型 -->
+			<isNotEmpty prepend="and" property="sgsgtype">
+				sg.send_goods_type = '$sgsgtype$'
+			</isNotEmpty>
+			<!-- 根据发货单状态 -->
+			<isNotEmpty prepend="and" property="sgstatus">
+				sg.status = '$sgstatus$'
+			</isNotEmpty>
+			<!-- 销售项目名称 -->
+			<isNotEmpty prepend="and" property="contractProName">
+				sc.contract_pro_name like '%$contractProName$%'
+			</isNotEmpty>
+			<!-- 根据客户名称 -->
+			<isNotEmpty prepend="and" property="customername">
+				cst.name like '%$customername$%'
+			</isNotEmpty>
+			<!-- 根据申请起始日期 -->
+			<isNotEmpty prepend="and" property="startapplydate">
+				<![CDATA[ sg.date >= #startapplydate# ]]>
+			</isNotEmpty>
+			<!-- 根据申请终止日期 -->
+			<isNotEmpty prepend="and" property="endapplydate">
+				<![CDATA[ sg.date <= #endapplydate# ]]>
+			</isNotEmpty> 
+			<!-- 根据发货起始日期 -->
+			<isNotEmpty prepend="and" property="startsendgoodsdate">
+				<![CDATA[ sg.request_date >= #startsendgoodsdate# ]]>
+			</isNotEmpty>
+			<!-- 根据发货终止日期 -->
+			<isNotEmpty prepend="and" property="endsendgoodsdate">
+				<![CDATA[ sg.request_date <= #endsendgoodsdate# ]]>
+			</isNotEmpty>
+			<!-- 根据要求到账起始日期 -->
+			<isNotEmpty prepend="and" property="startrequestdate">
+				<![CDATA[ (DATE_ADD(sg.send_date,INTERVAL sg.arterm DAY)) >= #startrequestdate# ]]>
+			</isNotEmpty>
+			<!-- 根据要求到账终止日期 -->
+			<isNotEmpty prepend="and" property="endrequestdate">
+				<![CDATA[ (DATE_ADD(sg.send_date,INTERVAL sg.arterm DAY)) <= #endrequestdate# ]]>
+			</isNotEmpty>
+			<!-- 权限判断 -->
+			<isNotEmpty prepend="and" property="userid">
+				<!-- 销售助理 -->
+				<isEqual compareValue="3" property="userrole"> 
+					uap.user_area_id = sg.user_area_id 
+					and uap.product_type_id = sg.product_type_id  
+					and uap.user_id = #userid#
+					<isEmpty prepend="AND" property="init">
+						sg.status IN (5,8)
+					</isEmpty>
+				</isEqual>
+				<!-- 销售经理 -->
+				<isEqual compareValue="4" property="userrole"> 
+					sg.user_id=#userid#
+				</isEqual>
+				<!-- 区域总监 -->
+				<isEqual compareValue="9" property="userrole"> 
+					sg.user_area_id = #userAreaId#
+					AND up.product_type_id = sg.product_type_id
+					and up.user_id = #userid#
+					<!--  lxs添加   -->
+					<isEmpty prepend="AND" property="init">
+						sg.status = 10
+					</isEmpty>
+				</isEqual>
+				<isEqual compareValue="19" property="userrole">
+						uam.user_id = #userid#
+					and uam.user_area_id = sg.user_area_id 
+					<isEmpty prepend="AND" property="init">
+						sg.status IN (5,8)
+					</isEmpty>
+				</isEqual>
+				<isEqual compareValue="20" property="userrole"> 
+						uam.user_id = #userid#
+					and uam.user_area_id = sg.user_area_id 
+					<isEmpty prepend="AND" property="init">
+						sg.status IN (5,8)
+					</isEmpty>
+				</isEqual>
+				<!-- 库房管理员 
+				<isEqual compareValue="12" property="userrole"> 
+					usp.stockroom_id = sgs.stockroom_id
+					and usp.product_type_id = sgs.product_type_id  
+					and   usp.user_id = #userid# 
+					<isEmpty prepend="AND" property="init">
+						sgs.status = 2
+					</isEmpty>
+				</isEqual> 
+				-->
+				<!-- 销售总监、信用专员、采购主管、产品总监 -->
+				<isEqual compareValue="10" property="userrole">
+					up.product_type_id = sg.product_type_id
+						and up.user_id = #userid#  
+					<isEmpty prepend="AND" property="init">
+						sg.status IN (5,8)
+					</isEmpty>
+				</isEqual>
+				<isEqual compareValue="6" property="userrole"> 
+					up.product_type_id = sg.product_type_id
+							and up.user_id = #userid# 
+					<isEmpty prepend="AND" property="init">
+						sg.status IN (5,8)
+					</isEmpty>
+				</isEqual>
+				<isEqual compareValue="11" property="userrole">
+					up.product_type_id = sg.product_type_id
+							and up.user_id = #userid#  
+					<isEmpty prepend="AND" property="init">
+						sg.status IN (5,8)
+					</isEmpty>
+				</isEqual>
+				<isEqual compareValue="5" property="userrole">
+					up.product_type_id = sg.product_type_id
+						and up.user_id = #userid#
+					<isEmpty prepend="AND" property="init">
+						sg.status = 6
+					</isEmpty>  
+				</isEqual>
+				<!-- 法务专员、运营总监助理、运营总监、信用主管、总经理、库房主管  -->
+				<isEmpty  property="init">
+					<isEqual compareValue="15" property="userrole">
+						sg.status IN (5,8)
+					</isEqual>
+					<isEqual compareValue="16" property="userrole">
+						sg.status IN (5,8)
+					</isEqual>
+					<isEqual compareValue="17" property="userrole">
+						sg.status IN (5,8)
+					</isEqual>
+					<isEqual compareValue="7" property="userrole">
+						sg.status IN (5,8)
+					</isEqual>
+					<isEqual compareValue="18" property="userrole">
+						sg.status IN (5,8)
+					</isEqual>
+					<isEqual  compareValue="13" property="userrole">
+						sg.status IN (5,8)
+					</isEqual>
+				</isEmpty>
+			</isNotEmpty>
+			
+			order by sg.id desc
+		</select>
+	
+	<select id="querySendGoodsList.recordCount" parameterClass="querySendGoodsList" resultClass="java.lang.Integer">
+		SELECT
+				  count(sg.id)
+				FROM 	
+				<isEqual compareValue="19" property="userrole"> 
+					user_area_mapping as uam,
+				</isEqual>
+				<isEqual compareValue="20" property="userrole"> 
+					user_area_mapping as uam,
+				</isEqual>
+				<isEqual compareValue="3" property="userrole"> 
+					user_area_product as uap,
+				</isEqual>
+			   <isEqual compareValue="9" property="userrole"> 
+					user_product as up,
+				</isEqual>
+				<isEqual compareValue="10" property="userrole"> 
+					user_product as up,
+				</isEqual>
+				<isEqual compareValue="6" property="userrole"> 
+					user_product as up,
+				</isEqual>
+				<isEqual compareValue="11" property="userrole"> 
+					user_product as up,
+				</isEqual>
+				<isEqual compareValue="5" property="userrole"> 
+					user_product as up,
+				</isEqual> 
+				  send_goods sg
+				 
+				  LEFT JOIN sell_contract AS sc
+				    ON sg.sell_contract_id = sc.id
+				  LEFT JOIN customer cst
+				    ON sg.customer_id = cst.id
+				  
+		where  sg.id = sg.id
+			<!-- 销售助理 -->
+				<isEqual compareValue="3" property="userrole"> 
+					and uap.product_type_id = sg.product_type_id
+				</isEqual>
+			   <isEqual compareValue="9" property="userrole"> 
+					 and up.product_type_id = sg.product_type_id
+				</isEqual>
+			  	<isEqual compareValue="10" property="userrole"> 
+					 and up.product_type_id = sg.product_type_id
+				</isEqual>
+				<isEqual compareValue="6" property="userrole"> 
+					 and up.product_type_id = sg.product_type_id
+				</isEqual>
+				<isEqual compareValue="11" property="userrole"> 
+					 and up.product_type_id = sg.product_type_id
+				</isEqual>
+				<isEqual compareValue="5" property="userrole"> 
+					 and up.product_type_id = sg.product_type_id
+				</isEqual>
+			<!-- 根据发货单ID  -->
+			<isNotEmpty prepend="and" property="sgid">
+				sg.id like '%$sgid$%'
+			</isNotEmpty>
+			<!-- 根据库房ID -->
+			<isNotEmpty prepend="and" property="stockroomid">
+				sg.stockroom_id = #stockroomid#
+			</isNotEmpty>
+			<!-- 根据产品分类ID -->
+			<isNotEmpty prepend="and" property="producttypeid">
+				sg.product_type_id = #producttypeid#
+			</isNotEmpty>
+			<!-- 根据产品合同号 -->
+			<isNotEmpty prepend="and" property="pcontractcode">
+				sc.product_contract_code like '%$pcontractcode$%'
+			</isNotEmpty>
+			<!-- 根据公司合同号 -->
+			<isNotEmpty prepend="and" property="ccontractcode">
+				sc.company_contract_code like '%$ccontractcode$%'
+			</isNotEmpty>
+			<!-- 根据人员名称 -->
+			<isNotEmpty prepend="and" property="sgusername">
+				sg.user_name like '%$sgusername$%' 
+			</isNotEmpty>
+			<!-- 根据发货单类型 -->
+			<isNotEmpty prepend="and" property="sgsgtype">
+				sg.send_goods_type = '$sgsgtype$'
+			</isNotEmpty>
+			<!-- 根据发货单状态 -->
+			<isNotEmpty prepend="and" property="sgstatus">
+				sg.status = '$sgstatus$'
+			</isNotEmpty>
+			<!-- 销售项目名称 -->
+			<isNotEmpty prepend="and" property="contractProName">
+				sc.contract_pro_name like '%$contractProName$%'
+			</isNotEmpty> 
+			<!-- 根据客户名称 -->
+			<isNotEmpty prepend="and" property="customername">
+				cst.name like '%$customername$%'
+			</isNotEmpty>
+			<!-- 根据申请起始日期 -->
+			<isNotEmpty prepend="and" property="startapplydate">
+				<![CDATA[ sg.date >= #startapplydate# ]]>
+			</isNotEmpty>
+			<!-- 根据申请终止日期 -->
+			<isNotEmpty prepend="and" property="endapplydate">
+				<![CDATA[ sg.date <= #endapplydate# ]]>
+			</isNotEmpty> 
+			<!-- 根据发货起始日期 -->
+			<isNotEmpty prepend="and" property="startsendgoodsdate">
+				<![CDATA[ sg.request_date >= #startsendgoodsdate# ]]>
+			</isNotEmpty>
+			<!-- 根据发货终止日期 -->
+			<isNotEmpty prepend="and" property="endsendgoodsdate">
+				<![CDATA[ sg.request_date <= #endsendgoodsdate# ]]>
+			</isNotEmpty>
+			<!-- 根据要求到账起始日期 -->
+			<isNotEmpty prepend="and" property="startrequestdate">
+				<![CDATA[ (DATE_ADD(sg.send_date,INTERVAL sg.arterm DAY)) >= #startrequestdate# ]]>
+			</isNotEmpty>
+			<!-- 根据要求到账终止日期 -->
+			<isNotEmpty prepend="and" property="endrequestdate">
+				<![CDATA[ (DATE_ADD(sg.send_date,INTERVAL sg.arterm DAY)) <= #endrequestdate# ]]>
+			</isNotEmpty>
+			<!-- 权限判断 -->
+			<isNotEmpty prepend="and" property="userid">
+				<!-- 销售助理 -->
+				<isEqual compareValue="3" property="userrole"> 
+					uap.user_area_id = sg.user_area_id 
+					and uap.product_type_id = sg.product_type_id  
+					and uap.user_id = #userid#
+					<isEmpty prepend="AND" property="init">
+						sg.status IN (5,8)
+					</isEmpty>
+				</isEqual>
+				<!-- 销售经理 -->
+				<isEqual compareValue="4" property="userrole"> 
+					sg.user_id=#userid#
+				</isEqual>
+				<!-- 区域总监 -->
+				<isEqual compareValue="9" property="userrole"> 
+					sg.user_area_id = #userAreaId#
+					AND up.product_type_id = sg.product_type_id
+					and up.user_id = #userid#
+					<!--  lxs添加   -->
+					<isEmpty prepend="AND" property="init">
+						sg.status = 10
+					</isEmpty>
+				</isEqual>
+				<isEqual compareValue="19" property="userrole">
+						uam.user_id = #userid#
+					and uam.user_area_id = sg.user_area_id 
+					<isEmpty prepend="AND" property="init">
+						sg.status IN (5,8)
+					</isEmpty>
+				</isEqual>
+				<isEqual compareValue="20" property="userrole"> 
+						uam.user_id = #userid#
+					and uam.user_area_id = sg.user_area_id 
+					<isEmpty prepend="AND" property="init">
+						sg.status IN (5,8)
+					</isEmpty>
+				</isEqual>
+				<!-- 库房管理员 
+				<isEqual compareValue="12" property="userrole"> 
+					usp.stockroom_id = sgs.stockroom_id
+					and usp.product_type_id = sgs.product_type_id  
+					and   usp.user_id = #userid# 
+					<isEmpty prepend="AND" property="init">
+						sgs.status = 2
+					</isEmpty>
+				</isEqual> 
+				-->
+				<!-- 销售总监、信用专员、采购主管、产品总监 -->
+				<isEqual compareValue="10" property="userrole">
+					up.product_type_id = sg.product_type_id
+						and up.user_id = #userid#  
+					<isEmpty prepend="AND" property="init">
+						sg.status IN (5,8)
+					</isEmpty>
+				</isEqual>
+				<isEqual compareValue="6" property="userrole"> 
+					up.product_type_id = sg.product_type_id
+							and up.user_id = #userid# 
+					<isEmpty prepend="AND" property="init">
+						sg.status IN (5,8)
+					</isEmpty>
+				</isEqual>
+				<isEqual compareValue="11" property="userrole">
+					up.product_type_id = sg.product_type_id
+							and up.user_id = #userid#  
+					<isEmpty prepend="AND" property="init">
+						sg.status IN (5,8)
+					</isEmpty>
+				</isEqual>
+				<isEqual compareValue="5" property="userrole">
+					up.product_type_id = sg.product_type_id
+						and up.user_id = #userid#
+					<isEmpty prepend="AND" property="init">
+						sg.status = 6
+					</isEmpty>  
+				</isEqual>
+				<!-- 法务专员、运营总监助理、运营总监、信用主管、总经理、库房主管  -->
+				<isEmpty  property="init">
+					<isEqual compareValue="15" property="userrole">
+						sg.status IN (5,8)
+					</isEqual>
+					<isEqual compareValue="16" property="userrole">
+						sg.status IN (5,8)
+					</isEqual>
+					<isEqual compareValue="17" property="userrole">
+						sg.status IN (5,8)
+					</isEqual>
+					<isEqual compareValue="7" property="userrole">
+						sg.status IN (5,8)
+					</isEqual>
+					<isEqual compareValue="18" property="userrole">
+						sg.status IN (5,8)
+					</isEqual>
+					<isEqual  compareValue="13" property="userrole">
+						sg.status IN (5,8)
+					</isEqual>
+				</isEmpty>
+			</isNotEmpty>
+	</select> 
+	
+	<!-- 发货单信息查看   --> 
+	<select id="selectSendGoodsView" parameterClass="java.lang.String" resultClass="view" >
+		SELECT
+		  send.id                    AS id,
+		  send.customer_id           AS sendCustomerId,
+		  send.customer_address_id   AS sendCustomerAddressId,
+		  customer.name		     AS sendCustomerName,
+		  send.send_goods_type       AS sendSendGoodsType,
+		  send.product_type_id       AS sendproductTypeId,
+		  send.date                  AS DATE,
+		  send.request_date          AS sendRequestDate,
+		  send.send_date             AS sendSendDate,
+		  send.arterm                AS arterm,
+		  send.money                 AS money,
+		  send.status                AS STATUS,
+		  send.transport_way         AS sendTransportWay,
+		  send.take_name             AS sendTakeName,
+		  send.take_number           AS sendTakeNumber,
+		  send.user_id               AS sendUserId,
+		  send.user_name             AS sendUserName,
+		  send.user_area_id          AS sendUserAreaId,
+		  send.text                  AS sendtext,
+		  send.pro_maj_date          as sendProMajDate,
+		  send.pro_maj_id            as sendProMajId,
+		  send.pro_maj_idea          as sendProMajIdea,
+		  send.pro_maj_name          as sendProMajName,
+		  send.pro_maj_text          as sendProMajText,  
+		  send.area_maj_date	     AS sendAreaMajDate,
+		  send.area_maj_id	         as sendAreaMajId,
+		  send.area_maj_idea	     as sendAreaMajIdea,
+		  send.area_maj_name	     as sendAreaMajName,
+		  send.area_maj_text	     as sendAreaMajText,    
+		  send.stk_adm_id            AS sendStkAdmId,
+		  send.stk_adm_name          AS sendStkAdmName,
+		  send.stk_adm_date          AS sendStkAdmDate,
+		  send.stk_adm_idea          AS sendStkAdmIdea,
+		  send.stk_adm_text          AS sendStkAdmText,
+		  send.datetime              AS DATETIME,
+		  send.credit_type_id        AS sendCreditTypeId,
+		  send.project_name          AS sendProjectName,
+		  send.climit                AS climit,
+		  send.free                  AS free,
+		  send.prepay_money          AS sendPrepayMoney,
+		  send.transit_money         AS sendTransitMoney,
+		  send.sell_contract_id      AS sendSellContractId,
+		  send.stockroom_id          AS sendStockRoomId,
+		  credit.name                AS creditname,
+		  sell.id                    AS sellid,
+		  sell.product_contract_code AS productContractCode,
+		  sell.company_contract_code AS companyContarctCode,
+		  sell.request_send_date     AS requestSendDate,
+		  sell.customer_id           AS customerId,
+		  sell.customer_name         AS customerName,
+	      sell.customer_credit_id    AS customerCreditId,
+		  sell.user_name	     AS userName,
+		  sell.product_type_id       AS productTypeId,
+		  sell.payment_way           AS paymentWay,
+		  sell.batch_way             AS batchWay,
+		  sell.cash_money            AS cashMoney,
+		  sell.batch_max_money       AS batchMaxMoney,
+		  
+		  send.ca_name               AS custname,
+		  send.ca_address            AS address,
+		  send.ca_postcode           AS postcode,
+		  send.ca_linkman            AS linkman,
+		  send.ca_tel                AS tel,
+		  send.ca_mobile             AS mobile,
+		  
+		  aream.name                 AS areaname,
+		  sroom.name                 AS sroomName,
+		  pt.name                    AS ptName,
+		  sroom.id                   AS sroomId,
+		  sell.contract_pro_name     as contractProName
+		FROM send_goods send
+		  LEFT JOIN customer_address AS cust ON send.customer_address_id = cust.id
+		  LEFT JOIN credit_type AS credit ON send.credit_type_id = credit.id
+		  LEFT JOIN user_area AS  aream ON send.user_area_id = aream.id
+		  LEFT JOIN stockroom AS sroom ON send.stockroom_id = sroom.id
+		  LEFT JOIN product_type AS pt ON send.product_type_id = pt.id
+		  LEFT JOIN sell_contract AS sell ON send.sell_contract_id = sell.id
+		  LEFT JOIN customer ON customer.id = send.customer_id
+		WHERE 
+		  send.id = #id#
+	</select>
+
+	<!-- 根据发货单ID查找合同信息 -->
+	<select id="selectSellContractBySendgoodId" parameterClass="java.lang.String" resultClass="sellContractEntity">
+		select
+			sell_contract.id as id,
+			sell_contract.product_type_id as productTypeId,
+			sell_contract.customer_id as customerId,
+			sell_contract.customer_credit_id as customerCreditId,
+			sell_contract.user_id as userId,
+			sell_contract.credit_type_id as creditTypeId,
+			user.name as userName,
+			user.mail as text
+		from 
+			sell_contract,send_goods,user
+		where
+			sell_contract.id = send_goods.sell_contract_id
+		and user.id = send_goods.user_id
+		and	send_goods.id=#id#
+	</select>
+
+	<!-- 查询所有产品分类 -->
+	<select id="sdQueryAllProductType" resultClass="sgProductType">
+		select id,name from product_type
+	</select> 
+	
+	<!-- 删除发货单 -->
+	<delete id="deleteSendGood" parameterClass="java.lang.String">	
+		delete from send_goods where id=#id#
+	</delete>
+
+	<!-- 新建发货单  --> 
+	<insert id="insertSendgoods" parameterClass="sendGoodsAddDto">
+		insert into
+			 send_goods(id,sell_contract_id,product_type_id,customer_id,customer_name,
+						send_goods_type,date,request_date,credit_type_id,project_name,
+						arterm,climit,free,prepay_money,transit_money,
+						money,status,stockroom_id,transport_way,
+						take_name,take_number,user_id,user_name,user_area_id,
+						text,datetime,extend_exceed_days,customer_address_id,
+						ca_name,ca_address,ca_postcode,ca_linkman,ca_tel,ca_mobile)
+		values 
+			(#id#,#sellContractId#,#productTypeId#,#customerId#,#customerName#,
+			 #sendGoodsType#,#date#,#requestDate#,#creditTypeId#,#projectName#,
+			 #arterm#,#climit#,#free#,#prepayMoney#,#transitMoney#,
+			 #sendGoodsMoney#,#status#,#stockroomId#,#transportWay#,
+			 #takeName#,#takeNumber#,#userId#,#userName#,#userAreaId#,
+			 #text#,#datetime#,#extendDays#,#customerAddressId#,
+			 #caName#,#caAddress#,#caPostcode#,#caLinkman#,#caTel#,#caMobile#
+			) 
+	</insert>
+	<!-- 修改发货单  --> 
+	<update id="updateSendGoods" parameterClass="sendGoodsAddDto">
+		update send_goods set 
+			 date = #date#,request_date = #requestDate#,
+			 project_name = #projectName#,arterm = #arterm#,
+			 climit = #climit#,free = #free#,
+			 prepay_money = #prepayMoney#,transit_money = #transitMoney#,
+			 money = #sendGoodsMoney#,stockroom_id = #stockroomId#,
+			 customer_address_id =#customerAddressId# ,transport_way = #transportWay#,
+			 take_name = #takeName#,take_number = #takeNumber#,
+			 user_id = #userId#,user_name = #userName#,status = #status#,
+			 ca_name=#caName#,ca_address=#caAddress#,ca_postcode=#caPostcode#,
+			 ca_linkman=#caLinkman#,ca_tel=#caTel#,ca_mobile=#caMobile#,
+			 <isEqual  property="status" compareValue="2">
+				stk_adm_id = "" , 
+				stk_adm_name = "" , 
+				stk_adm_date = "" , 
+				stk_adm_idea = "" , 
+				stk_adm_text = "" , 		
+			</isEqual>
+			 user_area_id = #userAreaId#,text =#text# 
+		where
+			id = #id# 
+	</update>
+	<!-- 修改发货单 close_flag  --> 
+	<update id="updateSendGoodsCloseFlag" parameterClass="sendGoodsEntity">
+		update send_goods set 
+			 close_flag = #closeFlag#
+		where
+			id = #id# 
+	</update>
+	<!-- 修改发货单 close_flag  --> 
+	<update id="updateSendGoodsCloseFlagM" parameterClass="sendGoodsEntity">
+		update 
+			send_goods,return_detail
+		set 
+			send_goods.close_flag = #closeFlag#
+		where
+			return_detail.send_goods_id = send_goods.id
+		and	return_detail.return_id = #id# 
+	</update>
+	<!-- 修改发货单状态 --> 
+	<update id="updateSendGoodsStatus" parameterClass="sendGoodsAddDto">
+		update send_goods set 
+			 status = #status#
+		where
+			id = #id# 
+	</update>
+	<!-- 修改发货单 发货异常  --> 
+	<update id="updateSendGoodsComplete" parameterClass="sendGoodsEntity">
+		update send_goods set 
+			 status = #status#,
+			 stk_adm_id = #stkAdmId#,
+			 stk_adm_name = #stkAdmName#,
+			 stk_adm_date = #stkAdmDate#,
+			 stk_adm_idea = #stkAdmIdea#,
+
+			 stk_adm_text =#stkAdmText#
+			 <isNotEmpty prepend="," property="sendDate">
+				 send_date = #sendDate#
+			 </isNotEmpty>
+		where
+			id = #id# 
+	</update>
+
+	<!-- 新建发货单明细  -->
+	<insert id="insertSendgoodsDetail" parameterClass="sendGoodsAddDto">
+		insert into
+			 send_goods_detail(send_goods_id,product_id,count,price)
+		values 
+			(#id#,#productId#,#count#,#price#) 
+	</insert>
+
+	<!-- 删除发货单明细by产品编号和发货单编号  -->
+	<delete id="deleteSendGoodsDetailByCondition" parameterClass="sendGoodsDetailEntity">	
+		delete from send_goods_detail where send_goods_id = #sendGoodsId# and product_id = #productId#
+	</delete>
+	<select id="selectSendGoodsDetail" parameterClass="string" resultClass="int">	
+		select 
+			count(*)  
+		from 
+			send_goods_detail 
+		where 
+			send_goods_detail.send_goods_id = #id#
+	</select> 
+	<!-- 更新备货数  -->
+	<update id="updateCount" parameterClass="sendGoodsDetailEntity">	
+		update 
+			send_goods_detail 
+		set 
+			count = #count# 
+		where
+			id = #id# 
+	</update>
+	<!-- 更新备货金额 -->
+	<update id="updatePreparedMoney" parameterClass="sendGoodsEntity">	
+		update 
+			send_goods 
+		set 
+			money = #money# 
+		where
+			id = #id# 
+	</update>
+	<!-- 计算备货金额 -->
+	<select id="selectPreparedMoney" parameterClass="sendGoodsEntity" resultClass="sendGoodsEntity">	
+		select 
+			sum(send_goods_detail.count*sell_contract_detail.price) as money,
+			send_goods.id as id
+		from 
+			send_goods,send_goods_detail,sell_contract_detail  
+		where 
+			send_goods_detail.send_goods_id  = #id# 
+		and send_goods_detail.send_goods_id = send_goods.id
+		and send_goods.sell_contract_id = sell_contract_detail.sell_contract_id
+		and send_goods_detail.product_id = sell_contract_detail.product_id
+		group by send_goods_detail.send_goods_id
+	</select>
+
+	<!-- 更新备货数  -->
+	<update id="updateStockroom" parameterClass="sendGoodsEntity">	
+		update 
+			send_goods 
+		set 
+			stk_adm_id = #stkAdmId# 
+		where
+			id = #id# 
+	</update>
+
+	<!-- 获取本合同本库房的产品备货数  -->
+	<select id="selectReserveProduct" parameterClass="sendGoodsAddDto" resultClass="sendgoodsProductSelect"> 
+		select
+			send_goods_detail.id as id,
+			send_goods_detail.send_goods_id as sendGoodsId,
+			send_goods_detail.product_id as productId,
+			send_goods_detail.count as bkfNum
+		from 
+			send_goods,send_goods_detail 
+		where 
+			send_goods.status = 8 and send_goods.sell_contract_id = #sellContractId#
+		and	send_goods_detail.send_goods_id = send_goods.id
+		and	send_goods.stockroom_id = #stockroomId# 
+	</select> 
+
+	<!-- 新建发货单 选择产品小页面  -->
+	<select id="selectProduct" parameterClass="sendGoodsEntity" resultClass="sendgoodsProductSelect"> 
+		select 
+			product.id as productId,product.code as productCode,product.name as productName,
+			product.type as productType,product.unit as productUnit,
+			sell_contract_detail.price as price,sell_contract_detail.count as count,sell_contract_detail.price*sell_contract_detail.count as money, 
+			ifnull(yfh.num,0) as yfhNum,ifnull(qtkf.num,0) as qtkfNum,ifnull(bkf.num,0) as bkfNum,
+			ifnull(fhky.num,0) as fhkyNum,ifnull(ths.num,0) as thsNum,fhky.time_stamp as timeStamp,
+			ifnull(ybfnum.num,0) as ybfNum
+		from
+			sell_contract_detail 
+			left join  (
+				select 
+					send_goods_detail.product_id as  product_id,
+					ifnull(sum(send_goods_detail.count),0) as num
+				from 
+					send_goods,send_goods_detail
+				where 
+					send_goods.sell_contract_id =  #sellContractId# 
+				and (send_goods.status = 2 or send_goods.status = 3 or send_goods.status = 5)
+				and send_goods_detail.send_goods_id = send_goods.id  
+
+				group by send_goods_detail.product_id) as yfh  
+
+			on yfh.product_id = sell_contract_detail.product_id  
+			 
+			left join (
+				select 
+					send_goods_detail.product_id as product_id,
+					ifnull(sum(send_goods_detail.count),0) as num
+				from 
+				 send_goods,send_goods_detail
+
+				where 
+					(send_goods.status = 10 or send_goods.status = 6 or send_goods.status = 8) and send_goods.sell_contract_id = #sellContractId#
+				and	send_goods.stockroom_id != #stockroomId#
+				and	send_goods_detail.send_goods_id = send_goods.id 
+
+				group by send_goods_detail.product_id) as qtkf
+
+			on qtkf.product_id = sell_contract_detail.product_id  
+	
+			left join (
+				select 
+					send_goods_detail.product_id as product_id,
+					ifnull(sum(send_goods_detail.count),0) as num
+				from 
+				 send_goods,send_goods_detail
+
+				where 
+					(send_goods.status = 10 or send_goods.status = 6 or send_goods.status = 8) 
+	
+				and send_goods.sell_contract_id = #sellContractId#
+	
+				and	send_goods_detail.send_goods_id = send_goods.id 
+
+				group by send_goods_detail.product_id) as ybfnum
+
+			on ybfnum.product_id = sell_contract_detail.product_id  
+			 
+			left join (
+				select  
+					send_goods_detail.product_id as product_id,
+					ifnull(sum(send_goods_detail.count),0) as num
+				from 
+					send_goods,send_goods_detail 
+				where 
+					(send_goods.status = 10 or send_goods.status = 6 or send_goods.status = 8) and send_goods.sell_contract_id = #sellContractId#
+				and	send_goods.stockroom_id = #stockroomId#
+				and	send_goods_detail.send_goods_id = send_goods.id 
+
+				group by send_goods_detail.product_id) as bkf
+
+			on bkf.product_id = sell_contract_detail.product_id  
+			 
+			left join (
+				select  
+					sell_contract_detail.sell_contract_id as sell_contract_id,  
+					stock.product_id as  product_id,
+					stock.num-stock.send_lock-stock.prepared as num,
+					stock.time_stamp as time_stamp
+				from 
+					sell_contract_detail,stock,stockroom
+				where 
+					sell_contract_detail.sell_contract_id = #sellContractId#   
+				and	stock.stockroom_id = #stockroomId#
+			    AND     stock.stockroom_id = stockroom.id
+				AND	stockroom.type != 2
+				and	stock.product_id = sell_contract_detail.product_id) as fhky
+
+			on fhky.product_id = sell_contract_detail.product_id  
+
+			left join (
+				select 
+					sell_back_goods_detail.product_id as  product_id,
+					ifnull(sum(sell_back_goods_detail.count),0) as num
+				from 
+					send_goods,sell_back_goods,sell_back_goods_detail
+				where 
+				 
+				send_goods.sell_contract_id =  #sellContractId# 
+				and
+				sell_back_goods.status = 8
+				and 
+				sell_back_goods.send_goods_id = send_goods.id 
+				and  
+				sell_back_goods_detail.sell_back_goods_id = sell_back_goods.id
+
+				group by sell_back_goods_detail.product_id) as ths
+
+			on ths.product_id = sell_contract_detail.product_id  
+
+			,product
+		where
+			product.id = sell_contract_detail.product_id 
+			and sell_contract_detail.sell_contract_id = #sellContractId#
+	</select>
+
+	<!-- 删除发货单   更新库存表  -->
+	<update id="updateStokePrepared" parameterClass="java.lang.String">	
+		update send_goods send , send_goods_detail sd , stock st 
+				set st.prepared=st.prepared-sd.count 
+				where send.id=sd.send_goods_id and send.stockroom_id=st.stockroom_id and
+				sd.product_id=st.product_id and send.id=#id#
+
+	</update>
+	<!-- 删除发货单  删除发货单明细  -->
+	<delete id="deleteSendGoodsDetail" parameterClass="java.lang.String">	
+		delete from send_goods_detail where send_goods_id = #id#
+	</delete>
+	
+	<!-- 备货评审保存  --><!--  lxs修改   -->
+	<update id="modifyStockingAssessment" parameterClass="sendGoodsEntity">	
+		update send_goods set
+			status=#status#
+		<isNotEmpty property="areaMajId">
+			, area_maj_id = #areaMajId# , 
+			area_maj_name = #areaMajName# ,
+			area_maj_idea = #areaMajIdea# ,
+			area_maj_date = #areaMajDate# ,
+			area_maj_text = #areaMajText# 
+		</isNotEmpty>
+		<isNotEmpty property="proMajId">
+			, pro_maj_id = #proMajId# , 
+			pro_maj_name = #proMajName# ,
+			pro_maj_idea = #proMajIdea# ,
+			pro_maj_date = #proMajDate# ,
+			pro_maj_text = #proMajText# 
+		</isNotEmpty>
+		where id=#id#
+	</update> 
+	
+	<!--  发货单查看页面产品信息   -->
+	<select id="sendGoodsViewselectProduct" parameterClass="view" resultClass="SendgoodViewProduct"> 		
+		select 
+			product.code as productcode,product.name as productname,product.type as producttype,product.unit as productunit, 
+			sell_contract_detail.price as price,IFNULL(sell_contract_detail.count,0) as count,IFNULL(sell_contract_detail.price*sell_contract_detail.count,0) as money, 
+	        (CASE 
+	          WHEN ffmx.sendStatus in (2,3,5) THEN IFNULL(yfh.num,0)-IFNULL(ffmx.ffcount,0)
+	          ELSE IFNULL(yfh.num,0)
+	          END) AS yfhnum,
+	        IFNULL(qtkf.num,0) as qtkfnum,IFNULL(bkf.num,0) as bkfnum,IFNULL(fhky.num,0) as fhkynum,IFNULL(ths.num,0) as thsnum ,
+			IFNULL(kpje.sdmoney,0) as kpjemoney , IFNULL(xyje.ccdmoney,0) as xyjemoney , IFNULL(hkzdje.hkmoney,0) as hkzdjemoney,
+			IFNULL(ztzdje.ztmoney,0) as ztzdjemoney, IFNULL(ffmx.ffcount,0) as ffcount ,IFNULL(sell_contract_detail.price*ffmx.ffcount,0) as ffmoney
+			,product.id as productId ,IFNULL(htths.num,0) as htthsnum
+		from
+	
+			sell_contract_detail 
+			left join  (
+				select 
+					send_goods.id as sendid, send_goods_detail.product_id as  product_id , send_goods_detail.count as ffcount ,send_goods.status as sendStatus
+				from 
+					send_goods_detail,send_goods
+				where 
+					send_goods_detail.send_goods_id = send_goods.id  
+				and send_goods_detail.send_goods_id = #id#
+				group by send_goods_detail.product_id) as ffmx  
+
+			on ffmx.product_id = sell_contract_detail.product_id		
+	
+			left join  (
+				select 
+					send_goods_detail.product_id as  product_id,
+					sum(send_goods_detail.count) as num
+				from 
+					send_goods,send_goods_detail
+				where 
+					send_goods.sell_contract_id =  #sendSellContractId# 
+				and (send_goods.status = 2 or send_goods.status = 3 or send_goods.status = 5)
+				and send_goods_detail.send_goods_id = send_goods.id  
+
+				group by send_goods_detail.product_id) as yfh  
+
+			on yfh.product_id = sell_contract_detail.product_id  
+			 
+			left join (
+				select 
+					send_goods_detail.product_id as product_id,
+					sum(send_goods_detail.count) as num
+				from 
+				 send_goods,send_goods_detail
+
+				where 
+					(send_goods.status = 10 or send_goods.status = 6 or send_goods.status = 8) and send_goods.sell_contract_id = #sendSellContractId#
+				and	send_goods.stockroom_id != #sendStockRoomId#
+				and	send_goods_detail.send_goods_id = send_goods.id 
+
+				group by send_goods_detail.product_id) as qtkf
+
+			on qtkf.product_id = sell_contract_detail.product_id  
+			 
+			left join (
+				select  
+					send_goods_detail.product_id as product_id,
+					sum(send_goods_detail.count) as num
+				from 
+					send_goods,send_goods_detail 
+				where 
+					(send_goods.status = 10 or send_goods.status = 6 or send_goods.status = 8) and send_goods.sell_contract_id = #sendSellContractId#
+				and	send_goods.stockroom_id = #sendStockRoomId#
+				and	send_goods_detail.send_goods_id = send_goods.id 
+
+				group by send_goods_detail.product_id) as bkf
+
+			on bkf.product_id = sell_contract_detail.product_id  
+			 
+			left join (
+				select  
+					sell_contract_detail.sell_contract_id as sell_contract_id,  
+					stock.product_id as  product_id,
+					stock.num-stock.send_lock-stock.prepared as num,
+					stock.time_stamp as time_stamp
+				from 
+					sell_contract_detail,stock,stockroom
+				where 
+					sell_contract_detail.sell_contract_id = #sendSellContractId#   
+				and	stock.stockroom_id = #sendStockRoomId#
+				AND     stock.stockroom_id = stockroom.id
+				AND	stockroom.type != 2
+				and	stock.product_id = sell_contract_detail.product_id) as fhky
+
+			on fhky.product_id = sell_contract_detail.product_id  
+	
+			left join (
+				select 
+					sell_back_goods_detail.product_id as  product_id,
+					sum(sell_back_goods_detail.count) as num
+				from 
+					send_goods,sell_back_goods,sell_back_goods_detail
+				where 
+				send_goods.sell_contract_id =#sendSellContractId# 
+				and send_goods.id= #id#
+				and sell_back_goods.status = 8
+				and sell_back_goods.send_goods_id = send_goods.id 
+				and sell_back_goods_detail.sell_back_goods_id = sell_back_goods.id
+				group by sell_back_goods_detail.product_id) as ths
+
+			on ths.product_id = sell_contract_detail.product_id  
+
+			left join (
+				select 
+					 sgd.product_id as  product_id,sd.money as sdmoney
+				from send_goods send , sell_invoice_detail sd , sell_invoice si ,send_goods_detail sgd
+				where 
+					send.id=sd.send_goods_id 
+				and sd.product_id=sgd.product_id 
+				and si.id=sd.sell_invoice_id
+				and send.id=sgd.send_goods_id 
+				and si.status != 7 
+				and send.id=#id#
+				group by product_id) as kpje
+			on  kpje.product_id = sell_contract_detail.product_id  
+			
+			left join (
+				select 
+					sendgd.product_id as product_id ,ccd.money as ccdmoney
+				from 
+					send_goods send , send_goods_detail sendgd ,customer_credit_detail ccd 
+				where 
+					send.id=sendgd.send_goods_id 
+				and sendgd.product_id=ccd.product_id 
+				and send.id=ccd.send_goods_id 
+				and send.id=#id#
+				group by product_id) as xyje
+			on  xyje.product_id = sell_contract_detail.product_id  
+			
+			left join (
+						SELECT
+						  sendgd.product_id  AS product_id,
+						  SUM(hkrd.money)    AS hkmoney
+						FROM mreturn hkm,
+						  return_detail hkrd,
+						  send_goods_detail sendgd
+						WHERE hkm.id = hkrd.return_id
+						    AND hkrd.product_id = sendgd.product_id
+						    AND hkrd.send_goods_id = sendgd.send_goods_id
+						    AND hkrd.appoint_type = 4
+						    AND (hkm.return_type = 0
+							  OR hkm.return_type = 2)
+						    AND hkrd.send_goods_id = #id#
+						GROUP BY product_id) as hkzdje
+			on  hkzdje.product_id = sell_contract_detail.product_id  
+			
+			left join (
+						SELECT
+						  sendgd.product_id  AS product_id,
+						  SUM(hkrd.money)    AS ztmoney
+						FROM mreturn hkm,
+						  return_detail hkrd,
+						  send_goods_detail sendgd
+						WHERE hkm.id = hkrd.return_id
+						    AND hkrd.product_id = sendgd.product_id
+						    AND hkrd.send_goods_id = sendgd.send_goods_id
+						    AND hkrd.appoint_type = 4
+						    AND hkm.return_type=1
+						    AND hkrd.send_goods_id = #id#
+						GROUP BY product_id) as ztzdje
+			on  ztzdje.product_id = sell_contract_detail.product_id  
+	
+			left join (
+				select 
+					sell_back_goods_detail.product_id as  product_id,
+					sum(sell_back_goods_detail.count) as num
+				from 
+					send_goods,sell_back_goods,sell_back_goods_detail
+				where 
+				 
+				send_goods.sell_contract_id =  #sendSellContractId# 
+				and
+				sell_back_goods.status = 8
+				and 
+				sell_back_goods.send_goods_id = send_goods.id 
+				and  
+				sell_back_goods_detail.sell_back_goods_id = sell_back_goods.id
+
+				group by sell_back_goods_detail.product_id) as htths
+
+			on htths.product_id = sell_contract_detail.product_id  
+			,product
+		where
+			product.id = sell_contract_detail.product_id 
+			and sell_contract_detail.sell_contract_id =#sendSellContractId# 
+			and ffmx.sendid =#id#
+	</select>
+	
+	<!--   备货评审产品信息   -->
+	<select id="SauditPrepareView" parameterClass="view" resultClass="SauditPrepare"> 		
+		select 
+			product.code as productcode,product.name as productname,product.type as producttype,product.unit as productunit, 
+			sell_contract_detail.price as price,IFNULL(sell_contract_detail.count,0) as count,IFNULL(sell_contract_detail.price*sell_contract_detail.count,0) as money, 
+			IFNULL(yfh.num,0) AS yfhnum,IFNULL(qtkf.num,0) as qtkfnum,IFNULL(bkf.num,0) as bkfnum,
+			IFNULL(fhky.num,0) as fhkynum,IFNULL(ths.num,0) as thsnum ,IFNULL(sell_contract_detail.price*bkf.num,0) as bfmoney ,
+			product.id as productId,IFNULL(htths.num,0) as htthsnum
+		from
+			sell_contract_detail 
+		left join  (
+				select 
+					send_goods_detail.product_id as  product_id,
+					sum(send_goods_detail.count) as num,
+					send_goods.status as sendStatus
+				from 
+					send_goods,send_goods_detail
+				where 
+					send_goods.sell_contract_id =  #sendSellContractId# 
+				and (send_goods.status = 10 or send_goods.status = 6 or send_goods.status = 8)
+				and send_goods_detail.send_goods_id = send_goods.id  
+
+				group by send_goods_detail.product_id) as yfh  
+
+			on yfh.product_id = sell_contract_detail.product_id  
+			 
+			left join (
+				select 
+					send_goods_detail.product_id as product_id,
+					sum(send_goods_detail.count) as num
+				from 
+				 send_goods,send_goods_detail
+
+				where 
+					(send_goods.status = 10 or send_goods.status = 6 or send_goods.status = 8) and send_goods.sell_contract_id = #sendSellContractId#
+				and	send_goods.stockroom_id != #sendStockRoomId#
+				and	send_goods_detail.send_goods_id = send_goods.id 
+
+				group by send_goods_detail.product_id) as qtkf
+
+			on qtkf.product_id = sell_contract_detail.product_id  
+			 
+			left join (
+				select  
+					send_goods.id AS sendid,send_goods_detail.product_id as  product_id , send_goods_detail.count as num
+				from 
+					send_goods_detail,send_goods
+				where 
+					send_goods_detail.send_goods_id = send_goods.id  
+				and send_goods_detail.send_goods_id = #id#
+
+				group by send_goods_detail.product_id) as bkf
+
+			on bkf.product_id = sell_contract_detail.product_id  
+			 
+			left join (
+				select  
+					sell_contract_detail.sell_contract_id as sell_contract_id,  
+					stock.product_id as  product_id,
+					stock.num-stock.send_lock-stock.prepared as num,
+					stock.time_stamp as time_stamp
+				from 
+					sell_contract_detail,stock,stockroom
+				where 
+					sell_contract_detail.sell_contract_id = #sendSellContractId#   
+				and	stock.stockroom_id = #sendStockRoomId#
+				AND stock.stockroom_id = stockroom.id
+				AND	stockroom.type != 2
+				and	stock.product_id = sell_contract_detail.product_id) as fhky
+
+			on fhky.product_id = sell_contract_detail.product_id  
+
+			left join (
+				select 
+					sell_back_goods_detail.product_id as  product_id,
+					sum(sell_back_goods_detail.count) as num
+				from 
+					send_goods,sell_back_goods,sell_back_goods_detail
+				where 
+				send_goods.sell_contract_id = #sendSellContractId#
+				and send_goods.id =  #id#
+				and sell_back_goods.status = 8
+				and sell_back_goods.send_goods_id = send_goods.id 
+				and sell_back_goods_detail.sell_back_goods_id = sell_back_goods.id
+				group by sell_back_goods_detail.product_id) as ths
+
+			on ths.product_id = sell_contract_detail.product_id  
+	
+			left join (
+				select 
+					sell_back_goods_detail.product_id as  product_id,
+					sum(sell_back_goods_detail.count) as num
+				from 
+					send_goods,sell_back_goods,sell_back_goods_detail
+				where 
+				 
+				send_goods.sell_contract_id =  #sendSellContractId# 
+				and
+				sell_back_goods.status = 8
+				and 
+				sell_back_goods.send_goods_id = send_goods.id 
+				and  
+				sell_back_goods_detail.sell_back_goods_id = sell_back_goods.id
+
+				group by sell_back_goods_detail.product_id) as htths
+
+			on htths.product_id = sell_contract_detail.product_id  
+	
+			,product,send_goods_detail
+		where
+			product.id = sell_contract_detail.product_id 
+			and sell_contract_detail.sell_contract_id = #sendSellContractId#
+			and send_goods_detail.product_id = sell_contract_detail.product_id 
+			and send_goods_detail.send_goods_id= #id#
+	</select>
+	
+	<!-- 新建备货单信息  -->
+	<insert id="insertReservegoods" parameterClass="sendGoodsEntity">
+		insert into send_goods 
+		(id,sell_contract_id,product_type_id,customer_id,customer_name,send_goods_type,date,request_date,credit_type_id,project_name,arterm,climit,free,prepay_money,transit_money,money,status,stockroom_id,user_id,user_name,user_area_id,text,datetime,extend_exceed_days) 
+		values 
+		(#id#,#sellContractId#,#productTypeId#,#customerId#,#customerName#,#sendGoodsType#,#date#,#requestDate#,#creditTypeId#,#projectName#,#arterm#,#climit#,#free#,#prepayMoney#,#transitMoney#,#money#,#status#,#stockroomId#,#userId#,#userName#,#userAreaId#,#text#,#datetime#,#extendExceedDays#)
+	</insert>
+	<!-- 新建备货单信息(插入备货单明细信息)  -->
+	<insert id="insertReservegoodsDetail" parameterClass="sendGoodsDetailEntity">
+		insert into send_goods_detail 
+		(send_goods_id,product_id,count)
+		values 
+		(#sendGoodsId#,#productId#,#count#)
+	</insert>
+	<!-- 新建备货单信息 (更新库存数) -->
+	<update id="modifyStockReservegoods" parameterClass="StockE">	
+		update stock as s 
+		set s.prepared = (s.prepared+#prepared#) 
+		where  s.stockroom_id = #stockroomId# and s.product_id=#productId# and  s.time_stamp= #timeStamp#
+	</update>
+	
+	<!--  备货单修改    -->
+	<update id="modifyReservegoods" parameterClass="sendGoodsEntity">
+		update send_goods  
+		set sell_contract_id = #sellContractId#,
+			product_type_id=#productTypeId#,
+			customer_id=#customerId#,
+			customer_name=#customerName#,
+			send_goods_type=#sendGoodsType#,
+			date=#date#,
+			request_date=#requestDate#,
+			credit_type_id=#creditTypeId#,
+			project_name=#projectName#,
+			arterm=#arterm#,
+			climit=#climit#,
+			free=#free#,
+			prepay_money=#prepayMoney#,
+			transit_money=#transitMoney#,
+			money=#money#,
+			status=#status#,
+			stockroom_id=#stockroomId#,
+			user_id=#userId#,
+			user_name=#userName#,
+			user_area_id=#userAreaId#,
+			text=#text#,
+			<isEqual  property="status" compareValue="6">
+				pro_maj_id = "" , 
+				pro_maj_name = "" , 
+				pro_maj_date = "" , 
+				pro_maj_idea = "" , 
+				pro_maj_text = "" , 
+				area_maj_id = "" ,
+				area_maj_name = "" ,
+				area_maj_idea = "" ,
+				area_maj_date = "" ,
+				area_maj_text = "" ,
+			</isEqual>
+			<isEqual  property="status" compareValue="10">
+				pro_maj_id = "" , 
+				pro_maj_name = "" , 
+				pro_maj_date = "" , 
+				pro_maj_idea = "" , 
+				pro_maj_text = "" , 
+				area_maj_id = "" ,
+				area_maj_name = "" ,
+				area_maj_idea = "" ,
+				area_maj_date = "" ,
+				area_maj_text = "" ,
+			</isEqual>
+			datetime=#datetime#
+		where id = #id#
+	</update> 
+	
+	<!-- 备货单查看  -->
+	<select id="selectReservegoodsView" parameterClass="java.lang.String" resultClass="view">
+		SELECT
+		  send.id                    AS id,
+		  send.customer_id           AS sendCustomerId,
+		  send.customer_address_id   AS sendCustomerAddressId,
+		  customer.name       	     AS sendCustomerName,
+		  send.send_goods_type       AS sendSendGoodsType,
+		  send.product_type_id       AS sendproductTypeId,
+		  send.date                  AS DATE,
+		  send.request_date          AS sendRequestDate,
+		  send.send_date             AS sendSendDate,
+		  send.arterm                AS arterm,
+		  send.money                 AS money,
+		  send.status                AS STATUS,
+		  send.transport_way         AS sendTransportWay,
+		  send.take_name             AS sendTakeName,
+		  send.take_number           AS sendTakeNumber,
+		  send.user_id               AS sendUserId,
+		  send.user_name             AS sendUserName,
+		  send.user_area_id          AS sendUserAreaId,
+		  send.text                  AS sendtext,
+		  send.area_maj_date	     AS sendAreaMajDate,
+		  send.area_maj_id	         as sendAreaMajId,
+		  send.area_maj_idea	     as sendAreaMajIdea,
+		  send.area_maj_name	     as sendAreaMajName,
+		  send.area_maj_text	     as sendAreaMajText,
+		  send.pro_maj_id 	         AS sendProMajId,
+		  send.pro_maj_name 	     AS sendProMajName,
+		  send.pro_maj_date          AS sendProMajDate,
+		  send.pro_maj_idea          AS sendProMajIdea,
+		  send.pro_maj_text          AS sendProMajText,
+		  send.datetime              AS DATETIME,
+		  send.credit_type_id        AS sendCreditTypeId,
+		  send.project_name          AS sendProjectName,
+		  send.climit                AS climit,
+		  send.free                  AS free,
+		  send.prepay_money          AS sendPrepayMoney,
+		  send.transit_money         AS sendTransitMoney,
+		  credit.name                AS creditname,
+		  send.sell_contract_id      AS sendSellContractId,
+		  send.stockroom_id          AS sendStockRoomId,
+		  sell.id                    AS sellid,
+		  sell.product_contract_code AS productContractCode,
+		  sell.company_contract_code AS companyContarctCode,
+		  sell.request_send_date     AS requestSendDate,
+	      sell.customer_id           AS customerId,
+		  sell.customer_credit_id    AS customerCreditId,
+		  sell.customer_name         AS customerName,
+		  sell.user_name	         AS userName,
+		  sell.product_type_id       AS productTypeId,
+		  sell.payment_way           AS paymentWay,
+		  sell.batch_way             AS batchWay,
+		  sell.cash_money            AS cashMoney,
+		  sell.batch_max_money       AS batchMaxMoney,
+		  aream.name                 AS areaname,
+		  sroom.name                 AS sroomName,
+		  pt.name                    AS ptName,
+		  sroom.id                   AS sroomId,
+		  sell.contract_pro_name     as contractProName
+		FROM send_goods send
+		  LEFT JOIN credit_type AS credit ON send.credit_type_id = credit.id 
+		  LEFT JOIN sell_contract AS  sell ON send.sell_contract_id = sell.id 
+		  LEFT JOIN user_area AS aream ON send.user_area_id = aream.id
+		  LEFT JOIN stockroom AS sroom ON send.stockroom_id=sroom.id 
+		  LEFT JOIN product_type AS pt ON send.product_type_id=pt.id 
+		  LEFT JOIN customer ON customer.id = send.customer_id
+		WHERE 
+		  send.id=#id#
+	</select>
+	<select id="getBoxIdBySendGoodId" parameterClass="java.util.Map" resultClass="cn.com.thtf.egov.cms.entity.BoxDetailEntity"> 
+		SELECT
+		  boxD.box_id AS boxId
+		FROM box_detail as boxD
+		WHERE boxD.send_goods_id = $sendGoodId$
+	</select>
+	<update id="getSoodGoodsStatus" parameterClass="sendGoodsEntity">
+		update send_goods set send_goods.status = #status# where send_goods.id = #id#
+	</update>
+</sqlMap>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="sellContractForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="sellcontract"
+				type="cn.com.thtf.egov.cms.dto.SellContractInfoDto" />
+			<form-property name="product"
+				type="cn.com.thtf.egov.cms.dto.ProductInfoDto" />
+			<form-property name="producttype" 
+				type="cn.com.thtf.egov.cms.dto.ProductTypeInfoDto"></form-property>	
+			<form-property name="customercredit"
+				type="cn.com.thtf.egov.cms.dto.CustomerCreditInfoDto" />
+
+			<form-property name="customer"
+				type="cn.com.thtf.egov.cms.dto.CustomerInfoDto" />
+			<form-property name="productDept"
+				type="cn.com.thtf.egov.cms.dto.ProductDeptInfoDto" />								
+			
+
+			<form-property name="sellContractDetail" 
+				type="cn.com.thtf.egov.cms.dto.SellContractDetailInfoDto"/>
+			<form-property name="work" 
+				type="cn.com.thtf.egov.cms.dto.WorkInfoDto"/>
+			<form-property name="workm" 
+				type="cn.com.thtf.egov.cms.dto.WorkMInfoDto"/>			
+			<form-property name="demand" 
+				type="cn.com.thtf.egov.cms.dto.DemandInfoDto"/>		
+
+		</form-bean>
+
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>
+		<action path="/sell"
+			type="cn.com.thtf.egov.cms.action.sell.SellContractAction"
+			parameter="method" scope="request" name="sellContractForm">
+			<forward name="productAll"
+				path="/jsp/sell/productSelect.jsp" />
+			<forward name="show" path="/jsp/sell/addressSelect.jsp" />
+			<forward name="showPaySelect"
+				path="/jsp/sell/payTypeSelect.jsp" />
+			<forward name="addContract"
+				path="/jsp/sell/sxfaddContract.jsp" />
+
+			
+			<forward name="showPaySelect_modify"
+				path="/jsp/sell/payTypeSelect_modify.jsp" />
+			<forward name="selectProductOnModifyPage"
+				path="/jsp/sell/productSelect_modify.jsp" />
+			
+			<!-- 显示要修改的销售合同-llw -->	
+			<forward name="modify" 
+				path="/jsp/sell/modify.jsp"/>
+				
+
+			<forward name="after" path="/sales.do?method=salesContractsList"/>
+
+			<!-- 销售合同查看-llw -->
+			<forward name="sellContractCheck" 
+				path="/jsp/sell/sellContractCheck.jsp"/>
+				
+			<!-- 销售合同查看预览-llw -->
+			<forward name="sellContractCheckView" 
+				path="/jsp/sell/sellContractCheckPreview.jsp"/>
+				
+			<!-- 销售合同查看预览返回-llw -->
+			<forward name="sellContractCheckViewBack" 
+				path="/jsp/sell/sellContractCheck.jsp"/>					
+	
+		</action>
+		
+		<!-- 保存.提交.预览销售合同-llw -->
+		<action path="/updateSellContract"
+			type="cn.com.thtf.egov.cms.action.sell.SellContractAction"
+			parameter="method" scope="request" name="sellContractForm">			
+			
+			<!--exception key="modifySellContract.failed" type="java.lang.Exception" 
+				path="/jsp/sell/modifyResult.jsp" /  -->
+			<forward name="updateContractSuccess"
+				path="/jsp/sell/modifyResult.jsp" />	
+			<forward name="modifyPreview"
+				path="/jsp/sell/modifyPreview.jsp" />
+		</action>
+		
+	
+		
+		<action path="/sales"
+				type="cn.com.thtf.egov.cms.action.sell.SalesAction" 
+				parameter="method"
+				scope="request" 
+				validate="false">
+				<forward name="salesContractManagement.jsp" path="/jsp/sell/salesContractManagement.jsp"/>
+		</action>
+
+		<!-- 查看评审表 -->
+		<action path="/sellcomment"
+			type="cn.com.thtf.egov.cms.action.sell.SellCheckAction"
+			parameter="method" scope="request" name="sellContractForm">
+			<forward name="audit"
+				path="/jsp/sell/sellComment030105audit.jsp" />
+			<forward name="view"
+				path="/jsp/sell/viewAudit.jsp" />
+			<forward name="preview" 
+			    path="/jsp/sell/030103audit_preview.jsp"></forward>
+				<forward name="seeYulan"
+				path="/jsp/sell/sellContract030103preview.jsp" />
+				<forward name="check"
+				path="/sales.do?method=salesContractsList" />
+		</action>
+        
+       
+		
+		
+ 
+	
+
+	</action-mappings>
+	<message-resources
+		parameter="com.tsinghua.mp.web.conf.i18n.ApplicationResources" />
+</struts-config>

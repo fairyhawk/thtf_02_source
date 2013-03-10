@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="areaForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="area"
+				type="cn.com.thtf.egov.cms.dto.AreaInfoDto" />
+		</form-bean>
+		<form-bean name="userDeptForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="userdept"
+				type="cn.com.thtf.egov.cms.dto.UserDeptInfoDto" />
+		</form-bean>
+		<form-bean name="productDeptForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="productdept"
+				type="cn.com.thtf.egov.cms.dto.ProductDeptInfoDto" />
+		</form-bean>
+		<form-bean name="productTypeForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="producttype"
+				type="cn.com.thtf.egov.cms.dto.ProductTypeInfoDto" />
+		</form-bean>
+		<form-bean name="productSerieForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="productserie"
+				type="cn.com.thtf.egov.cms.dto.ProductSerieInfoDto" />
+		</form-bean>
+		<form-bean name="depotForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="depot"
+				type="cn.com.thtf.egov.cms.dto.DepotInfoDto" />
+		</form-bean>
+		<form-bean name="logisticsForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="logistics"
+				type="cn.com.thtf.egov.cms.dto.LogisticsInfoDto" />
+		</form-bean>
+		<form-bean name="brandForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="brand"
+				type="cn.com.thtf.egov.cms.dto.BrandInfoDto" />
+		</form-bean>
+		<form-bean name="productForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="product"
+				type="cn.com.thtf.egov.cms.dto.ProductInfoDto" />
+		</form-bean>
+		<form-bean name="supplierForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="supplier"
+				type="cn.com.thtf.egov.cms.dto.SupplierInfoDto" />
+		</form-bean>
+		<form-bean name="companyForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="company"
+				type="cn.com.thtf.egov.cms.dto.CompanyInfoDto" />
+		</form-bean>
+		<form-bean name="companyaddressForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="companyaddress"
+				type="cn.com.thtf.egov.cms.dto.CompanyAddressInfoDto" />
+		</form-bean>
+		<form-bean name="baseCustomerForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="supplier"
+				type="cn.com.thtf.egov.cms.dto.CustomerInfoDto" />
+		</form-bean>
+		
+		<form-bean name="userForm" type="cn.com.thtf.egov.cms.form.UserForm"> 
+		</form-bean>
+		<form-bean name="go2rptForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="url"
+				type="java.lang.String" />
+		</form-bean>
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>
+		<action path="/areamanagement"
+			type="cn.com.thtf.egov.cms.action.AreaAction" name="areaForm"
+			parameter="method" scope="request" validate="false">
+			<forward name="areaAll"
+				path="/jsp/BaseManagement/arealist.jsp" />
+			<forward name="show"
+				path="/jsp/BaseManagement/areaupdate.jsp" />
+			<forward name="savesuccess"
+				path="/areamanagement.do?method=areaAll" />
+			<forward name="showadd"
+				path="/jsp/BaseManagement/areaadd.jsp" />
+			<forward name="addsuccess"
+				path="/areamanagement.do?method=areaAll" />
+			<forward name="deletesuccess"
+				path="/areamanagement.do?method=areaAll" />
+		</action>
+		<action path="/userdeptmanagement"
+			type="cn.com.thtf.egov.cms.action.UserDeptAction" name="userDeptForm"
+			parameter="method" scope="request" validate="false">
+			<forward name="userDeptAll"
+				path="/jsp/BaseManagement/userdeptlist.jsp" />
+			<forward name="userDeptAdd"
+				path="/jsp/BaseManagement/userdeptadd.jsp" />
+			<forward name="addsucess"
+				path="/userdeptmanagement.do?method=userDeptAll" />
+			<forward name="userDepterr"
+				path="/userdeptmanagement.do?method=showUserDeptAdd" />
+			<forward name="showUserDeptUpdate"
+				path="/jsp/BaseManagement/userdeptupdate.jsp" />
+			<forward name="UserDeptUpdate"
+				path="/userdeptmanagement.do?method=userDeptAll" />
+			<forward name="deleteUserDept"
+				path="/userdeptmanagement.do?method=userDeptAll" />
+		</action>
+		<action path="/productdeptmanagement"
+			type="cn.com.thtf.egov.cms.action.ProductDeptAction"
+			name="productDeptForm" parameter="method" scope="request"
+			validate="false">
+			<forward name="productDeptAll"
+				path="/jsp/BaseManagement/productdeptlist.jsp" />
+			<forward name="showProductDeptAdd"
+				path="/jsp/BaseManagement/productdeptadd.jsp" />
+			<forward name="productDeptAdd"
+				path="/productdeptmanagement.do?method=productDeptAll" />
+			<forward name="showproductDeptupdate"
+				path="/jsp/BaseManagement/productdeptupdate.jsp" />
+			<forward name="saveproductDeptupdate"
+				path="/productdeptmanagement.do?method=productDeptAll" />
+			<forward name="deleteproductDept"
+				path="/productdeptmanagement.do?method=productDeptAll" />
+		</action>
+		<action path="/producttypemanagement"
+			type="cn.com.thtf.egov.cms.action.ProductTypeAction"
+			name="productTypeForm" parameter="method" scope="request"
+			validate="false">
+			<forward name="productTypeAll"
+				path="/jsp/BaseManagement/producttypelist.jsp" />
+			<forward name="showProductTypeAdd"
+				path="/jsp/BaseManagement/producttypeadd.jsp" />
+			<forward name="productTypeAdd"
+				path="/producttypemanagement.do?method=productTypeAll" />
+			<forward name="showProductTypeUpdate"
+				path="/jsp/BaseManagement/producttypeupdate.jsp" />
+			<forward name="productTypeUpdate"
+				path="/producttypemanagement.do?method=productTypeAll" />
+			<forward name="productTypeDelete"
+				path="/producttypemanagement.do?method=productTypeAll" />
+		</action>
+		<action path="/productseriemanagement"
+			type="cn.com.thtf.egov.cms.action.ProductSerieAction"
+			name="productSerieForm" parameter="method" scope="request"
+			validate="false">
+			<forward name="productSerieAll"
+				path="/jsp/BaseManagement/productserietlist.jsp" />
+			<forward name="showProductSerieAdd"
+				path="/jsp/BaseManagement/productserieadd.jsp" />
+			<forward name="showProductSerieUpdate"
+				path="/jsp/BaseManagement/productserieupdate.jsp" />
+			<forward name="checkProductSerie"
+				path="/jsp/BaseManagement/productserietlist.jsp" />
+			<forward name="addProductSerie"
+				path="/productseriemanagement.do?method=productSerieAll" />
+			<forward name="updateProductSerie"
+				path="/productseriemanagement.do?method=productSerieAll" />
+		</action>
+		<action path="/brand"
+			type="cn.com.thtf.egov.cms.action.BrandAction" name="brandForm"
+			parameter="method" scope="request" validate="false">
+			<forward name="brandAll"
+				path="/jsp/BaseManagement/brandlist.jsp" />
+			<forward name="showBrandAdd"
+				path="/jsp/BaseManagement/brandadd.jsp" />
+			<forward name="brandAdd"
+				path="/brand.do?method=showBrandAdd" />
+			<forward name="showBrandUpdate"
+				path="/jsp/BaseManagement/brandupdate.jsp" />
+			<forward name="saveBrandUpdate"
+				path="/brand.do?method=brandAll" />
+			<forward name="deleteBrand"
+				path="/brand.do?method=brandAll" />
+		</action>
+		<action path="/depot"
+			type="cn.com.thtf.egov.cms.action.DepotAction" name="depotForm"
+			parameter="method" scope="request" validate="false">
+			<forward name="depotList"
+				path="/jsp/BaseManagement/depotList.jsp" />
+			<forward name="depotAdd"
+				path="/jsp/BaseManagement/depotAdd.jsp" />
+			<forward name="depotUpdate0"
+				path="/jsp/BaseManagement/depotUpdate0.jsp" />
+			<forward name="depotUpdate1"
+				path="/jsp/BaseManagement/depotUpdate1.jsp" />
+			<forward name="depotView0"
+				path="/jsp/BaseManagement/depotView0.jsp" />
+			<forward name="depotView1"
+				path="/jsp/BaseManagement/depotView1.jsp" />
+			<forward name="showAddressAdd"
+				path="/jsp/BaseManagement/depotaddress_add.jsp" />
+			<forward name="depotaddress_modify"
+				path="/jsp/BaseManagement/depotaddress_modify.jsp" />
+		</action>
+		<action path="/logistics"
+			type="cn.com.thtf.egov.cms.action.LogisticsAction"
+			name="logisticsForm" parameter="method" scope="request"
+			validate="false">
+			<forward name="logisticsList"
+				path="/jsp/BaseManagement/logisticsList.jsp" />
+			<forward name="logisticsAdd"
+				path="/jsp/BaseManagement/logisticsAdd.jsp" />
+			<forward name="logisticsUpdate"
+				path="/jsp/BaseManagement/logisticsUpdate.jsp" />
+			<forward name="logisticsLook"
+				path="/jsp/BaseManagement/logisticsLook.jsp" />
+		</action>
+		<action path="/product"
+			type="cn.com.thtf.egov.cms.action.ProductAction" name="productForm"
+			parameter="method" scope="request" validate="false">
+			<forward name="productAll"
+				path="/jsp/BaseManagement/productlist.jsp" />
+			<forward name="showProductAdd"
+				path="/jsp/BaseManagement/productadd.jsp" />
+			<forward name="showProductUpdate"
+				path="/jsp/BaseManagement/productupdate.jsp" />
+			<forward name="ProductUpdate"
+				path="/product.do?method=productAll" />
+			<forward name="checkProduct"
+				path="/jsp/BaseManagement/productlist.jsp" />
+		</action>
+		<action path="/supplier"
+			type="cn.com.thtf.egov.cms.action.SupplierAction" name="supplierForm"
+			parameter="method" scope="request" validate="false">
+			<forward name="supplierList"
+				path="/jsp/BaseManagement/supplierList.jsp" />
+			<forward name="supplierLook"
+				path="/jsp/BaseManagement/supplierLook.jsp" />
+			<forward name="showSupplierAdd"
+				path="/jsp/BaseManagement/010602add.jsp" />
+			<forward name="showLinkmanAdd"
+				path="/jsp/BaseManagement/010602linkman_add.jsp" />
+			<forward name="010602modify"
+				path="/jsp/BaseManagement/010602modify.jsp" />
+			<forward name="showAddressAdd"
+				path="/jsp/BaseManagement/010602address_add.jsp" />
+			<forward name="010602linkman_modify"
+				path="/jsp/BaseManagement/010602linkman_modify.jsp" />
+			<forward name="010602address_modify"
+				path="/jsp/BaseManagement/010602address_modify.jsp" />
+
+		</action>
+		<action path="/customer"
+			type="cn.com.thtf.egov.cms.action.CustomerAction" name="baseCustomerForm"
+			parameter="method" scope="request" validate="false">
+			<forward name="supplierList"
+				path="/jsp/BaseManagement/customersupplierList.jsp" />
+			<forward name="supplierLook"
+				path="/jsp/BaseManagement/customersupplierLook.jsp" />
+			<forward name="showSupplierAdd"
+				path="/jsp/BaseManagement/customer010602add.jsp" />
+			<forward name="showLinkmanAdd"
+				path="/jsp/BaseManagement/customer010602linkman_add.jsp" />
+			<forward name="010602modify"
+				path="/jsp/BaseManagement/customer010602modify.jsp" />
+			<forward name="showAddressAdd"
+				path="/jsp/BaseManagement/customer010602address_add.jsp" />
+			<forward name="010602linkman_modify"
+				path="/jsp/BaseManagement/customer010602linkman_modify.jsp" />
+			<forward name="010602address_modify"
+				path="/jsp/BaseManagement/customer010602address_modify.jsp" />
+		</action>
+		<action path="/company"
+			type="cn.com.thtf.egov.cms.action.CompanyAction" name="companyForm"
+			parameter="method" scope="request" validate="false">
+			<forward name="aaa"
+				path="/companyadress.do?method=companyAll" />
+			<forward name="showCompany11"
+				path="/jsp/BaseManagement/companyManagerment.jsp" />
+			<forward name="showCompany11"
+				path="/jsp/BaseManagement/companyManagerment.jsp" />
+		</action>
+		<action path="/companyadress"
+			type="cn.com.thtf.egov.cms.action.CompanyAction"
+			name="companyaddressForm" parameter="method" scope="request"
+			validate="false">
+			<forward name="showCompany"
+				path="/jsp/BaseManagement/companyManagerment.jsp" />
+			<forward name="showCompanyAddress"
+				path="/jsp/BaseManagement/companyAddressAdd.jsp" />
+			<forward name="showUpdateAddress"
+				path="/jsp/BaseManagement/companAddressUpdate.jsp" />
+		</action>
+		<action path="/user"
+			type="cn.com.thtf.egov.cms.action.UserAction"
+			name="userForm" parameter="method" scope="request"
+			validate="false">
+			<forward name="userMsg"
+				path="/jsp/BaseManagement/userManagerment.jsp" />
+		</action>
+		<!-- Report跳转Action -->
+		<action path="/go2rpt"
+			type="cn.com.thtf.egov.cms.action.report.Go2ReportAction"
+			parameter="go2rpt"
+			name="go2rptForm"
+			scope="request"
+			validate="false"> 
+		</action>
+	</action-mappings>
+</struts-config>

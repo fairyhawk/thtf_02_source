@@ -1,0 +1,656 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+   PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+   "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="stock_sqlMap">
+<typeAlias alias="incomeStockListDto"
+	type="cn.com.thtf.egov.cms.dto.IncomeStockListDto" />
+<typeAlias alias="incomeStoreRoomDto"
+	type="cn.com.thtf.egov.cms.dto.IncomeStoreRoomDto" />
+<typeAlias alias="stockEntity"
+	type="cn.com.thtf.egov.cms.entity.StockEntity" />
+<typeAlias alias="stockOfIncomeDto"
+	type="cn.com.thtf.egov.cms.dto.StockOfIncomeDto" />	
+<typeAlias alias="productEntity"
+	type="cn.com.thtf.egov.cms.entity.ProductEntity" />	
+<typeAlias alias="saleReturnGoodsViewSelfOfIncomeDto"
+	type="cn.com.thtf.egov.cms.dto.saleReturnGoodsViewSelfOfIncomeDto" />	
+<typeAlias alias="customerCreditEntity"
+	type="cn.com.thtf.egov.cms.entity.CustomerCreditEntity" />		
+<typeAlias alias="customerCreditDetailEntity"
+	type="cn.com.thtf.egov.cms.entity.CustomerCreditDetailEntity" />
+<typeAlias alias="incomeOfSendEmailDto"
+	type="cn.com.thtf.egov.cms.dto.IncomeOfSendEmailDto" />
+<typeAlias alias="incomeOfListDto"
+	type="cn.com.thtf.egov.cms.dto.IncomeOfListDto" />
+	
+	<!-- 入库列表 begin -->
+	<select id="getIncomeStockList.getData" parameterClass="incomeStockListDto" resultClass="incomeStockListDto">
+			select 
+				stockList.billType,
+				stockList.incomeStockId,
+				stockList.storeroom,
+				stockList.storeroomId as storeroomId,
+				stockList.productTypeName,
+				stockList.productTypeId as productTypeId,
+				stockList.date,
+				stockList.incomeDate,
+				stockList.userName,
+				stockList.status,
+				stockList.supplierName,
+				
+				stockList.sendGoodsId
+			from (
+				select 
+					1 as billType,
+					in_stock.id as incomeStockId,
+					0 as sendGoodsId,
+					stockroom.name as storeroom,
+					stockroom.id as storeroomId,
+					product_type.name as productTypeName,
+					product_type.id as productTypeId,
+					in_stock.`date` as date,
+					in_stock.stk_adm_date as incomeDate,
+					in_stock.user_name as userName,
+					in_stock.`status` as status,
+					in_stock.supplier_name as supplierName
+				from in_stock,stockroom,product_type
+				where in_stock.stockroom_id =stockroom.id
+					AND product_type.id=in_stock.product_type_id
+					and in_stock.status in (4,5,6)
+					
+				union all
+	
+				select 
+					2 as billType,
+					sell_back_goods.id as incomeStockId,
+					sell_back_goods.send_goods_id as sendGoodsId,
+					stockroom.name as storeroom,
+					stockroom.id as storeroomId,
+					product_type.name as productTypeName,
+					product_type.id as productTypeId,
+					sell_back_goods.`date` as date,
+					sell_back_goods.stk_adm_date as incomeDate,
+					sell_back_goods.user_name as userName,
+					(case 
+						when sell_back_goods.`status`=6 then 4
+						when sell_back_goods.`status`=7 then 5
+						when sell_back_goods.`status`=8 then 6
+						else 99 end) as status,
+					sell_back_goods.customer_name as supplierName
+				from sell_back_goods,stockroom,product_type
+				where sell_back_goods.stockroom_id=stockroom.id
+					AND product_type.id=sell_back_goods.product_type_id
+					and sell_back_goods.status in(6,7,8)
+				union all
+	
+				select 
+					3 as billType,
+					move.id as incomeStockId,
+					0 as sendGoodsId,
+					stockroom.name as storeroom,
+					stockroom.id as storeroomId,
+					product_type.name as productTypeName,
+					product_type.id as productTypeId,
+					move.`date` as date,
+					move.stk_adm_date as incomeDate,
+					move.user_name as userName,
+					(case 
+						when move.`status`=7 then 4
+						when move.`status`=8 then 6
+						else 99 end) as status,
+					outStockroom.name as supplierName
+				FROM  
+				       stockroom,
+				       product_type,move
+				left join stockroom as outStockroom on move.out_stockroom_id =outStockroom.id
+				WHERE  move.in_stockroom_id = stockroom.id
+				       AND product_type.id=move.product_type_id
+						and move.status in (7,8)
+				union all
+	
+				select
+					4 as billType,<!-- 单据类型 -->
+					sample_in.id as incomeStockId,<!-- 入库单号   -->
+					0 as sendGoodsId,
+					stockroom.name as storeroom,<!-- 库房名称 --> 
+					stockroom.id as storeroomId, 
+					product_type.name as productTypeName,<!-- 产品分类名称 -->  
+					product_type.id as productTypeId,
+					sample_in.`date` as date,<!-- 申请日期   -->
+					sample_in.stk_adm_date as incomeDate,<!-- 入库日期 -->  
+					sample_in.user_name as userName,<!-- 人员名称 -->
+					sample_in.`status` as status,<!-- 入库单状态 -->
+					(case 
+						when sample_out.company_type=3 then typeOfSupplier.name
+						when sample_out.company_type=1 then typeOfCompany.name
+						when sample_out.company_type=2 then typeOfCustomer.name
+					end) as supplierName <!-- 供货商名称 -->
+				from stockroom,product_type,
+						sample_in,sample_out
+				left join (
+					select customer.name as name,customer.id as id
+					from customer
+				) as typeOfCustomer on typeOfCustomer.id=sample_out.company_id and sample_out.company_type=2
+				left join (
+					select company.id as id,company.name
+					from company
+				) as typeOfCompany on typeOfCompany.id=sample_out.company_id and sample_out.company_type=1
+				left join (
+					select supplier.name as name,supplier.id as id
+					from supplier
+				) as typeOfSupplier on typeOfSupplier.id=sample_out.company_id and sample_out.company_type=3
+				where sample_in.sample_out_id=sample_out.id and stockroom.id=sample_in.in_stockroom_id
+						and product_type.id=sample_out.product_type_id and sample_in.status in(4,5,6)
+						) as stockList
+						
+		
+			<dynamic prepend="WHERE">
+				<isNotEmpty prepend="and" property="stockList">
+				<iterate property="stockList" open="(" close=")" conjunction="or" >  
+					(stockList.storeroomId=$stockList[].storeroomId$ and stockList.productTypeId=$stockList[].productTypeId$)
+				</iterate>	
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="incomeStockId">
+					stockList.incomeStockId like concat('%',#incomeStockId#,'%')
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="storeroomId">
+					stockList.storeroomId=#storeroomId#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productTypeId">
+					stockList.productTypeId=#productTypeId#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="supplierName">
+					stockList.supplierName like concat('%',#supplierName#,'%')
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="incomeDate">
+					<![CDATA[ stockList.incomeDate>=#incomeDate# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endIncomeDate">
+					<![CDATA[ stockList.incomeDate<=#endIncomeDate# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="status">
+					stockList.status=#status#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					stockList.userName like concat('%',#userName#,'%')
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="billTypes">
+					<iterate property="billTypes" open="(" close=")" conjunction="or" >  
+					billType = $billTypes[]$
+					</iterate>
+				</isNotEmpty>
+				<isEmpty prepend="and" property="type">
+					stockList.status=4
+				</isEmpty>
+			</dynamic>
+			order by stockList.billType,stockList.incomeStockId desc
+	</select>
+	<!-- 入库列表 end -->
+	<!-- 入库列表 分页 begin -->
+	<select id="getIncomeStockList.recordCount" parameterClass="incomeStockListDto" resultClass="java.lang.Integer">
+			select 
+				count(*)
+			from (
+				select 
+					1 as billType,
+					in_stock.id as incomeStockId,
+					0 as sendGoodsId,
+					stockroom.name as storeroom,
+					stockroom.id as storeroomId,
+					product_type.name as productTypeName,
+					product_type.id as productTypeId,
+					in_stock.`date` as date,
+					in_stock.stk_adm_date as incomeDate,
+					in_stock.user_name as userName,
+					in_stock.`status` as status,
+					stockroom.name as supplierName
+				from in_stock,stockroom,product_type
+				where in_stock.stockroom_id =stockroom.id
+					AND product_type.id=in_stock.product_type_id
+					and in_stock.status in (4,5,6)
+					
+				union all
+	
+				select 
+					2 as billType,
+					sell_back_goods.send_goods_id as sendGoodsId,
+					sell_back_goods.id as incomeStockId,
+					stockroom.name as storeroom,
+					stockroom.id as storeroomId,
+					product_type.name as productTypeName,
+					product_type.id as productTypeId,
+					sell_back_goods.`date` as date,
+					sell_back_goods.stk_adm_date as incomeDate,
+					sell_back_goods.user_name as userName,
+					(case 
+						when sell_back_goods.`status`=6 then 4
+						when sell_back_goods.`status`=7 then 5
+						when sell_back_goods.`status`=8 then 6
+						else 99 end) as status,
+					stockroom.name as supplierName
+				from sell_back_goods,stockroom,product_type
+				where sell_back_goods.stockroom_id=stockroom.id
+					AND product_type.id=sell_back_goods.product_type_id
+					and sell_back_goods.status in(6,7,8)
+				union all
+	
+				select 
+					3 as billType,
+					move.id as incomeStockId,
+					0 as sendGoodsId,
+					stockroom.name as storeroom,
+					stockroom.id as storeroomId,
+					product_type.name as productTypeName,
+					product_type.id as productTypeId,
+					move.`date` as date,
+					move.stk_adm_date as incomeDate,
+					move.user_name as userName,
+					(case 
+						when move.`status`=7 then 4
+						when move.`status`=8 then 6
+						else 99 end) as status,
+					stockroom.name as supplierName
+				FROM  move,
+				       stockroom,
+				       product_type
+				WHERE  move.in_stockroom_id = stockroom.id
+				       AND product_type.id=move.product_type_id
+						and move.status in (7,8)
+				union all
+	
+				select
+					4 as billType,<!-- 单据类型 -->
+					0 as sendGoodsId,
+					sample_in.id as incomeStockId,<!-- 入库单号   -->
+					stockroom.name as storeroom,<!-- 库房名称 --> 
+					stockroom.id as storeroomId, 
+					product_type.name as productTypeName,<!-- 产品分类名称 -->  
+					product_type.id as productTypeId,
+					sample_in.`date` as date,<!-- 申请日期   -->
+					sample_in.stk_adm_date as incomeDate,<!-- 入库日期 -->  
+					sample_in.user_name as userName,<!-- 人员名称 -->
+					sample_in.`status` as status,<!-- 入库单状态 -->
+					(case 
+						when sample_out.company_type=3 then typeOfSupplier.name
+						when sample_out.company_type=1 then typeOfCompany.name
+						when sample_out.company_type=2 then typeOfCustomer.name
+					end) as supplierName <!-- 供货商名称 -->
+				from stockroom,product_type,
+						sample_in,sample_out
+				left join (
+					select customer.name as name,customer.id as id
+					from customer
+				) as typeOfCustomer on typeOfCustomer.id=sample_out.company_id and sample_out.company_type=2
+				left join (
+					select company.id as id,company.name
+					from company
+				) as typeOfCompany on typeOfCompany.id=sample_out.company_id and sample_out.company_type=1
+				left join (
+					select supplier.name as name,supplier.id as id
+					from supplier
+				) as typeOfSupplier on typeOfSupplier.id=sample_out.company_id and sample_out.company_type=3
+				where sample_in.sample_out_id=sample_out.id and stockroom.id=sample_in.in_stockroom_id
+						and product_type.id=sample_out.product_type_id and sample_in.status in(4,5,6)
+						) as stockList
+			<dynamic prepend="WHERE">
+				<isNotEmpty prepend="and" property="stockList">
+					<iterate property="stockList" open="(" close=")" conjunction="or" >  
+						(stockList.storeroomId=$stockList[].storeroomId$ and stockList.productTypeId=$stockList[].productTypeId$)
+					</iterate>	
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="incomeStockId">
+					stockList.incomeStockId like concat('%',#incomeStockId#,'%')
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="storeroomId">
+					stockList.storeroomId=#storeroomId#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productTypeId">
+					stockList.productTypeId=#productTypeId#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="supplierName">
+					stockList.supplierName like concat('%',#supplierName#,'%')
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="incomeDate">
+					<![CDATA[ stockList.incomeDate>=#incomeDate# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endIncomeDate">
+					<![CDATA[ stockList.incomeDate<=#endIncomeDate# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="status">
+					stockList.status=#status#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					stockList.userName like concat('%',#userName#,'%')
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="billTypes">
+					<iterate property="billTypes" open="(" close=")" conjunction="or" >  
+					billType = $billTypes[]$
+					</iterate>
+				</isNotEmpty>
+				<isEmpty prepend="and" property="type">
+					stockList.status=4
+				</isEmpty>
+				
+			</dynamic>
+	</select>
+	<!-- 入库列表 分页 end -->
+	<!-- 库房名称 Begin -->	              
+	<select id="getStoreRoom"  resultClass="stockRoomOfSellBack">
+			SELECT   NAME,ID
+			FROM     STOCKROOM
+	</select>
+	<!-- 库房名称 End -->
+	<!-- 评审 入库单 Begin -->	              
+	<update id="modifyIncomeStoreroomOfIntock" parameterClass="incomeStoreRoomDto">
+		<isEqual property="billType" compareValue="1">
+			update in_stock set status=#status#,stk_adm_name=#stkAdmName#,stk_adm_date=#stkAdmDate#,stk_adm_idea=#stkAdmIdea#,stk_adm_text=#stkAdmText# where id=#id#
+		</isEqual>
+		<isEqual property="billType" compareValue="2">
+			update sell_back_goods set status=#status#,stk_adm_name=#stkAdmName#,stk_adm_date=#stkAdmDate#,stk_adm_idea=#stkAdmIdea#,stk_adm_text=#stkAdmText# where id=#id#
+		</isEqual>
+		<isEqual property="billType" compareValue="3">
+			update move set status=#status#,in_adm_name=#stkAdmName#,in_adm_date=#stkAdmDate#,in_adm_idea=#stkAdmIdea#,in_adm_text=#stkAdmText# where id=#id#
+		</isEqual>
+		<isEqual property="billType" compareValue="4">
+			update sample_in set status=#status#,stk_adm_name=#stkAdmName#,stk_adm_date=#stkAdmDate#,stk_adm_idea=#stkAdmIdea#,stk_adm_text=#stkAdmText# where id=#id#
+		</isEqual>
+	</update>
+	<!-- 评审 入库单 End -->	
+	<!-- 获取时间戳 Begin -->	              
+	<select id="getTimestamp"  resultClass="stockEntity" parameterClass="stockOfIncomeDto">
+			SELECT   time_stamp as timeStamp,id,num
+			FROM     stock
+			where stockroom_id=#stockroomId# and product_id=#productId#
+	</select>
+	<!-- 获取时间戳 End -->
+	<!-- 修改库存数量 Begin -->	
+	<update id="modifyStockCountOfIncome" parameterClass="stockOfIncomeDto">
+		update stock set num=#num#,time_stamp=now() where id=#id# and time_stamp=#oldTimeStamp#
+	</update>              
+	<!-- 修改库存数量 End -->	
+	<!-- 修改库存金额 Begin -->	
+	<update id="modifyStockMoneyOfIncome" parameterClass="productEntity">
+		update product set money=money+#money# where id=#id#
+	</update>              
+	<!-- 修改库存金额 End -->
+	<!--  退货单查看退货信息 Begin  -->
+	<select id="getReturnGoodsByIdOfIncome" parameterClass="java.lang.String" resultClass="saleReturnGoodsViewSelfOfIncomeDto">
+SELECT
+	  sbg.money as money,
+	  sbg.id                   AS id,
+	  sbg.send_goods_id        AS sendGoodsId,
+	  sbg.product_type_id      AS productTypeId,
+	  pt.productTypeName       AS productTypeName,
+	  sbg.customer_id          AS customeId,
+	  sbg.customer_name        AS customeName,
+	  sbg.stockroom_id         AS stockroomId,
+	  sk.skName                AS stockroomName,
+	  sbg.stockroom_address_id AS stockroomAddressId,
+	  sk.untiName              AS untiName,
+	  sk.address               AS address,
+	  sk.postcode              AS postcode,
+	  sk.linkman               AS linkman,
+	  sk.tel                   AS tel,
+	  sk.mobile                AS mobile,
+	  sbg.text                 AS TEXT,
+	  sbg.sell_maj_id           AS sellMajId,
+	  sbg.sell_maj_name         AS sellMajName,
+	  sbg.sell_maj_date         AS sellMajDate,
+	  sbg.sell_maj_idea         AS sellMajIdea,
+	  sbg.sell_maj_text         AS sellMajText,
+	  sbg.ope_maj_id           AS opeMajId,
+	  sbg.ope_maj_name         AS opeMajName,
+	  sbg.ope_maj_date         AS opeMajDate,
+	  sbg.ope_maj_idea         AS opeMajIdea,
+	  sbg.ope_maj_text         AS opeMajText,
+	  sbg.stk_adm_id           AS stkMajId,
+	  sbg.stk_adm_name         AS stkMajName,
+	  sbg.stk_adm_date         AS stkMajDate,
+	  sbg.stk_adm_idea         AS stkMajIdea,
+	  sbg.stk_adm_text         AS stkMajText,
+	  sell_contract.customer_credit_id as customerCreditId
+	FROM sell_contract,send_goods,sell_back_goods sbg
+	  LEFT JOIN (SELECT
+	               sbg.id            AS sbgId,
+	               pt.name           AS productTypeName
+	             FROM product_type pt,
+	               sell_back_goods sbg
+	             WHERE sbg.product_type_id = pt.id) AS pt
+	    ON pt.sbgId = sbg.id
+	  LEFT JOIN (SELECT
+	               sbg.id            AS sbgId,
+	               sk.name           AS skName,
+	               ska.NAME          AS untiName,
+	               ska.address       AS address,
+	               ska.postcode      AS postcode,
+	               ska.linkman       AS linkman,
+	               ska.tel           AS tel,
+	               ska.mobile        AS mobile
+	             FROM stockroom_address ska,
+	               stockroom sk,
+	               sell_back_goods sbg
+	             WHERE sbg.stockroom_address_id = ska.id
+	                 AND sk.id = ska.stockroom_id) AS sk
+	    ON sk.sbgId = sbg.id
+		WHERE sbg.id = #returnGoodsId# and sbg.send_goods_id=send_goods.id and send_goods.sell_contract_id=sell_contract.id
+	</select>
+	<!--  退货单查看退货信息 end  -->
+	<!-- 获取时间戳 Begin -->	              
+	<select id="getCustomerTimesTamp"  resultClass="string" parameterClass="string">
+			SELECT   time_stamp as timeStamp
+			FROM     customer_credit
+			where id=#id#
+	</select>
+	<!-- 获取时间戳 End -->
+	<!-- 更改客户时间戳 Begin -->	
+	<update id="modifyCustomerCreditOfIncome" parameterClass="customerCreditEntity">
+		update customer_credit set time_stamp=now() where id=#id# and time_stamp=#datetime#
+	</update>              
+	<!-- 更改客户时间戳 End -->	
+	<!-- 更改客户信用 Begin -->	
+	<update id="modifyCustomerCreditDetailOfIncome" parameterClass="customerCreditDetailEntity">
+		update customer_credit_detail set money=money-#money# where customer_credit_id=#customerCreditId# and send_goods_id=#sendGoodsId# and product_id=#productId#
+	</update>              
+	<!-- 更改客户信用 End -->	
+	<!-- 更改客户信用 Begin -->	
+	<insert id="addStockCountOfIncome" parameterClass="stockOfIncomeDto">
+		insert into stock(stockroom_id,product_id,num,time_stamp) values(#stockroomId#,#productId#,#num#,now())
+	</insert>              
+	<!-- 更改客户信用 End -->		
+	<!-- 邮件 入库单 begin -->
+	 <select id="getIncomeOfSendEmailByInStoke" parameterClass="string" resultClass="incomeOfSendEmailDto">
+		select  
+			product_dept.name as productDeptName,
+			in_stock.stk_adm_date as stkAdmDate,
+			in_stock.supplier_name as supplierName,
+			buy_contract.product_contract_code as productContractCode,
+			in_stock.id as incomeId,
+			stockroom.name as stockroomName,
+			product_type.name as productTypeName,
+			product.code,
+			product.name,
+			product.unit,
+			product.`type`,
+			in_stock_detail.`count`,
+			in_stock_detail.price,
+			in_stock_detail.price*in_stock_detail.`count` as sumValue,
+			buy_contract.user_name as userName,
+			in_stock.stk_adm_name as stkAdmName,
+			product.id as productId
+		from product,product_dept,in_stock_detail,in_stock
+			inner join buy_contract on buy_contract.id=in_stock.buy_contract_id
+			left join stockroom on in_stock.stockroom_id=stockroom.id
+			left join product_type on product_type.id=in_stock.product_type_id
+		where in_stock.id=in_stock_detail.in_stock_id and product.id=in_stock_detail.product_id and product_type.product_dept_id = product_dept.id
+			and in_stock.id=#id#
+	</select>
+	<!-- 邮件 入库单 end -->
+	
+	<!-- 邮件 销售退货单 begin -->
+	<select id="getIncomeOfSendEmailBySellReturn" parameterClass="string" resultClass="incomeOfSendEmailDto">
+		select 
+			sell.productDeptName AS productDeptName,
+			sell.stk_adm_date as stkAdmDate,
+			sell.supplierName as supplierName,
+			"" as productContractCode,
+			sell.id as incomeId,
+			sell.name as stockroomName,
+			sell.productTypeName as productTypeName,
+			sell.code as code,
+			sell.productName as name,
+			sell.unit as unit,
+			sell.type as type,
+			sell.count as count,
+			priceOfSendGoods.price as sellPrice,
+			priceOfsellContract.price,
+			priceOfsellContract.price*sell.count as sumValue,
+			sell.user_name as userName,
+			sell.stk_adm_name as stkAdmName,
+			sell.productid
+		from 
+			(select 
+			product_dept.name as productDeptName,
+			sell_back_goods.stk_adm_date,
+			sell_back_goods.customer_name as supplierName,
+			"" as s,
+			sell_back_goods.id,
+			stockroom.name,
+			product_type.name as productTypeName,
+			product.code,
+			product.name as productName,
+			product.unit,
+			product.`type`,
+			sell_back_goods_detail.`count`,
+			sell_back_goods.user_name,
+			sell_back_goods.stk_adm_name,
+			product.id as productid,
+			sell_back_goods.send_goods_id as sendgoodsid
+			from stockroom,product_type,product_dept,product,sell_back_goods,sell_back_goods_detail
+			where sell_back_goods_detail.sell_back_goods_id=sell_back_goods.id and product.id=sell_back_goods_detail.product_id
+			and product_type.product_dept_id = product_dept.id
+			and sell_back_goods.stockroom_id=stockroom.id and product_type.id=sell_back_goods.product_type_id
+			and sell_back_goods.id=#id#
+			) as sell
+			left join (
+				select sell_contract_detail.product_id as productId,
+						sell_contract_detail.price as price,
+						send_goods.id  as sendGoodId
+				from sell_contract_detail,sell_contract
+				inner join send_goods on send_goods.sell_contract_id=sell_contract.id
+				where sell_contract.id=sell_contract_detail.sell_contract_id
+			) as priceOfsellContract on priceOfsellContract.productId=sell.productid and sell.sendgoodsid=priceOfsellContract.sendGoodId
+			left join(
+				select send_goods_detail.product_id as productId,send_goods_detail.price as price,send_goods.id  as sendGoodId  from send_goods,send_goods_detail
+				where send_goods.id=send_goods_detail.send_goods_id 
+			) as priceOfSendGoods  on priceOfSendGoods.productId=sell.productid and sell.sendgoodsid=priceOfSendGoods.sendGoodId
+	</select>
+	<!-- 邮件 销售退货单 end -->
+
+	<!-- 邮件 移库单 begin -->
+	<select id="getIncomeOfSendEmailByMove" parameterClass="string" resultClass="incomeOfSendEmailDto">
+		select 
+				product_dept.name as productDeptName,
+				move.in_adm_date as stkAdmDate,
+				outStockroom.name as supplierName,
+				"" as productContractCode,
+				move.id as incomeId,
+				stockroom.name as stockroomName,
+				product_type.name as productTypeName,
+				product.code,
+				product.name,
+				product.unit,
+				product.`type`,
+				move_detail.`count`,
+				move_detail.price,
+				move_detail.`count`*move_detail.price as sumValue,
+				move.user_name as userName,
+				move.in_adm_name as stkAdmName,
+				move_detail.price as sellPrice,
+				product.id as productId
+		from product_dept,product,move_detail,move 
+				left join stockroom on move.in_stockroom_id=stockroom.id
+				left join product_type on product_type.id=move.product_type_id
+				left join stockroom as outStockroom on move.out_stockroom_id =outStockroom.id
+		where move_detail.move_id=move.id and product.id=move_detail.product_id and product_type.product_dept_id = product_dept.id
+		and move.id=#id#
+	</select>
+	<!-- 邮件 移库单 end -->
+	
+	<!-- 邮件 归还单 begin -->
+	<select id="getIncomeOfSendEmailBySample" parameterClass="string" resultClass="incomeOfSendEmailDto">
+		select 
+			
+			sampleOfAll.productDeptName,
+			sampleOfAll.stkAdmDate,
+			sampleOfAll.supplierName,
+			sampleOfAll.productContractCode,
+			sampleOfAll.incomeId,
+			sampleOfAll.stockroomName,
+			sampleOfAll.productTypeName,
+			sampleOfAll.code,
+			sampleOfAll.name,
+			sampleOfAll.unit,
+			sampleOfAll.`type`,
+			sampleOfAll.`count`,
+			sampleOut.price,
+			sampleOfAll.`count` * sampleOut.price as sumValue,
+			sampleOfAll.pid as productId,
+			sampleOfAll.userName,
+			sampleOut.price as sellPrice,
+			sampleOfAll.stkAdmName
+			 from (
+						select 
+							product_dept.name as productDeptName,
+							sample_in.stk_adm_date as stkAdmDate,
+							(case 
+								when sample_out.company_type=3 then typeOfSupplier.name
+								when sample_out.company_type=1 then typeOfCompany.name
+								when sample_out.company_type=2 then typeOfCustomer.name
+							end) as supplierName,
+							"" as productContractCode,
+							sample_in.id as incomeId,
+							stockroom.name as stockroomName,
+							product_type.name as productTypeName,
+							product.code,
+							product.name,
+							product.unit,
+							product.`type`,
+							sample_in_detail.`count`,
+							product.id as pid,
+							sample_out.id  as sampleOutId,
+							sample_in.user_name as userName,
+							sample_in.stk_adm_name as stkAdmName
+						from product_dept,product,sample_in,sample_in_detail,stockroom,product_type,
+							sample_out
+							left join (
+									select customer.name as name,customer.id as id
+									from customer
+								) as typeOfCustomer on typeOfCustomer.id=sample_out.company_id and sample_out.company_type=2
+							left join (
+									select company.id as id,company.name
+									from company
+								) as typeOfCompany on typeOfCompany.id=sample_out.company_id and sample_out.company_type=1
+							left join (
+									select supplier.name as name,supplier.id as id
+									from supplier
+							) as typeOfSupplier on typeOfSupplier.id=sample_out.company_id and sample_out.company_type=3
+						where sample_in_detail.sample_in_id=sample_in.id 
+							and product.id=sample_in_detail.product_id
+							 and product_type.product_dept_id = product_dept.id
+							and sample_in.sample_out_id=sample_out.id 
+							and product_type.id=sample_out.product_type_id
+							and sample_in.in_stockroom_id=stockroom.id
+							and sample_in.id=#id#
+				) as sampleOfAll 
+			 left join (
+							select sample_out_detail.price,sample_out_detail.product_id as pid,sample_out.id as id from sample_out_detail,sample_out where sample_out.id=sample_out_detail.sample_out_id
+						) as sampleOut on sampleOut.id=sampleOfAll.sampleOutId and sampleOut.pid=sampleOfAll.pid
+	</select>
+	<!-- 邮件 归还单 end -->
+	<!-- 根据库房管理员用户获取库房、产品分类id Begin -->
+	<select id="getStockIdAndProductTypeId" parameterClass="string" resultClass="incomeOfListDto">
+		select stockroom_id as storeroomId,product_type_id as productTypeId from user_stockroom_product where user_id=#userId#
+	</select>	          
+	<!-- 根据库房管理员用户获取库房、产品分类id End -->
+</sqlMap>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings> 
+		<action path="/searchUser"
+				type="cn.com.thtf.egov.cms.action.UersManagementAction" 
+				parameter="method"
+				scope="request" 
+				validate="false">
+				<forward name="userInformationManagement.jsp" path="/jsp/BaseManagement/userInformationManagement1.jsp"/>
+				<forward name="administratorView.jsp" path="/jsp/BaseManagement/administratorView.jsp"/>
+				<forward name="salesDirectorView.jsp" path="/jsp/BaseManagement/salesDirectorView.jsp"/>
+				<forward name="regionalDirectorView.jsp" path="/jsp/BaseManagement/regionalDirectorView.jsp"/>
+				<forward name="salesManagerView.jsp" path="/jsp/BaseManagement/salesManagerView.jsp"/>
+				<forward name="logisticsManagerView.jsp" path="/jsp/BaseManagement/logisticsManagerView.jsp"/>
+				<forward name="administratorChange.jsp" path="/jsp/BaseManagement/administratorChange.jsp"/>
+				<forward name="searchUser.do?method=searchUserBefore" path="/searchUser.do?method=searchUserBefore"/>
+				<forward name="salesDirectorChange.jsp" path="/jsp/BaseManagement/salesDirectorChange.jsp"/>
+				<forward name="regionalDirectorChange.jsp" path="/jsp/BaseManagement/regionalDirectorChange.jsp"/>
+				<forward name="salesManagerChange.jsp" path="/jsp/BaseManagement/salesManagerChange.jsp"/>
+				<forward name="salesManagerAddCustomer.jsp" path="/jsp/BaseManagement/salesManagerAddCustomer.jsp"/>
+				<forward name="logisticsManagerChange.jsp" path="/jsp/BaseManagement/logisticsManagerChange.jsp"/>
+				<forward name="userAdd.jsp" path="/jsp/BaseManagement/userAdd.jsp"/>
+				<forward name="salesManagerAddCustomer1.jsp" path="/jsp/BaseManagement/salesManagerAddCustomer1.jsp"/>
+				<forward name="salesAssistantAdd.jsp" path="/jsp/BaseManagement/salesAssistantAdd.jsp"/>
+				<forward name="salesAssistantChange.jsp" path="/jsp/BaseManagement/salesAssistantChange.jsp"/>
+				<forward name="salesAssistantView.jsp" path="/jsp/BaseManagement/salesAssistantView.jsp"/>
+				<forward name="treasuryManagerChange.jsp" path="/jsp/BaseManagement/treasuryManagerChange.jsp"/>
+				<forward name="treasuryManagerAdd.jsp" path="/jsp/BaseManagement/treasuryManagerAdd.jsp"/>
+				<forward name="treasuryManagerView.jsp" path="/jsp/BaseManagement/treasuryManagerView.jsp"/>
+				<forward name="userAreaMappingChange.jsp" path="/jsp/BaseManagement/userAreaMappingChange.jsp"/>
+				<forward name="userAreaMappingView.jsp" path="/jsp/BaseManagement/userAreaMappingView.jsp"/>
+		</action>
+	</action-mappings>
+	<message-resources parameter="cn.com.tsinghua.mp.web.conf.i18n.ApplicationResources" />
+</struts-config>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans> 
+		<form-bean name="mailForm" type="cn.com.thtf.egov.cms.form.MailForm">
+		</form-bean>
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>  
+		<!-- 邮件管理列表 -->
+		<action path="/mailList"
+			type="cn.com.thtf.egov.cms.action.mail.MailAction"
+			parameter="mailList"
+			name="mailForm"
+			scope="request"
+			validate="false">
+			<forward name="mailList" path="/jsp/mail/maillist.jsp"/>
+		</action>
+		<!-- 邮件查看 -->
+		<action path="/mailView"
+			type="cn.com.thtf.egov.cms.action.mail.MailAction"
+			parameter="mailView"
+			name="mailForm"
+			scope="request"
+			validate="false">
+			<forward name="mailView" path="/jsp/mail/mailview.jsp"/>
+		</action> 
+		<!-- 发送邮件 -->
+		<action path="/sendMail"
+			type="cn.com.thtf.egov.cms.action.mail.MailAction"
+			parameter="sendMail"
+			name="mailForm"
+			scope="request"
+			validate="false">
+			<forward name="mailView" path="/mailView.do"/>
+			<forward name="mailList" path="/mailList.do"/>
+		</action>
+	</action-mappings>
+
+</struts-config>

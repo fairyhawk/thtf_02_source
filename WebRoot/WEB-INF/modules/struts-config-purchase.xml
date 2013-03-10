@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="inStockFrom" type="cn.com.thtf.egov.cms.form.InStockFrom">
+		</form-bean> 
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>
+		<!-- 新建入库单 -->
+		<action path="/addItockInit"
+			type="cn.com.thtf.egov.cms.action.purchase.InStockAction"
+			parameter="addItockInit"
+			name="inStockFrom"
+			scope="request"
+			validate="false">
+			<forward name="inStock" path="/jsp/purchase/instock.jsp" />
+		</action>
+		<action path="/addInStock"
+			type="cn.com.thtf.egov.cms.action.purchase.InStockAction"
+			parameter="addInStock"
+			name="inStockFrom"
+			scope="request"
+			validate="false">
+			<forward name="createSuccess" path="/instockList.do"/>
+			<forward name="createFail" path="/addItockInit.do"/>
+			<forward name="submitRepeat" path="/instockList.do"/>
+		</action>
+		<action path="/getReceiveGoodsDetail"
+			type="cn.com.thtf.egov.cms.action.purchase.InStockAction"
+			parameter="getReceiveGoodsDetail"
+			name="inStockFrom"
+			scope="request"
+			validate="false">
+			<forward name="receiveGoodsDetailList" path="/jsp/purchase/receiveGoodsDetailList.jsp"/>
+		</action>
+		<action path="/getProductList"
+			type="cn.com.thtf.egov.cms.action.purchase.InStockAction"
+			parameter="getProductList"
+			name="inStockFrom"
+			scope="request"
+			validate="false">
+			<forward name="productList" path="/jsp/purchase/productList.jsp"/>
+		</action>
+		<!-- 入库单查看 -->
+		<action path="/instockView"
+			type="cn.com.thtf.egov.cms.action.purchase.InStockAction"
+			parameter="getInstock"
+			name="inStockFrom"
+			scope="request"
+			validate="false">
+			<forward name="getInstock" path="/jsp/purchase/instockView.jsp"/>
+			<forward name="auditView" path="/jsp/purchase/instockAudit.jsp"/>
+		</action>
+		<!-- 入库单列表 -->
+		<action path="/instockList"
+			type="cn.com.thtf.egov.cms.action.purchase.InStockAction"
+			parameter="getInstockList"
+			name="inStockFrom"
+			scope="request"
+			validate="false">
+			<forward name="getInstockList" path="/jsp/purchase/instocklist.jsp"/>
+		</action>
+		<!-- 入库单删除 -->
+		<action path="/instockDel"
+			type="cn.com.thtf.egov.cms.action.purchase.InStockAction"
+			parameter="removeInstock"
+			name="inStockFrom"
+			scope="request"
+			validate="false">
+			<forward name="getInstockList" path="/instockList.do"/>
+		</action>
+		<!-- 入库单评审 --> 
+		<action path="/instockAudit"
+			type="cn.com.thtf.egov.cms.action.purchase.InStockAction"
+			parameter="auditInstock"
+			name="inStockFrom"
+			scope="request"
+			validate="false">
+			<forward name="createSuccess" path="/instockList.do"/>
+			<forward name="createFail" path="/instockView.do"/>
+		</action>
+	</action-mappings>
+
+</struts-config>

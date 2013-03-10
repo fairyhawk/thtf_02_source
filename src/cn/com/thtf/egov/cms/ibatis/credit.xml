@@ -1,0 +1,950 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="credit_sqlMap">
+
+	<typeAlias alias="creditproducttype"
+		type="cn.com.thtf.egov.cms.dto.ProductTypeInfoDto" />
+		
+	<typeAlias alias="credittypelimit"
+		type="cn.com.thtf.egov.cms.dto.CreditTypeLimitInfoDto" />
+
+	<typeAlias alias="customercredit"
+		type="cn.com.thtf.egov.cms.dto.CustomerCreditInfoDto" />	
+
+	<typeAlias alias="customerCreditEntity"
+		type="cn.com.thtf.egov.cms.entity.CustomerCreditEntity" />
+
+	<typeAlias alias="credittype"
+		type="cn.com.thtf.egov.cms.entity.CreditTypeEntity" />
+		
+	<typeAlias alias="productTypeEntity"
+		type="cn.com.thtf.egov.cms.entity.ProductTypeEntity" />
+	
+	<typeAlias alias="proCreditTypeLimit"
+	 	type="cn.com.thtf.egov.cms.dto.CreditTypeLimitDto"/>
+	 	
+	<typeAlias alias="CreditTypeLimitEntity"
+	 	type="cn.com.thtf.egov.cms.entity.CreditTypeLimitEntity"/>
+
+	<!-- luping -->
+	<typeAlias alias="productype"
+		type="cn.com.thtf.egov.cms.entity.ProductTypeEntity" />
+	<typeAlias alias="productCredit"
+		type="cn.com.thtf.egov.cms.dto.ProdCreditLimitDto" />
+
+		
+	<typeAlias alias="productTypeNew"
+		type="cn.com.thtf.egov.cms.entity.ProductTypeEntity" />
+		
+	<typeAlias alias="dtoCustomerCredit"
+		type="cn.com.thtf.egov.cms.dto.CustomerCreditLimitDto" />
+		
+	<typeAlias alias="creditTypeLimitNew"
+		type="cn.com.thtf.egov.cms.entity.CreditTypeLimitEntity" />
+			
+	<typeAlias alias="customercreditlimit"
+		type="cn.com.thtf.egov.cms.entity.CustomerCreditEntity" />
+				
+	<typeAlias alias="customerNew"
+		type="cn.com.thtf.egov.cms.entity.CustomerEntity" />	
+
+	<typeAlias alias="customerCreditDetail"
+		type="cn.com.thtf.egov.cms.entity.CustomerCreditDetailEntity" />
+		
+	<typeAlias alias="customerCreditDto"
+		type="cn.com.thtf.egov.cms.dto.CustomerCreditDto" />
+
+	<typeAlias alias="customerAppraise"
+		type="cn.com.thtf.egov.cms.entity.CustomerAppraiseEntity" />
+
+	<!-- 选择所有客户信用名称(根据条件)(llw) -->
+	<select id="customerCredit.queryCustomerCreditLimitByCondition" resultClass="dtoCustomerCredit" parameterClass="dtoCustomerCredit">
+		SELECT CUSTOMER.ID          AS CUSTOMERID,
+		       CC.ID,
+			   CC.PRODUCT_TYPE_ID   AS PRODUCTTYPEID,
+			   CC.CREDIT_TYPE_ID    AS CREDITTYPEID,
+		       CUSTOMER.NAME        AS CUSTOMERNAME,
+		       PTYPE.NAME        	AS PRODUCTTYPENAME,
+		       CTYPE.NAME        	AS CREDITTYPENAME,
+		       CC.PROJECT_NAME   	AS PROJECTNAME,
+		       CC.CLIMIT         	AS CREDITLIMIT,
+		       CC.ENABLE,
+		       CC.USER_NAME		 	AS USERNAME,
+		       CC.DATETIME,
+		       CC.ARTERM,
+		       CC.TIME_STAMP     	AS TIMESTAMP,
+		       RESULT.USED_LIMIT 	AS USEDCREDIT,
+		       RESULT.LOCK_LIMIT 	AS  LOCKCREDIT,
+		       IFNULL(RESULT.RETURN_MONEY,0) AS inTransitMoney,
+		       IFNULL(RCCD.exceed_owe_money,0) AS exceedOweMoney,
+			   IFNULL(RCCD.max_exceed_days,0) AS maxExceedDays,
+		       CC.CLIMIT - IFNULL(RESULT.USED_LIMIT,0) - IFNULL(RESULT.LOCK_LIMIT,0) + IFNULL(RESULT.RETURN_MONEY,0) AS CANUSECREDIT
+		FROM   CUSTOMER,
+		       PRODUCT_TYPE                           AS PTYPE,
+		       CREDIT_TYPE                            AS CTYPE,
+		       VIEW_RESULT_CUSTOMER_CREDIT_RESULTLIMT AS RESULT,
+		       <!-- 区域经理、大区经理 -->
+		       <isEqual prepend=" " property="roleId" compareValue="1920" >
+		       		(select user.user_area_id,uc.id,uc.customer_id
+						 from user_customer  uc,
+						user
+						where uc.user_id=user.id
+						and user.role_id=4
+						and user.user_area_id in (select user_area_id from user_area_mapping where user_id=#userId#)
+						group by uc.customer_id
+					)area,
+		       </isEqual>
+		       CUSTOMER_CREDIT                        AS CC
+		       LEFT JOIN  R_CUSTOMER_CREDIT_DETAIL  AS RCCD
+		       		ON RCCD.ID=CC.ID
+               <!--区域总监-->
+		       <isEqual prepend=","  property="roleId" compareValue="9">
+
+				(SELECT DISTINCT CD.CUSTOMER_ID,
+				                 PRODUCT_TYPE_ID
+				 FROM   CUSTOMER_CREDIT CD
+				 WHERE  CD.CUSTOMER_ID IN (SELECT DISTINCT CUSTOMER_ID
+				                           FROM   USER_CUSTOMER
+				                           WHERE  USER_ID IN (SELECT DISTINCT ID
+				                                              FROM   USER
+				                                              WHERE  ROLE_ID = 4
+				                                                     AND USER_AREA_ID = #userAreaId#))) AS A,
+				(SELECT PRODUCT_TYPE_ID
+						FROM
+						USER_PRODUCT 
+						WHERE
+						USER_ID = #userId#) UP
+		       </isEqual>	     		       		       
+		WHERE  CC.CUSTOMER_ID = RESULT.CUSTOMER_ID
+		       AND CC.PRODUCT_TYPE_ID = RESULT.PRODUCT_TYPE_ID
+		       AND CC.CREDIT_TYPE_ID = RESULT.CREDIT_TYPE_ID
+		       AND (( CC.PROJECT_NAME is null and RESULT.VIEW_PROJECT_NAME is null) or CC.PROJECT_NAME=RESULT.VIEW_PROJECT_NAME)
+		       AND CC.CUSTOMER_ID = CUSTOMER.ID
+		       AND CC.PRODUCT_TYPE_ID = PTYPE.ID
+		       AND CC.CREDIT_TYPE_ID = CTYPE.ID
+		         <!-- 区域经理、大区经理 -->
+		        <isEqual prepend="and" property="roleId" compareValue="1920" >
+		         	 area.customer_id=cc.customer_id
+		        </isEqual>
+		        <!--销售经理-->
+		       <isEqual prepend="and"  property="roleId" compareValue="4">
+		       		CUSTOMER.ID IN (
+						SELECT CUSTOMER_ID
+						FROM
+						USER_CUSTOMER 
+						WHERE
+						USER_ID = #userId#		       		
+		       		)
+		       		AND CC.PRODUCT_TYPE_ID IN (
+						SELECT PRODUCT_TYPE_ID
+						FROM
+						USER_PRODUCT 
+						WHERE
+						USER_ID = #userId#		       		
+		       		)
+		       </isEqual>
+		       
+               <!--销售助理-->
+		       <isEqual prepend="and"  property="roleId" compareValue="3">
+	                CC.PRODUCT_TYPE_ID IN (
+						SELECT PRODUCT_TYPE_ID
+						FROM
+						USER_AREA_PRODUCT 
+						WHERE
+						USER_ID = #userId#		       		
+		       		)
+		       </isEqual>
+		       
+               <!--销售总监、信用专员、采购专员、产品总监、采购主管-->
+		       <isEqual prepend="and"  property="roleId" compareValue="5681011">
+	                CC.PRODUCT_TYPE_ID IN (
+						SELECT PRODUCT_TYPE_ID
+						FROM
+						USER_PRODUCT 
+						WHERE
+						USER_ID = #userId#		       		
+		       		)
+		       </isEqual>		       		       		       
+
+               <!--区域总监-->
+		       <isEqual prepend="and"  property="roleId" compareValue="9">
+		       		UP.PRODUCT_TYPE_ID = A.PRODUCT_TYPE_ID 
+		       		AND CC.PRODUCT_TYPE_ID = A.PRODUCT_TYPE_ID
+		       		AND PTYPE.ID = A.PRODUCT_TYPE_ID
+		       		AND CUSTOMER.ID = A.CUSTOMER_ID
+		       </isEqual>	
+		       
+		       <isNotEmpty prepend="and" property="customerName">
+		       	   customer.name like concat('%',#customerName#,'%')	
+		       </isNotEmpty>
+		       
+		       <isNotEmpty prepend="and" property="productTypeId">
+		       	   CC.PRODUCT_TYPE_ID = #productTypeId#	
+		       </isNotEmpty>
+		       
+		       <isNotEmpty prepend="and" property="creditTypeId">
+		       	   CC.CREDIT_TYPE_ID = #creditTypeId#	
+		       </isNotEmpty>
+		       
+		       <isNotEmpty prepend="and" property="creditLimit">
+		       	   cc.climit = #creditLimit#
+		       </isNotEmpty>
+		       
+		        <isNotEmpty prepend="and" property="arterm">
+		       	   cc.arterm = #arterm#		       
+		       </isNotEmpty>
+		       
+		       <isNotEmpty prepend="and" property="enable">
+		       	   cc.enable = #enable#
+		       </isNotEmpty>
+		  GROUP BY CC.ID     
+		  ORDER BY CUSTOMER.ID,CC.PRODUCT_TYPE_ID		  
+	</select>
+	
+	<!-- 查询所有用户信用的记录数 分页 by lilw -->
+	<select id="customerCredit.recordCount" parameterClass="dtoCustomerCredit"	resultClass="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM 
+		(SELECT CUSTOMER.ID
+		FROM   CUSTOMER,
+		       PRODUCT_TYPE                           AS PTYPE,
+		       CREDIT_TYPE                            AS CTYPE,
+		       VIEW_RESULT_CUSTOMER_CREDIT_RESULTLIMT AS RESULT,
+		        <!-- 区域经理、大区经理 -->
+		       <isEqual prepend=" " property="roleId" compareValue="1920" >
+		       		(select user.user_area_id,uc.id,uc.customer_id
+						 from user_customer  uc,
+						user
+						where uc.user_id=user.id
+						and user.role_id=4
+						and user.user_area_id in (select user_area_id from user_area_mapping where user_id=#userId#)
+						group by uc.customer_id
+					)area,
+		       </isEqual>
+		       CUSTOMER_CREDIT                        AS CC
+               <!--区域总监-->
+		       <isEqual prepend=","  property="roleId" compareValue="9">
+
+				(SELECT DISTINCT CD.CUSTOMER_ID,
+				                 PRODUCT_TYPE_ID
+				 FROM   CUSTOMER_CREDIT CD
+				 WHERE  CD.CUSTOMER_ID IN (SELECT DISTINCT CUSTOMER_ID
+				                           FROM   USER_CUSTOMER
+				                           WHERE  USER_ID IN (SELECT DISTINCT ID
+				                                              FROM   USER
+				                                              WHERE  ROLE_ID = 4
+				                                                     AND USER_AREA_ID = #userAreaId#))) AS A,
+				(SELECT PRODUCT_TYPE_ID
+						FROM
+						USER_PRODUCT 
+						WHERE
+						USER_ID = #userId#) UP
+		       </isEqual>			       
+		WHERE  CC.CUSTOMER_ID = RESULT.CUSTOMER_ID
+		       AND CC.PRODUCT_TYPE_ID = RESULT.PRODUCT_TYPE_ID
+		       AND CC.CREDIT_TYPE_ID = RESULT.CREDIT_TYPE_ID
+		       AND CC.CUSTOMER_ID = CUSTOMER.ID
+		       AND (( CC.PROJECT_NAME is null and RESULT.VIEW_PROJECT_NAME is null) or CC.PROJECT_NAME=RESULT.VIEW_PROJECT_NAME)
+		       AND CC.PRODUCT_TYPE_ID = PTYPE.ID
+		       AND CC.CREDIT_TYPE_ID = CTYPE.ID
+		        <!-- 区域经理、大区经理 -->
+		        <isEqual prepend="and" property="roleId" compareValue="1920" >
+		         	 area.customer_id=cc.customer_id
+		        </isEqual>
+		        <!--销售经理-->
+		       <isEqual prepend="and"  property="roleId" compareValue="4">
+		       		CUSTOMER.ID IN (
+						SELECT CUSTOMER_ID
+						FROM
+						USER_CUSTOMER 
+						WHERE
+						USER_ID = #userId#		       		
+		       		)
+		       		AND CC.PRODUCT_TYPE_ID IN (
+						SELECT PRODUCT_TYPE_ID
+						FROM
+						USER_PRODUCT 
+						WHERE
+						USER_ID = #userId#		       		
+		       		)
+		       </isEqual>
+
+               <!--销售助理-->
+		       <isEqual prepend="and"  property="roleId" compareValue="3">
+	                CC.PRODUCT_TYPE_ID IN (
+						SELECT PRODUCT_TYPE_ID
+						FROM
+						USER_AREA_PRODUCT 
+						WHERE
+						USER_ID = #userId#		       		
+		       		)
+		       </isEqual>
+		       
+               <!--销售总监、信用专员、采购专员、产品总监、采购主管-->
+		       <isEqual prepend="and"  property="roleId" compareValue="5681011">
+	                CC.PRODUCT_TYPE_ID IN (
+						SELECT PRODUCT_TYPE_ID
+						FROM
+						USER_PRODUCT 
+						WHERE
+						USER_ID = #userId#		       		
+		       		)
+		       </isEqual>		       		       		       
+
+               <!--区域总监-->
+		       <isEqual prepend="and"  property="roleId" compareValue="9">
+		       		UP.PRODUCT_TYPE_ID = A.PRODUCT_TYPE_ID
+		       		AND CC.PRODUCT_TYPE_ID = A.PRODUCT_TYPE_ID
+		       		AND PTYPE.ID = A.PRODUCT_TYPE_ID 
+		       		AND CUSTOMER.ID = A.CUSTOMER_ID
+		       </isEqual>	
+ 		       
+		       <isNotEmpty prepend="and" property="customerName">
+		       	   customer.name like concat('%',#customerName#,'%')	
+		       </isNotEmpty>
+		       
+		       <isNotEmpty prepend="and" property="productTypeId">
+		       	   CC.PRODUCT_TYPE_ID = #productTypeId#	
+		       </isNotEmpty>
+		       
+		       <isNotEmpty prepend="and" property="creditTypeId">
+		       	   CC.CREDIT_TYPE_ID = #creditTypeId#	
+		       </isNotEmpty>
+		       
+		       <isNotEmpty prepend="and" property="creditLimit">
+		       	   cc.climit = #creditLimit#
+		       </isNotEmpty>
+		       
+		        <isNotEmpty prepend="and" property="arterm">
+		       	   cc.arterm = #arterm#		       
+		       </isNotEmpty>
+		       
+		       <isNotEmpty prepend="and" property="enable">
+		       	   cc.enable = #enable#
+		       </isNotEmpty>
+		  GROUP BY CC.ID     
+		  ORDER BY CUSTOMER.ID,CC.PRODUCT_TYPE_ID ) T		       
+	</select>
+	
+	<!-- 查询所有信用类型的记录数 -->
+	<select id="creditType.recordCount"  parameterClass="dtoCustomerCredit"	resultClass="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM   CREDIT_TYPE
+	</select>	
+	
+	<!-- 查询user负责客户的记录数  by lilw-->
+	<select id="customerNew.recordCount"
+		resultClass="java.lang.Integer" parameterClass="java.util.HashMap">
+		
+			SELECT COUNT(*)
+			FROM   CUSTOMER
+			<isNotEmpty prepend="where" property="customerName">
+		       	   CUSTOMER.NAME LIKE '%$customerName$%'		       
+		    </isNotEmpty>
+	</select>
+
+	<!-- 选择所有信用类型 -->
+	<select id="creditType.findAllCreditType" resultClass="credittype">
+		SELECT   ID,
+        		 NAME
+		FROM     CREDIT_TYPE
+		ORDER BY ID
+	</select>
+	
+	<!-- 根据ID查找信用类型-->
+	<select id="findCreditTypeById" resultClass="credittype"
+		parameterClass="java.lang.String">
+		SELECT ID,NAME
+		FROM   CREDIT_TYPE
+		WHERE  ID = #id#
+	</select>
+	
+	<!-- 修改信用类型 -->
+	<update id="updateCreditType" parameterClass="credittype">
+		UPDATE CREDIT_TYPE
+		SET    NAME = #name#
+		WHERE  ID = #id#
+	</update>
+    
+    <!-- 添加客户信用  by lilw-->
+	<insert id="insertCustomerCreditLimit" parameterClass="dtoCustomerCredit">
+		INSERT INTO CUSTOMER_CREDIT
+           (CUSTOMER_ID,
+            CREDIT_TYPE_ID,
+            PRODUCT_TYPE_ID,
+            PROJECT_NAME,
+            ENABLE,
+            ARTERM,
+            CLIMIT,
+            USER_ID,
+            USER_NAME,
+            DATETIME,
+            TIME_STAMP,
+            TEXT,
+            agreement_Code)
+		VALUES     
+		   (#customerId#,
+            #creditTypeId#,
+            #productTypeId#,
+            #projectName#,
+            #enable#,
+            #arterm#,
+            #creditLimit#,
+            #userId#,
+            #userName#,
+            #datetime#,
+            now(),
+            #text#,
+            #agreementCode#);
+	</insert>
+		
+	<!-- 删除信用类型  by lilw-->
+	<delete id="deleteCustomerCreditLimit" parameterClass="dtoCustomerCredit">
+			DELETE FROM CUSTOMER_CREDIT 
+			WHERE       ID = #id#
+			AND			TIME_STAMP = #timeStamp#
+	</delete>
+	
+
+	<!-- 修改客户信用  by lilw -->
+	<update id="updateCustomerCreditLimit" parameterClass="dtoCustomerCredit">
+			UPDATE  CUSTOMER_CREDIT
+			SET     CREDIT_TYPE_ID = #creditTypeId#,
+       				CLIMIT = #creditLimit#,
+       				ARTERM = #arterm#,
+       				ENABLE = #enable#,
+       				USER_ID= #userId#,
+       				USER_NAME = #userName#,
+       				project_name = #projectName#,
+       				agreement_Code = #agreementCode#,
+       				TEXT=#text#,
+       				DATETIME = #datetime#
+			WHERE  ID = #id#
+				   AND TIME_STAMP = #timeStamp#
+	</update>
+	
+	<!-- 判断项目名称是否存在-->
+	<select id="credit.selectProjectNameByCondtion" resultClass="java.lang.Integer" parameterClass="java.util.HashMap">
+		SELECT COUNT(* )
+		FROM   CUSTOMER_CREDIT
+		WHERE  CUSTOMER_ID = #customerId#
+		       AND PROJECT_NAME = #projectName#
+	</select>
+	
+	<!--  查看所有产品分类信用额度   信用主管登陆-->
+	<select id="prodAssortCreditLimitForCreditAdmin.findAllProdAssortCreditLimit" resultClass="proCreditTypeLimit">
+		SELECT PRODID,
+		       PRODNAME,
+		       CRDTTPID,
+		       CRDTTPNAME,
+		       TOTALLIMIT,
+		       ASSIGNEDLIMIT,
+		       UNASSIGNEDLIMIT,
+		       USEDLIMIT,
+		       LOCKEDLIMIT,
+		       FREELIMIT
+		FROM   VIEW_RESULT_CREDIT_TYPE CRCT
+		ORDER BY PRODID ASC
+	</select>
+	<!-- 查询所有产品类型信用额度记录数 信用主管登陆 -->
+	<select id="prodAssortCreditLimitForCreditAdmin.recordCount"
+		resultClass="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM   VIEW_RESULT_CREDIT_TYPE
+	</select>
+
+	<!--  查看所有产品分类信用额度   除去信用主管-->
+	<select id="prodAssortCreditLimit.findAllProdAssortCreditLimit" parameterClass="proCreditTypeLimit" resultClass="proCreditTypeLimit">
+		SELECT PRODID,
+		       PRODNAME,
+		       CRDTTPID,
+		       CRDTTPNAME,
+		       TOTALLIMIT,
+		       ASSIGNEDLIMIT,
+		       UNASSIGNEDLIMIT,
+		       USEDLIMIT,
+		       LOCKEDLIMIT,
+		       FREELIMIT
+		FROM   VIEW_RESULT_CREDIT_TYPE CRCT,
+		       USER,
+		       USER_PRODUCT UP
+		WHERE  USER.ENABLE = 1
+		       AND USER.ID = UP.USER_ID
+		       AND CRCT.PRODID = UP.PRODUCT_TYPE_ID
+		       AND USER.ID = #userId#
+		ORDER BY PRODID ASC
+	</select>
+	<!-- 查看所有产品分类信用额度记录数  非信用主管 -->
+	<select id="prodAssortCreditLimit.recordCount"
+		resultClass="java.lang.Integer" parameterClass="proCreditTypeLimit">
+		SELECT COUNT(*)
+		FROM   VIEW_RESULT_CREDIT_TYPE VRCT,
+			   USER,
+			   USER_PRODUCT UP
+		WHERE  USER.ENABLE = 1
+			   AND USER.ID = UP.USER_ID
+			   AND VRCT.PRODID = UP.PRODUCT_TYPE_ID
+			   AND USER.ID = #userId#
+	</select>
+	<!-- 根据id查询用户信用 (llw)-->
+	<select id="queryCustomerCreditLimitById" parameterClass="java.lang.Integer" resultClass="dtoCustomerCredit">
+				
+		SELECT CREDIT.ID                 AS ID,
+		       CREDIT.CUSTOMER_ID        AS CUSTOMERID,
+		       CREDIT.PRODUCT_TYPE_ID    AS PRODUCTTYPEID,
+		       CREDIT.CREDIT_TYPE_ID     AS CREDITTYPEID,
+		       CREDIT.PROJECT_NAME       AS PROJECTNAME,
+		       CREDIT.CLIMIT             AS CREDITLIMIT,
+		       USER_ID                   AS USERID,
+		       USER_NAME                 AS USERNAME,
+		       CREDIT.DATETIME,
+		       CREDIT.ENABLE,
+		       CREDIT.ARTERM,
+		       CUSTOMER.NAME             AS CUSTOMERNAME,
+		       CTYPE.NAME                AS CREDITTYPENAME,
+		       PTYPE.NAME                AS PRODUCTTYPENAME,
+		       IFNULL(LIM.CLIMIT,0)      AS DISTRIBUTECREDIT,
+		       CREDIT.TIME_STAMP         AS TIMESTAMP,
+		       RESULT.LOCK_LIMIT         AS LOCKCREDIT,
+		       RESULT.USED_LIMIT 		 as USEDCREDIT,
+		       CREDIT.TEXT 				AS text,
+		       CREDIT.agreement_Code 		 as agreementCode
+		FROM   CUSTOMER_CREDIT AS CREDIT
+		       LEFT JOIN CREDIT_TYPE_LIMIT AS LIM
+		         ON CREDIT.PRODUCT_TYPE_ID = LIM.PRODUCT_TYPE_ID
+		            AND CREDIT.CREDIT_TYPE_ID = LIM.CREDIT_TYPE_ID
+		       LEFT JOIN VIEW_RESULT_CUSTOMER_CREDIT_RESULTLIMT AS RESULT
+		         ON CREDIT.CUSTOMER_ID = RESULT.CUSTOMER_ID
+		            AND CREDIT.PRODUCT_TYPE_ID = RESULT.PRODUCT_TYPE_ID
+		            AND CREDIT.CREDIT_TYPE_ID = RESULT.CREDIT_TYPE_ID
+		             
+					AND (( CREDIT.PROJECT_NAME is null and RESULT.VIEW_PROJECT_NAME is null) or CREDIT.PROJECT_NAME=RESULT.VIEW_PROJECT_NAME),
+		       CUSTOMER,
+		       CREDIT_TYPE AS CTYPE,
+		       PRODUCT_TYPE AS PTYPE
+		WHERE  CREDIT.ID = #id#
+		       AND CREDIT.CUSTOMER_ID = CUSTOMER.ID
+		       AND CREDIT.PRODUCT_TYPE_ID = PTYPE.ID
+		       AND CREDIT.CREDIT_TYPE_ID = CTYPE.ID
+		GROUP BY CREDIT.ID       
+		      
+
+	</select>	
+
+	<!--  对产品分类信用额度进行修改 -->
+	<update id="updateProdAssortCreditLimit" parameterClass="proCreditTypeLimit">
+		UPDATE CREDIT_TYPE_LIMIT
+		SET    CLIMIT = #totalLimit#
+		WHERE  PRODUCT_TYPE_ID = #prodId#
+       		   AND CREDIT_TYPE_ID = #crdttpId#
+			   AND TIME_STAMP = #timeStamp#
+	</update>
+
+
+	<!--取的对应产品分类信用额度的相关数据-->	
+	<select id="getProdAssortCreditLimit" parameterClass="proCreditTypeLimit" resultClass="proCreditTypeLimit">
+		SELECT PT.ID                                                               AS PRODID,
+		       SELFTBL.CREDIT_TYPE_ID                                              AS CRDTTPID,
+			   PT.NAME                                                             AS PRODNAME,
+		       SELFTBL.NAME                                                        AS CRDTTPNAME,
+		       IFNULL(PT.CLIMIT,0) - IFNULL(CTL.CLIMIT,0)                          AS FREELIMIT,
+		       IFNULL(SELFTBL.CLIMIT,0)                                            AS SELFLIMIT,
+		       IFNULL(CUSTOMERCREDIT.ASSIGNEDLIMIT,0)                              AS ASSIGNEDLIMIT,
+		       IFNULL(SELFTBL.CLIMIT,0) - IFNULL(CUSTOMERCREDIT.ASSIGNEDLIMIT,0)   AS UNASSIGNEDLIMIT,
+		       SELFTBL.TIME_STAMP                                                  AS TIMESTAMP
+		FROM   PRODUCT_TYPE PT
+		       LEFT JOIN (SELECT   PRODUCT_TYPE_ID,
+		                           CREDIT_TYPE_ID,
+		                           SUM(CLIMIT)       AS CLIMIT
+		                  FROM     CREDIT_TYPE_LIMIT
+		                  WHERE    PRODUCT_TYPE_ID = #prodId#
+		                           AND CREDIT_TYPE_ID != #crdttpId#
+		                  GROUP BY PRODUCT_TYPE_ID) AS CTL
+		         ON PT.ID = CTL.PRODUCT_TYPE_ID
+		       LEFT JOIN (SELECT   CTL.PRODUCT_TYPE_ID,
+		                           CTL.CREDIT_TYPE_ID,
+		                           CT.NAME,
+								   CTL.TIME_STAMP,
+		                           SUM(IFNULL(CTL.CLIMIT,0))    AS CLIMIT
+		                  FROM     CREDIT_TYPE_LIMIT CTL,
+		                           CREDIT_TYPE CT
+		                  WHERE    PRODUCT_TYPE_ID = #prodId#
+		                           AND CREDIT_TYPE_ID = #crdttpId#
+		                           AND CT.ID = CREDIT_TYPE_ID
+		                  GROUP BY PRODUCT_TYPE_ID,CREDIT_TYPE_ID) AS SELFTBL
+		         ON PT.ID = SELFTBL.PRODUCT_TYPE_ID
+		       LEFT JOIN (SELECT   CC.PRODUCT_TYPE_ID,
+		                           CC.CREDIT_TYPE_ID,
+		                           SUM(IFNULL(CC.CLIMIT,0))          AS ASSIGNEDLIMIT
+		                  FROM     CUSTOMER_CREDIT CC,
+		                           CREDIT_TYPE CT
+		                  WHERE    CC.ENABLE = 1
+		                           AND CC.CREDIT_TYPE_ID = CT.ID
+		                           AND CC.PRODUCT_TYPE_ID = #prodId#
+		                           AND CC.CREDIT_TYPE_ID = #crdttpId#
+		                  GROUP BY CC.PRODUCT_TYPE_ID,CC.CREDIT_TYPE_ID) AS CUSTOMERCREDIT
+		         ON SELFTBL.PRODUCT_TYPE_ID = CUSTOMERCREDIT.PRODUCT_TYPE_ID
+		            AND SELFTBL.CREDIT_TYPE_ID = CUSTOMERCREDIT.CREDIT_TYPE_ID
+		WHERE  PT.ID = #prodId#
+	</select>
+		
+	<!--添加产品信用类型额度-->
+	<insert id="insertProdAssortCreditLimit" parameterClass="proCreditTypeLimit">
+		INSERT INTO CREDIT_TYPE_LIMIT
+					(PRODUCT_TYPE_ID,
+            		CREDIT_TYPE_ID,
+            		CLIMIT,
+	                TIME_STAMP)
+		VALUES     (#prodId#,
+					#crdttpId#,
+					$totalLimit$,
+	                now())
+	</insert>
+
+	<!-- 取得用户信用时间戳根据id (llw)-->
+	<select id="getCustomerCreditTimestamp" resultClass="java.sql.Timestamp" parameterClass="java.lang.Integer">
+		SELECT TIME_STAMP 
+		FROM CUSTOMER_CREDIT
+		WHERE ID = #id#
+	</select>
+	
+	<!-- 检查用户信用是否存在根据roduct_type_id,credit_type_id,customer_id (llw)-->
+	<select id="isCustomerCreditExist" resultClass="java.lang.Integer" parameterClass="dtoCustomerCredit">
+		
+		SELECT COUNT(*)
+		
+		FROM   CUSTOMER_CREDIT AS CREDIT,
+       			CREDIT_TYPE AS CTYPE
+       			
+		WHERE  CUSTOMER_ID = #customerId#
+       		AND PRODUCT_TYPE_ID = #productTypeId#       		
+       		AND CREDIT_TYPE_ID != 5
+       		
+	</select>
+	
+	
+	<!-- 查询用户信用的已用额度根据id (llw)-->
+	<select id="getUsedCreditById" resultClass="java.lang.Double" parameterClass="java.lang.Integer">
+		SELECT USED_LIMIT 
+		FROM CUSTOMER_CREDIT AS CREDIT		    
+		     LEFT JOIN VIEW_RESULT_CUSTOMER_CREDIT_RESULTLIMT AS RESULT
+		         ON CREDIT.CUSTOMER_ID = RESULT.CUSTOMER_ID
+		            AND CREDIT.PRODUCT_TYPE_ID = RESULT.PRODUCT_TYPE_ID
+		            AND CREDIT.CREDIT_TYPE_ID = RESULT.CREDIT_TYPE_ID 
+					AND (( CREDIT.PROJECT_NAME is null and RESULT.VIEW_PROJECT_NAME is null) or CREDIT.PROJECT_NAME=RESULT.VIEW_PROJECT_NAME)
+		WHERE CREDIT.ID = #ID#
+		GROUP BY CREDIT.ID
+		      
+	</select>
+	
+	<!-- 根据product_type_id和credit_type_id 查询总信用额度 (llw) -->
+	<select id="queryTotalClimt" parameterClass="dtoCustomerCredit" resultClass="dtoCustomerCredit">
+		SELECT 0 AS CREDITLIMIT,
+		       LIM.PRODUCT_TYPE_ID AS PRODUCTTYPEID,
+		       LIM.CREDIT_TYPE_ID AS CREDITTYPEID,
+		       IFNULL(LIM.CLIMIT,0)
+		         - IFNULL(CUSTOMER.CLIMITTOTAL,0) AS DISTRIBUTECREDIT
+		FROM   CREDIT_TYPE_LIMIT AS LIM,
+		       (SELECT SUM(CLIMIT) AS CLIMITTOTAL
+		        FROM   CUSTOMER_CREDIT AS CC
+		        WHERE  CC.PRODUCT_TYPE_ID = #productTypeId#
+		               AND CC.CREDIT_TYPE_ID = #creditTypeId#) AS CUSTOMER
+		WHERE  LIM.PRODUCT_TYPE_ID = #productTypeId#
+		       AND LIM.CREDIT_TYPE_ID = #creditTypeId#
+	</select>	
+	
+	
+	<!-- 根据product_type_id和credit_type_id 更新总可分配额度 (llw) -->
+	<update id="updateTotalDistributeClimt" parameterClass="creditTypeLimitNew" >
+			
+			UPDATE CREDIT_TYPE_LIMIT AS LIM 
+			SET    TIME_STAMP = #timeStamp#		
+			WHERE LIM.PRODUCT_TYPE_ID = #productTypeId#
+				  AND LIM.CREDIT_TYPE_ID = #creditTypeId#
+	</update>
+
+	
+	<!-- 查询user负责的全部客户 -->
+	<select id="customerNew.findAllCustomerOfUser" resultClass="customerNew" parameterClass="java.util.HashMap">
+		
+			SELECT CUSTOMER.ID,
+			       NAME,
+			       AREA,
+			       PROVINCE,
+			       CITY,
+			       ADDRESS,
+			       POSTCODE,
+			       CUSTOMER.INVOICE_BANK_NAME    AS INVOICEBANKNAME,
+			       CUSTOMER.INVOICE_BANK_ACCOUNT AS INVOICEBANKACCOUNT,
+			       CUSTOMER.TAX_NUMBER           AS TAXNUMBER,
+			       CUSTOMER.INVOICE_BANK_ADDRESS AS INVOICEBANKADDRESS,
+			       CUSTOMER.INVOICE_BANK_TEL     AS INVOICEBANKTEL,
+			       CUSTOMER.INVOICE_TYPE         AS INVOICETYPE,
+			       CUSTOMER.TAX_RATE             AS TAXRATE,
+			       CUSTOMER.REMIT_BANK_NAME      AS REMITBANKNAME,
+			       CUSTOMER.REMIT_BANK_ACCOUNT   AS REMITBANKACCOUNT
+			FROM   CUSTOMER		       
+			
+			       
+			   <isNotEmpty prepend="where" property="customerName">
+		       	   CUSTOMER.NAME LIKE '%$customerName$%'		       
+		       </isNotEmpty>
+			       
+	</select>
+	
+	
+
+
+	<!--根据条件查找数据库中是否存在相同的记录-->
+	<select id="findCreditTypeByCondition" parameterClass="proCreditTypeLimit" resultClass="java.lang.Integer">
+		SELECT COUNT(* )
+		FROM   CREDIT_TYPE_LIMIT CTL
+		WHERE  CTL.PRODUCT_TYPE_ID = #prodId#
+		       AND CTL.CREDIT_TYPE_ID = #crdttpId#
+	</select>	       
+
+	<!--取得添加页面的可分配额度-->
+	<select id="getCanAssingClimit" parameterClass="java.lang.Integer" resultClass="java.lang.String">
+		SELECT IFNULL(PT.CLIMIT,0) - IFNULL(VCAL.CLIMIT,0) AS ASSIGNEDLIMIT
+		FROM   PRODUCT_TYPE PT
+		       LEFT JOIN VIEW_CREDIT_ASSIGNED_LIMIT VCAL
+		         ON PT.ID = VCAL.PRODID
+		WHERE  PT.ID = #prodId#
+	</select>
+
+	
+	<!--查询所有的信用类型-->
+	<select id="findAllCreditType" resultClass="credittype">
+		SELECT CT.ID,
+		       CT.NAME
+		FROM   CREDIT_TYPE CT
+	</select>
+	
+	<!--查询所有的产品分类-->
+	<select id="findAllProductType" resultClass="productTypeEntity" parameterClass="java.util.HashMap">
+		SELECT PT.ID,
+		       PT.NAME
+		FROM   PRODUCT_TYPE PT
+		<!--信用专员-->
+		<isEqual prepend="where"  property="roleId" compareValue="6">
+			PT.ID IN (
+				SELECT PRODUCT_TYPE_ID
+				FROM
+				USER_PRODUCT 
+				WHERE
+				USER_ID = #userId#		       		
+			)
+		</isEqual>		
+	</select>
+	
+	<!-- 产品分类信用类型额度删除 -->
+	<delete id="deleteProdAssortCreditTypeLimit" parameterClass="proCreditTypeLimit">
+		DELETE FROM CREDIT_TYPE_LIMIT
+		WHERE       CREDIT_TYPE_ID = #crdttpId#
+		            AND PRODUCT_TYPE_ID = #prodId#		
+	</delete>	
+
+	<!-- 取得客户信用类型已分配额度 -->
+	<select id="findCostomerAssignLimit" parameterClass="customerCreditEntity" resultClass="java.lang.String">	
+		SELECT   SUM(IFNULL(CC.CLIMIT,0))  AS CLIMIT
+		FROM     CUSTOMER_CREDIT CC
+		WHERE    CC.PRODUCT_TYPE_ID = #productTypeId#
+		         AND CC.CREDIT_TYPE_ID = #creditTypeId#
+		GROUP BY CC.PRODUCT_TYPE_ID,CC.CREDIT_TYPE_ID	
+	</select>
+	
+	<!--end             by zhaolei-->
+	
+	<!-- 查看所有产品分类信用总额 非信用主管 -->
+	<select id="creditTotalLimit.creditProductTypeAll" resultClass="productCredit" parameterClass="productCredit">
+		SELECT   PRODID,
+			     PRODNAME,
+			     TOTALLIMIT,
+			     ASSIGNEDLIMIT,
+			     UNASSIGNEDLIMIT,
+			     USEDLIMIT,
+			     LOCKEDLIMIT,
+			     FREELIMIT
+		FROM     VIEW_RESULT_PROD_CREDIT VRPC,
+			     USER,
+			     USER_PRODUCT UP
+		WHERE    USER.ENABLE = 1
+			     AND USER.ID = UP.USER_ID
+			     AND VRPC.PRODID = UP.PRODUCT_TYPE_ID
+			     AND USER.ID = #userId#
+	    ORDER BY PRODID
+	</select>
+	
+	<!-- 查询所有信用类型的记录数  非信用主管 -->
+	<select id="creditTotalLimit.recordCount"
+		resultClass="java.lang.Integer" parameterClass="productCredit">
+		SELECT COUNT(*)
+		FROM   VIEW_RESULT_PROD_CREDIT VRPC,
+			   USER,
+			   USER_PRODUCT UP
+		WHERE  USER.ENABLE = 1
+			   AND USER.ID = UP.USER_ID
+			   AND VRPC.PRODID = UP.PRODUCT_TYPE_ID
+			   AND USER.ID = #userId#
+	</select>
+	
+	<!-- 查看所有产品分类信用总额 信用主管 -->
+	<select id="creditTotalLimitCreMang.creditProductTypeAll" resultClass="productCredit">
+		SELECT   PRODID,
+			     PRODNAME,
+			     TOTALLIMIT,
+			     ASSIGNEDLIMIT,
+			     UNASSIGNEDLIMIT,
+			     USEDLIMIT,
+			     LOCKEDLIMIT,
+			     FREELIMIT
+		FROM     VIEW_RESULT_PROD_CREDIT VRPC
+		ORDER BY PRODID ASC
+	</select>
+		
+	<!-- 查询所有信用类型的记录数  信用主管 -->
+	<select id="creditTotalLimitCreMang.recordCount"
+		resultClass="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM   VIEW_RESULT_PROD_CREDIT VRPC
+	</select>
+		
+	<!-- 根据ID查看产品分类信用总额-->
+	<select id="findProdCreditLimitById" resultClass="productCredit"  parameterClass="java.lang.String">
+		SELECT PRODTYPE.ID                                                             AS PRODID,
+		       SUM(IFNULL(CRETYPEL.CLIMIT,0))                                          AS ASSIGNEDLIMIT,
+		       PRODTYPE.CLIMIT                                                         AS TOTALLIMIT,
+		       PRODTYPE.NAME                                                           AS PRODNAME,
+		       (IFNULL(PRODTYPE.CLIMIT,0) - SUM(IFNULL(CRETYPEL.CLIMIT,0)))            AS UNASSIGNEDLIMIT
+		FROM   PRODUCT_TYPE PRODTYPE
+		       LEFT JOIN CREDIT_TYPE_LIMIT CRETYPEL
+		         ON PRODTYPE.ID = CRETYPEL.PRODUCT_TYPE_ID
+		WHERE  PRODTYPE.ID = #prodid#
+		GROUP BY CRETYPEL.PRODUCT_TYPE_ID
+	</select>
+	
+	<!-- 修改产品分类信用总额 -->
+	<update id="updateProdCreditLimit" parameterClass="productype">
+		UPDATE  PRODUCT_TYPE
+		SET     PRODUCT_TYPE.CLIMIT = #climit#
+		WHERE   PRODUCT_TYPE.ID = #id#  	
+	</update>
+	
+	<!-- 根据修改条件查找信用类型是否存在-->
+	<select id="findNameByCondition" resultClass="java.lang.Integer"
+	    parameterClass="java.lang.String">
+	    SELECT COUNT(NAME)
+        FROM   CREDIT_TYPE
+        WHERE  NAME = #name#
+	</select>
+	
+	<!-- 查询所有已分配信用额度的产品分类  by llw-->
+	<select id="findAllHasClimitProductType" resultClass="productTypeEntity">
+		SELECT   PTYPE.ID,
+		         PTYPE.NAME
+		FROM     PRODUCT_TYPE AS PTYPE,
+		         CREDIT_TYPE_LIMIT AS LIM
+		WHERE    PTYPE.ID = LIM.PRODUCT_TYPE_ID
+		GROUP BY PTYPE.ID
+	
+	</select>	
+	
+	<!-- 查询所有产品类型下已分配信用额度的信用类型  by llw-->
+	<select id="findAllHasClimtCreditTypeByPid" resultClass="credittype" parameterClass="java.lang.Integer">
+		SELECT CTYPE.ID,
+		       CTYPE.NAME
+		FROM   CREDIT_TYPE AS CTYPE,
+		       CREDIT_TYPE_LIMIT AS LIM
+		WHERE  LIM.CREDIT_TYPE_ID = CTYPE.ID
+		       AND LIM.PRODUCT_TYPE_ID = #productTypeId#
+	
+	</select>
+
+	<!-- 更新客户信用表 时间戳 -->
+	<update id="updateCustomerCreditTimeStamp" parameterClass="customerCreditEntity">	
+		update 
+			customer_credit 
+		set 
+			time_stamp = now()
+		where
+				time_stamp = #timeStamp# 
+			and id = #id#
+	</update> 
+	<!-- 新增客户信用明细 -->
+	<insert id="insertCustomerCreditDetail" parameterClass="customerCreditDetail">
+		insert into
+			 customer_credit_detail(customer_credit_id,send_goods_id,product_id,money)
+		values 
+			(#customerCreditId#,#sendGoodsId#,#productId#,#money#) 
+	</insert>
+
+	<!-- 查询是否存在客户信用明细 -->
+	<select id="getCreditAndDetailByCondition" resultClass="customerCreditDto" parameterClass="customerCreditDetail">
+		select 
+			customer_credit.id as id,
+			customerCreditDetail.id as detileId,
+			customerCreditDetail.money as money,
+			customer_credit.time_stamp as timeStamp
+		from 
+			customer_credit left join 
+		(select id,money,customer_credit_id
+		 from customer_credit_detail 
+		 where 
+			 customer_credit_detail.product_id = #productId# 
+		 and customer_credit_detail.send_goods_id = #sendGoodsId#) as customerCreditDetail
+
+		 on customer_credit.id = customerCreditDetail.customer_credit_id
+
+		 where customer_credit.id = #customerCreditId#  
+	</select> 
+
+	<!-- 查询是否存在客户信用明细 -->
+	<select id="getCreditDetailByCondition" resultClass="customerCreditDto" parameterClass="customerCreditDetail">
+		select 
+			customer_credit.id as id,
+			customer_credit_detail.id as detileId,
+			customer_credit_detail.money as money,
+			customer_credit.time_stamp as timeStamp
+		from 
+			customer_credit,customer_credit_detail
+		where
+			product_id = #productId#
+		and	send_goods_id = #sendGoodsId#
+		and customer_credit.id = customer_credit_detail.customer_credit_id 
+	</select>
+
+	<!-- 更新客户信用明细表 使用额度 -->
+	<update id="updateCreditDetileMoney" parameterClass="customerCreditDetail">	
+		update 
+			customer_credit_detail 
+		set 
+			money = money + #money#
+		where
+			id = #id#
+	</update>
+
+	<!-- 更新客户评价表 发货金额 发货次数 -->
+	<update id="updateCustomerAppraise" parameterClass="customerAppraise">	
+		update 
+			customer_appraise 
+		set 
+			send_money = send_money + #sendMoney#,
+			send_count = send_count + #sendCount#
+		where
+				customer_id = #customerId#
+			and product_type_id = #productTypeId#
+	</update>
+
+	<!-- 删除客户信用明细 -->
+	<delete id="deleteCreditDetileById" parameterClass="java.lang.Integer">
+		delete from customer_credit_detail where id = #id#
+	</delete>
+
+	<!-- 删除客户信用明细 -->
+	<delete id="deleteCreditDetileBySendgoodsId" parameterClass="java.lang.String">
+		delete from customer_credit_detail where send_goods_id = #id#
+	</delete>
+	
+</sqlMap>

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans> 
+		<form-bean name="saleBackContractQuery" type="cn.com.thtf.egov.cms.form.SalesContractListForm"/>
+		<form-bean name="saleBackContractOfAddForm" type="cn.com.thtf.egov.cms.form.SaleBackContractOfAddForm"/>
+		
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>
+	
+		<!--销售退货合同管理  by lilewei-->
+		<action path="/salesBackContractManage"	
+			name="saleBackContractQuery"	    
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			parameter="salesBackContractManage"			
+			scope="request"
+			validate="false">
+			
+			<forward name="salesBackContractList" 
+				     path="/jsp/salesBackContract/salesBackContractManage.jsp" />
+		</action>
+		<!--新建销售退货合同 显示  by hanrubing-->
+		<action path="/addSalesBackContractOfShow" 
+			name="saleBackContractOfAddForm"
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			parameter="addSalesBackContractOfShow"			
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/salesBackContract/sellBackGoodsContract.jsp?type=add" />
+		</action>
+		<!--新建销售退货合同执行  by hanrubing-->
+		<action path="/addSalesBackContractOfTransact" 
+			name="saleBackContractOfAddForm"
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			parameter="addSalesBackContractOfTransact"			
+			scope="request"
+			validate="false">
+			<forward name="success" path="/salesBackContractManage.do?init=true" />
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>
+		<!--产品信息  by hanrubing-->
+		<action path="/getSalesBackContractOfGoodsInfo" 
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			parameter="getSalesBackContractOfGoodsInfo"			
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/salesBackContract/getGoodsInfo.jsp" />
+		</action>
+		<!--收获地址选择  by hanrubing-->
+		<action path="/getStoreRoomAddress" 
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			parameter="getStoreRoomAddress"			
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/salesBackContract/storeRoomReceiveAddress.jsp" />
+		</action>		
+		
+		<!--销售退货合同查看  by lilewei-->
+		<action path="/salesBackContractCheck"		 
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			parameter="salesBackContractCheck"			
+			scope="request"
+			validate="false">	
+					
+			<forward name="fail" 
+			         path="/salesBackContractManage.do?init=true" />
+			<forward name="success" 
+			         path="/jsp/salesBackContract/salesBackContractCheck.jsp" />
+		</action>
+		
+		<!--销售退货合同预览  by lilewei-->
+		<action path="/salesBackContractPreview" 		 
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			parameter="salesBackContractPreview"			
+			scope="request"
+			validate="false">	
+					
+			<forward name="fail" 
+			         path="/salesBackContractManage.do?init=true" />
+			<forward name="success" 
+			         path="/jsp/salesBackContract/salesBackContractPreview.jsp" />
+		</action>
+		
+		<!--销售退货合同文件下载(Ajax)  by lilewei-->
+		<action path="/downloadSalesBackContractFile" 		 
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			parameter="downloadSalesBackContractFile"			
+			scope="request"
+			validate="false">	
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+			<forward name="preview" 
+			         path="/salesBackContractPreview.do?salesContractId=" redirect="true"/>		
+		</action>
+		<!--销售退货合同 修改显示-->
+		<action path="/modifySalesBackContractOfShow" 		 
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			name="saleBackContractOfAddForm"
+			parameter="modifySalesBackContractOfShow"			
+			scope="request"
+			validate="false">	
+			
+			<forward name="success" path="/jsp/salesBackContract/sellBackGoodsContract.jsp?type=modify" />	
+		</action>
+		<!--销售退货合同 修改执行-->
+		<action path="/modifySalesBackContractOfTransact" 		 
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			name="saleBackContractOfAddForm"
+			parameter="modifySalesBackContractOfTransact"			
+			scope="request"
+			validate="false">	
+			<forward name="success" path="/salesBackContractManage.do?init=true" />
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>
+		<!--销售退货合同评审 查看-->
+		<action path="/commentSalesBackContractOfShow" 		 
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			name="saleBackContractOfAddForm"
+			parameter="commentSalesBackContractOfShow"			
+			scope="request"
+			validate="false">	
+			<forward name="success" path="/jsp/salesBackContract/saleBackGoodsContractOfComment.jsp" />
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />	
+		</action>
+		<!--销售退货合同评审 执行-->
+		<action path="/commentSalesBackContractOfTransact" 		 
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			name="saleBackContractOfAddForm"
+			parameter="commentSalesBackContractOfTransact"			
+			scope="request"
+			validate="false">	
+			<forward name="success" path="/salesBackContractManage.do?init=true" />
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />	
+		</action>
+		<!--销售退货合同删除-->
+		<action path="/deleteSalesBackContract" 		 
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			name="saleBackContractOfAddForm"
+			parameter="deleteSalesBackContract"			
+			scope="request"
+			validate="false">	
+			<forward name="success" path="/salesBackContractManage.do" />
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />	
+		</action>
+		<!--销售退货合同 查看评审表-->
+		<action path="/lookCommentTable" 		 
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			name="saleBackContractOfAddForm"
+			parameter="lookCommentTable"			
+			scope="request"
+			validate="false">	
+			<forward name="success" path="/jsp/salesBackContract/auditPreview.jsp?print=false" />	
+		</action>	
+		<!--销售退货合同 打印评审表-->
+		<action path="/printCommentTable" 		 
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			name="saleBackContractOfAddForm"
+			parameter="printCommentTable"			
+			scope="request"
+			validate="false">	
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>					
+		<!--销售退货合同 确认-->
+		<action path="/decideSaleBackContract" 		 
+			type="cn.com.thtf.egov.cms.action.salesBackContract.SalesBackContractAction"
+			name="saleBackContractOfAddForm"
+			parameter="decideSaleBackContract"			
+			scope="request"
+			validate="false">	
+			<forward name="success" path="/salesBackContractManage.do?init=true" redirect="true"/>	
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>			
+	</action-mappings>
+</struts-config>

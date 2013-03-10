@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+
+  <!-- 销售合同总额 销售总监评审/销售总监助理评审 的界定值（元） -->
+  <contract_money>1000000.00</contract_money>
+  
+  <!-- 销售合同总利率 销售总监评审/销售总监助理评审 的界定值（%）-->
+  <contract_rate>5</contract_rate>
+
+  <!-- 采购合同总额 运营总监评审/运营总监助理评审 的界定值（元） -->
+  <buy_contract_money>500000.00</buy_contract_money>
+
+  <!-- 采购合同产品采购增长率 运营总监评审/运营总监助理评审 的界定值（%） -->
+  <prod_growth_rate>10</prod_growth_rate>
+  
+  <!-- 采购付款金额 运营总监评审/运营总监助理评审 的界定值（元） -->
+  <purchase_money>0</purchase_money>
+  
+  <!-- 销售合同签订地点 -->
+  <sell_place>北京市海淀区</sell_place>
+  
+  <!-- 销售合同保价期限（天） -->
+  <sell_protect>60</sell_protect>
+  
+  <!-- 销售合同验收期限（天） -->
+  <sell_check>2</sell_check>
+  
+  <!-- 销售合同违约金标准 -->
+  <sell_break>欠款总额的1%/日</sell_break>
+  
+  <!-- 销售合同诉讼地 -->
+  <sell_lawsuit>合同签订地的人民法院提起诉讼</sell_lawsuit>
+
+  <!-- 上传、下载文件目录名 -->
+  <dir_name>upload</dir_name>  
+
+  <!-- 销售合同 下载文件名前缀 -->
+  <sell_prefix_name>销售合同_</sell_prefix_name>  
+  
+  <!-- 销售退货合同 下载文件名前缀 -->
+  <sell_back_prefix_name>销售退货合同_</sell_back_prefix_name>    
+  
+  <!-- 采购合同 下载文件名前缀 -->
+  <buy_prefix_name>采购合同_</buy_prefix_name> 
+  
+  <!-- 采购退货合同 下载文件名前缀 -->
+  <buy_back_prefix_name>采购退货合同_</buy_back_prefix_name>    
+  
+  <!-- 发送邮件服务器的IP或URL -->
+  <mail_server_host>smtp.thtf.com.cn</mail_server_host>
+  
+  <!-- 发送邮件服务器的端口 -->
+  <mail_server_port>25</mail_server_port>
+  
+  <!-- 是否需要身份验证 -->
+  <auth_validate>true</auth_validate>
+  
+  <!-- 简单协议 -->
+  <mail_smtp_host>mail.smtp.host</mail_smtp_host>
+
+  <!-- 发送授权认证 -->
+  <mail_smtp_auth>mail.smtp.auth</mail_smtp_auth>
+
+  <!-- 发送协议 -->
+  <mail_send_confer>smtp</mail_send_confer>
+  
+  <!-- 邮件发送者的地址 -->
+  <from_address>cms_server@thtf.com.cn</from_address>
+  
+  <!-- 发件人昵称 -->
+  <nickname>系统管理员</nickname>
+  
+  <!-- 邮件接收者的地址 
+  <to_address>liuqg@bbut.com.cn</to_address>-->  
+  
+  <!-- 登陆邮件发送服务器的用户名 -->  
+  <user_name>cms_server</user_name>
+  
+  <!-- 登陆邮件发送服务器的用密码 -->
+  <password>600100</password>
+  
+  <!-- 邮件主题 -->
+  <subject>清华同方</subject> 
+  
+  <!-- 邮件格式 -->
+  <mail_type>html</mail_type>
+
+  <!-- 编码方式 -->
+  <mail_type_coding>text/html;charset=utf-8</mail_type_coding>
+  
+  <!-- 财务邮件模版路径及文件名-->
+  <fina_template>FinaTemplate\\finaTemplate.ftl</fina_template>
+  <!-- k3邮件模版路径及文件名-->
+  <k3_sendgoods_template>K3Template\\sendgoodTemplate.ftl</k3_sendgoods_template>
+  <!-- K3入库单模版  -->  
+  <k3_incomeStock_template>K3Template\\incomeStockTemplate.ftl</k3_incomeStock_template>
+  <!-- k3邮件接收者的地址 -->  
+  <k3_to_address>imain@163.com</k3_to_address>
+  <!-- k3收件人姓名 -->  
+  <k3_to_name>K3管理员</k3_to_name>
+
+  <!-- 发货异常邮件模版路径及文件名 -->
+  <err_sendgoods_template>sendgoodsErrTemplate\\sendgoodsErrTemplate.ftl</err_sendgoods_template> 
+  <!-- 发货异常收件人姓名  
+  <err_to_name>销售经理</err_to_name>--> 
+
+  <!-- 回款邮件模版路径及文件名 -->  
+  <return_template>returnTemplate\\returnTemplate.ftl</return_template> 
+  <!-- 资金管理员接收者的地址 -->  
+  <return_to_address>liuqg@bbut.com.cn</return_to_address>
+  <!-- 资金管理员收件人姓名 -->  
+  <return_name>资金管理员</return_name>
+
+  <!-- 宽限天数 -->
+  <extend_exceed_days>7</extend_exceed_days>
+  
+  <!--上传文件大小 缺省5M 5 * 1024000 注意更新下面的错误提示信息 -->
+  <max_post_size>5120000</max_post_size>
+  
+  <!--上传文件过大导致失败的错误提示-->
+  <max_post_size_err_msg>文件不能大于5M</max_post_size_err_msg>
+  
+  <!--每页显示的记录条数-->
+  <default_page_size>10</default_page_size>
+</config>

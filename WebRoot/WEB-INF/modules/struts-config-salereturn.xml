@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+	<!--		列表  -->
+		<form-bean name="returnGoodsListForm" type="cn.com.thtf.egov.cms.form.ReturnGoodsListForm">
+		</form-bean>
+		<form-bean name="newReturnGoodsForm" type="cn.com.thtf.egov.cms.form.SaleReturnsAddressSelectForm"></form-bean>
+	</form-beans>
+
+	<global-exceptions />
+
+	<global-forwards>
+	</global-forwards>
+
+
+	<action-mappings>
+		<!-- 销售退货列表  -->
+		<action path="/saleReturns"
+			type="cn.com.thtf.egov.cms.action.sell.SaleReturnsAction"
+			parameter="getSaleReturnsList"
+			scope="request"
+			name="returnGoodsListForm"
+			validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/returnGoodsSaleList.jsp"/>
+		</action>
+		<!-- 销售新建初始化  -->
+		<action path="/getAddSaleReturnsInit"
+			type="cn.com.thtf.egov.cms.action.sell.SaleReturnsAction"
+			parameter="addSaleReturnsInit"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/returnGoodsSaleAdd.jsp"/>
+		</action>
+		<!-- 销售新建退货单   收货地址选择-->
+		<action path="/getAddressSelect"
+			type="cn.com.thtf.egov.cms.action.sell.SaleReturnsAction"
+			parameter="getReceiveAddressSelect"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/receiveAddressSelect.jsp"/>
+		</action>
+		<!-- 销售退货单查看 -->
+		<action path="/viewReturnGoodsSale"
+			type="cn.com.thtf.egov.cms.action.sell.SaleReturnsAction"
+			parameter="viewSaleReturns"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/returnGoodsSaleView.jsp"/>
+		</action>
+		<!-- 销售退货单新建 -->
+		<action path="/getAddSaleReturns"
+			type="cn.com.thtf.egov.cms.action.sell.SaleReturnsAction"
+			parameter="addSaleReturns"
+			scope="request"
+			name="newReturnGoodsForm"
+			validate="false">
+		</action>
+		<!-- 销售退货单评审初始化 -->
+		<action path="/auditReturnGoodsSaleInit"
+			type="cn.com.thtf.egov.cms.action.sell.SaleReturnsAction"
+			parameter="auditSaleReturnsInit"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/returnGoodsSaleAudit.jsp"/>
+		</action>
+		<!-- 销售退货单评审 -->
+		<action path="/auditReturnGoodsSale"
+			type="cn.com.thtf.egov.cms.action.sell.SaleReturnsAction"
+			parameter="auditSaleReturns"
+			name="returnGoodsAuditForm"
+			scope="request"
+			validate="false">
+		</action>
+		<!-- 销售退货单修改初始化 -->
+		<action path="/modifyReturnGoodsSaleInit"
+			type="cn.com.thtf.egov.cms.action.sell.SaleReturnsAction"
+			parameter="modifyReturnGoodsSaleInit"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/returnGoodsSaleModify.jsp"/>
+		</action>
+		<!-- 销售退货单修改初始化 -->
+		<action path="/modifyReturnGoodsSale"
+			type="cn.com.thtf.egov.cms.action.sell.SaleReturnsAction"
+			parameter="modifyReturnsGoods"
+			name="newReturnGoodsForm"
+			scope="request"
+			validate="false">
+		</action>
+		<!-- 销售退货单删除  -->
+		<action path="/deleteReturnGoods"
+			type="cn.com.thtf.egov.cms.action.sell.SaleReturnsAction"
+			parameter="deleteReturnGoodsSale"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/saleReturns.do"/>
+		</action>
+		<!-- 发货明细选   -->
+		<action path="/getReturnGoodsProductSelect"
+			type="cn.com.thtf.egov.cms.action.sell.SaleReturnsAction"
+			parameter="getReturnGoodsProductSelect"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/returnGoodsProductList.jsp"/>
+		</action>
+	</action-mappings>
+</struts-config>

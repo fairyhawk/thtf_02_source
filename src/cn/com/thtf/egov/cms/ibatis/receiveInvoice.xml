@@ -1,0 +1,651 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="receiveInvoice_sqlMap">
+    <!-- 收票管理列表 By Chenhj @2010-6-9 -->
+    <typeAlias alias="receiveInvoiceDto" type="cn.com.thtf.egov.cms.dto.ReceiveInvoiceDto"/>
+    <!-- 收票管理列表 检索、录入 By Chenhj @2010-6-9 -->
+    <typeAlias alias="invoiceForm" type="cn.com.thtf.egov.cms.form.ReceiveInvoiceForm"/>    
+    <!-- 供应商 By Chenhj @2010-6-10-->
+	<typeAlias alias="supplierEntity" type="cn.com.thtf.egov.cms.entity.SupplierEntity"/>        
+    <!-- 入库明细选择 By Chenhj @2010-6-11 -->
+    <typeAlias alias="inStockProdDetailDto" type="cn.com.thtf.egov.cms.dto.InStockProdDetailDto"/>
+    <!-- 入库明细选择检索条件 By Chenhj @2010-6-11 -->
+    <typeAlias alias="inStockSearchForm" type="cn.com.thtf.egov.cms.form.InStockSearchForm"/>
+    <!-- 收票明细实体 By  HanHaiyun @2010-06-22-->
+    <typeAlias alias="receiveInvoiceDetailEntity" type="cn.com.thtf.egov.cms.entity.ReceiveInvoiceDetailEntity"/>
+	<!-- 收票管理列表 -->	
+	<select id="receiveInvoice.selectReceiveInvoice" resultClass="receiveInvoiceDto" parameterClass="invoiceForm">
+		SELECT RI.ID AS RECEIVEINVOICEID,
+		       PT.ID AS PRODTYPEID,
+		       PT.NAME AS PRODTYPENAME,
+		       S.ID AS SUPPLIERID,
+		       S.NAME AS SUPPLIERNAME,
+		       RI.MONEY AS INVOICEMONEY,
+		       RI.STATUS,
+		       RI.INVOICE_TYPE AS INVOICETYPE,
+		       RI.NUMBER AS INVOICENO,
+		       RI.RECEIVE_DATE AS RECEIVEDATE,
+		       RI.BACK_DATE AS BACKDATE,
+		       RI.USER_NAME AS USERNAME,
+		       IFNULL(INVO.INVOICECOUNT,0) AS INVOICECOUNT
+		FROM   PRODUCT_TYPE PT,
+		       SUPPLIER S,
+		        <isNotEmpty prepend=" " property="inStockId">
+		       	RECEIVE_INVOICE_DETAIL RID,
+		       </isNotEmpty>
+		       (SELECT * FROM RECEIVE_INVOICE ORDER BY ID DESC ) RI
+		 LEFT JOIN (
+		 		SELECT RID.RECEIVE_INVOICE_ID AS RECEIVE_INVOICE_ID,
+		 			   COUNT(RID.ID) 		  AS  INVOICECOUNT
+		 		FROM RECEIVE_INVOICE_DETAIL RID
+		 		GROUP BY RID.RECEIVE_INVOICE_ID
+		 		) INVO
+		 	ON INVO.RECEIVE_INVOICE_ID=RI.ID
+		 WHERE  RI.PRODUCT_TYPE_ID = PT.ID
+		       AND RI.SUPPLIER_ID = S.ID
+			<isEqual property="roleId" compareValue="8">
+				<isNotEmpty prepend="and" property="userId">
+					RI.USER_ID = #userId#
+				</isNotEmpty>
+			</isEqual>		         
+			<!-- 检索条件 -->
+			<isNotEmpty prepend="and" property="receiveInvoiceId">
+				RI.ID LIKE CONCAT('%', #receiveInvoiceId#, '%')
+			</isNotEmpty> 
+			
+			<isNotEmpty prepend="and" property="prodTypeId">
+				PT.ID = #prodTypeId#
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="supplierName">
+				S.NAME LIKE CONCAT('%', #supplierName#, '%')
+			</isNotEmpty>	
+						         
+			<isNotEmpty prepend="and" property="status">
+				RI.STATUS = #status#
+			</isNotEmpty>	
+
+			<isNotEmpty prepend="and" property="invoiceType">
+				RI.INVOICE_TYPE = #invoiceType#
+			</isNotEmpty>	
+
+			<isNotEmpty prepend="and" property="invoiceNo">
+				RI.NUMBER LIKE CONCAT('%', #invoiceNo#, '%')
+			</isNotEmpty>	
+
+			<isNotEmpty prepend="and" property="receiveStartDate">
+				<![CDATA[STR_TO_DATE(RI.RECEIVE_DATE,'%Y-%m-%d') >= STR_TO_DATE(#receiveStartDate#,'%Y-%m-%d') ]]>					 
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="and" property="receiveEndDate">
+				<![CDATA[STR_TO_DATE(RI.RECEIVE_DATE,'%Y-%m-%d') <= STR_TO_DATE(#receiveEndDate#,'%Y-%m-%d') ]]>					
+			</isNotEmpty>	
+																	         
+			<isNotEmpty prepend="and" property="backStartDate">
+				<![CDATA[STR_TO_DATE(RI.BACK_DATE,'%Y-%m-%d') >= STR_TO_DATE(#backStartDate#,'%Y-%m-%d') ]]>					 
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="and" property="backEndDate">
+				<![CDATA[STR_TO_DATE(RI.BACK_DATE,'%Y-%m-%d') <= STR_TO_DATE(#backEndDate#,'%Y-%m-%d') ]]>					
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="userName">
+				RI.USER_NAME LIKE CONCAT('%', #userName#, '%')
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="inStockId">
+				RID.RECEIVE_INVOICE_ID=RI.ID
+				AND RID.IN_STOCK_ID=#inStockId#
+				GROUP BY RI.ID
+			</isNotEmpty>
+													         
+	</select>
+	<!-- 收票管理列表 分页 -->	
+	<select id="receiveInvoice.recordCount" resultClass="java.lang.Integer" parameterClass="invoiceForm">
+		SELECT COUNT(*)
+		FROM   RECEIVE_INVOICE RI,
+		       PRODUCT_TYPE PT,
+		        <isNotEmpty prepend=" " property="inStockId">
+		      	 (SELECT RECEIVE_INVOICE_ID FROM RECEIVE_INVOICE_DETAIL 
+		       		WHERE IN_STOCK_ID=#inStockId#
+		       		GROUP BY RECEIVE_INVOICE_ID
+		       		) AS RID,
+		       </isNotEmpty>
+		       SUPPLIER S
+		WHERE  RI.PRODUCT_TYPE_ID = PT.ID
+		       AND RI.SUPPLIER_ID = S.ID
+			<isEqual property="roleId" compareValue="8">
+				<isNotEmpty prepend="and" property="userId">
+					RI.USER_ID = #userId#
+				</isNotEmpty>
+			</isEqual>			         
+			<!-- 检索条件 -->
+			<isNotEmpty prepend="and" property="receiveInvoiceId">
+				RI.ID LIKE CONCAT('%', #receiveInvoiceId#, '%')
+			</isNotEmpty> 
+			
+			<isNotEmpty prepend="and" property="prodTypeId">
+				PT.ID = #prodTypeId#
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="supplierName">
+				S.NAME LIKE CONCAT('%', #supplierName#, '%')
+			</isNotEmpty>	
+						         
+			<isNotEmpty prepend="and" property="status">
+				RI.STATUS = #status#
+			</isNotEmpty>	
+
+			<isNotEmpty prepend="and" property="invoiceType">
+				RI.INVOICE_TYPE = #invoiceType#
+			</isNotEmpty>	
+
+			<isNotEmpty prepend="and" property="invoiceNo">
+				RI.NUMBER LIKE CONCAT('%', #invoiceNo#, '%')
+			</isNotEmpty>	
+
+			<isNotEmpty prepend="and" property="receiveStartDate">
+				<![CDATA[STR_TO_DATE(RI.RECEIVE_DATE,'%Y-%m-%d') >= STR_TO_DATE(#receiveStartDate#,'%Y-%m-%d') ]]>					 
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="and" property="receiveEndDate">
+				<![CDATA[STR_TO_DATE(RI.RECEIVE_DATE,'%Y-%m-%d') <= STR_TO_DATE(#receiveEndDate#,'%Y-%m-%d') ]]>					
+			</isNotEmpty>	
+																	         
+			<isNotEmpty prepend="and" property="backStartDate">
+				<![CDATA[STR_TO_DATE(RI.BACK_DATE,'%Y-%m-%d') >= STR_TO_DATE(#backStartDate#,'%Y-%m-%d') ]]>					 
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="and" property="backEndDate">
+				<![CDATA[STR_TO_DATE(RI.BACK_DATE,'%Y-%m-%d') <= STR_TO_DATE(#backEndDate#,'%Y-%m-%d') ]]>					
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="userName">
+				RI.USER_NAME LIKE CONCAT('%', #userName#, '%')
+			</isNotEmpty>
+			<!-- 检索条件  入库单号 -->
+			<isNotEmpty prepend="and" property="inStockId">
+				RID.RECEIVE_INVOICE_ID=RI.ID
+			</isNotEmpty>																						         
+	</select>
+	
+	<!-- 供应商选择 -->	
+	<select id="invoiceSupplier.selectAllSuppliers" resultClass="supplierEntity" parameterClass="java.util.HashMap">
+		SELECT   ID,
+		         NAME,
+		         PROVINCE,
+		         CITY,
+		         REMIT_BANK_NAME AS REMITBANKNAME,
+		         REMIT_BANK_ACCOUNT AS REMITBANKACCOUNT,
+		         INVOICE_TYPE AS INVOICETYPE,
+		         TAX_RATE AS TAXRATE
+		FROM     SUPPLIER
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="and" property="supplierName">
+				NAME LIKE CONCAT('%', #supplierName#, '%')
+			</isNotEmpty>			
+		</dynamic>		
+		ORDER BY NAME
+	</select>
+	<!-- 供应商选择 分页 -->	
+	<select id="invoiceSupplier.recordCount" resultClass="java.lang.Integer" parameterClass="java.util.HashMap">
+		SELECT   COUNT(*)
+		FROM     SUPPLIER
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="and" property="supplierName">
+				NAME LIKE CONCAT('%', #supplierName#, '%')
+			</isNotEmpty>			
+		</dynamic>			
+	</select>
+
+    <!-- 采购发票录入 -->
+	<insert id="invoiceInsert.insertReceiveInvoice" parameterClass="invoiceForm">
+		INSERT INTO RECEIVE_INVOICE
+           (ID,
+            PRODUCT_TYPE_ID,
+            SUPPLIER_ID,
+            SUPPLIER_NAME,
+            STATUS,
+            RECEIVE_DATE,
+            BACK_DATE,
+            MONEY,
+            NUMBER,
+            INVOICE_TYPE,
+            TAX_RATE,
+            USER_ID,
+            USER_NAME,
+            TEXT,
+            DATETIME)
+		VALUES     
+		   (#receiveInvoiceId#,
+		    #prodTypeId#,
+            #supplierId#,
+            #supplierName#,
+            #status#,
+            #receiveDate#,
+            #backDate#,
+            #receiveMoney#,
+            #invoiceNo#,
+            #invoiceType#,
+            #taxRate#,            
+            #userId#,
+            #userName#,
+            #text#,
+            DATE_FORMAT(NOW(),'%Y-%m-%d'));
+	</insert>
+	<!--采购发票明细录入 @HanHaiyun 2010-06-22 -->
+	<insert id="invoiceInsert.insertInvoiceDetail" parameterClass="receiveInvoiceDetailEntity">
+		INSERT INTO RECEIVE_INVOICE_DETAIL
+           (RECEIVE_INVOICE_ID,
+            IN_STOCK_ID,
+            PRODUCT_ID,
+            COUNT,
+            MONEY)
+		VALUES
+			(#receiveInvoiceId#,
+            #inStockId#,
+            #productId#,
+            #count#,
+            #money#)
+	</insert>
+	<!-- 采购发票信息 -->	
+	<select id="invoiceInfo.selectInvoiceInfoById" resultClass="receiveInvoiceDto" parameterClass="java.lang.String">
+		SELECT PT.ID AS PRODTYPEID,
+			   RI.ID AS RECEIVEINVOICEID,
+		       PT.NAME AS PRODTYPENAME,
+		       RI.SUPPLIER_ID AS SUPPLIERID,
+		       RI.SUPPLIER_NAME AS SUPPLIERNAME,
+		       RI.RECEIVE_DATE AS RECEIVEDATE,
+		       RI.MONEY AS INVOICEMONEY,
+		       RI.INVOICE_TYPE AS INVOICETYPE,
+		       RI.NUMBER AS INVOICENO,
+		       RI.TAX_RATE AS TAXRATE,
+		       RI.STATUS,
+		       RI.BACK_DATE AS BACKDATE,
+		       RI.TEXT
+		FROM   RECEIVE_INVOICE RI,
+		       PRODUCT_TYPE PT
+		WHERE  RI.PRODUCT_TYPE_ID = PT.ID
+		       AND RI.ID = #receiveInvoiceId#
+	</select>	
+
+	<!-- 入库明细选择 -->	
+	<select id="inStockDetail.selectInStockProd" resultClass="inStockProdDetailDto" parameterClass="inStockSearchForm">
+		SELECT TMPA.IN_STOCK_ID AS INSTOCKID,                   <!--入库单号-->
+		       TMPA.PRODID,                                     <!--产品ID-->
+		       TMPA.PRODCODE,                                   <!--产品编码-->
+		       TMPA.PRODNAME,                                   <!--产品名称-->
+		       TMPA.PRODTYPE,                                   <!--规格型号-->
+		       TMPA.PRODUNIT,                                   <!--单位-->
+		       TMPA.PRODCONTRACTCODE,                           <!--产品合同号-->
+		       TMPA.COMPCONTRACTCODE,                           <!--公司合同号-->
+		       TMPA.TAXRATE,                                    <!--产品税率-->
+		       TMPA.MONEY,                                      <!--产品库存金额-->
+		       IFNULL(TMPA.INSTOCKCOUNT,0) AS INSTOCKCOUNT,     <!--入库数-->
+		       IFNULL(TMPA.BUYUNITPRICE,0) AS BUYUNITPRICE,     <!--采购单价-->
+		       IFNULL(TMPB.MONEY,0) AS APPOINTMONEY,            <!--指定金额-->
+		       IFNULL(TMPC.COUNT,0) AS RECEIVEDINVOICECOUNT,    <!--已收票数-->
+		       IFNULL(TMPC.COUNT,0)
+		         * IFNULL(TMPA.BUYUNITPRICE,0) 
+		           AS RECEIVEINVOICEMONEY,                      <!--收票金额-->
+		       IFNULL(TMPD.COUNT,0)
+		         * IFNULL(TMPA.BUYUNITPRICE,0) 
+		           AS BACKGOODSMONEY                            <!--返厂金额-->
+		FROM   (SELECT BC.ID AS BUY_CONTRACT_ID,
+		               ISK.ID AS IN_STOCK_ID,
+		               ISD.COUNT AS INSTOCKCOUNT,
+		               ISD.PRICE AS BUYUNITPRICE,
+		               P.ID AS PRODID,
+		               P.CODE AS PRODCODE,
+		               P.NAME AS PRODNAME,
+		               P.TYPE AS PRODTYPE,
+		               P.UNIT AS PRODUNIT,
+		               P.MONEY,
+		               BC.PRODUCT_CONTRACT_CODE AS PRODCONTRACTCODE,
+		               BC.COMPANY_CONTRACT_CODE AS COMPCONTRACTCODE,
+		               BC.TAX_RATE AS TAXRATE
+		        FROM   IN_STOCK ISK,
+		               IN_STOCK_DETAIL ISD,
+		               PRODUCT P,
+		               BUY_CONTRACT BC
+		        WHERE  ISK.STATUS = 6
+		               AND ISK.ID = ISD.IN_STOCK_ID
+		               AND ISD.PRODUCT_ID = P.ID
+		               AND ISK.BUY_CONTRACT_ID = BC.ID
+		               AND BC.PRODUCT_TYPE_ID=#prodTypeId#
+						<isEqual property="roleId" compareValue="8">
+							<isNotEmpty prepend="and" property="userId">
+								BC.PRODUCT_TYPE_ID IN 
+								(
+									SELECT  PRODUCT_TYPE_ID 
+									FROM    USER_PRODUCT
+									WHERE   USER_ID = #userId#
+								)
+							</isNotEmpty>
+						</isEqual>
+						<isNotEmpty prepend="and" property="supplierId">
+							BC.SUPPLIER_ID = #supplierId# 
+						</isNotEmpty>									               
+		               ) TMPA
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+		                           PD.IN_STOCK_ID,
+		                           PD.PRODUCT_ID,
+		                           SUM(PD.MONEY) MONEY
+		                  FROM     
+		                           IN_STOCK ISK,
+		                           PAYMENT_DETAIL PD,
+		                           PAYMENT P
+		                  WHERE    PD.APPOINT_TYPE = 1
+		                           AND P.STATUS = 13
+		                           AND P.ID = PD.PAYMENT_ID
+		                           AND ISK.ID = PD.IN_STOCK_ID
+		                  GROUP BY ISK.BUY_CONTRACT_ID,PD.PRODUCT_ID) TMPB
+		         ON TMPA.BUY_CONTRACT_ID = TMPB.BUY_CONTRACT_ID
+		            AND TMPA.PRODID = TMPB.PRODUCT_ID
+		       LEFT JOIN (SELECT   RID.IN_STOCK_ID,
+		                           RID.PRODUCT_ID,
+		                           SUM(RID.COUNT) AS COUNT
+		                  FROM     RECEIVE_INVOICE_DETAIL RID,
+		                           RECEIVE_INVOICE RI
+		                  WHERE    RI.STATUS = 1
+		                           AND RI.ID = RID.RECEIVE_INVOICE_ID
+		                  GROUP BY RID.IN_STOCK_ID,RID.PRODUCT_ID) TMPC
+		         ON TMPA.IN_STOCK_ID = TMPC.IN_STOCK_ID
+		            AND TMPA.PRODID = TMPC.PRODUCT_ID
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+		                           BBGD.PRODUCT_ID,
+		                           SUM(BBGD.COUNT) COUNT
+		                  FROM     IN_STOCK ISK,
+		                           BUY_BACK_GOODS BBG,
+		                           BUY_BACK_GOODS_DETAIL BBGD
+		                  WHERE    ISK.ID = BBG.IN_STOCK_ID
+		                           AND BBG.STATUS = 11
+		                           AND BBGD.BUY_BACK_GOODS_ID = BBG.ID
+		                  GROUP BY ISK.BUY_CONTRACT_ID,BBGD.PRODUCT_ID) TMPD
+		         ON TMPA.BUY_CONTRACT_ID = TMPD.BUY_CONTRACT_ID
+		            AND TMPA.PRODID = TMPD.PRODUCT_ID
+		WHERE  TMPA.INSTOCKCOUNT > IFNULL(TMPC.COUNT,0)
+			<!-- 产品名称 -->
+			<isNotEmpty prepend="and" property="prodName">
+				TMPA.PRODNAME like CONCAT('%',#prodName#,'%')
+			</isNotEmpty>
+			<!-- 入库单号 -->
+			<isNotEmpty prepend="and" property="inStockId">
+				TMPA.IN_STOCK_ID like CONCAT('%',#inStockId#,'%')
+			</isNotEmpty>
+			<!-- 产品合同号-->
+			<isNotEmpty prepend="and" property="prodContractCode">
+				TMPA.PRODCONTRACTCODE like CONCAT('%',#prodContractCode#,'%')
+			</isNotEmpty>
+			<!-- 公司合同号-->
+			<isNotEmpty prepend="and" property="compContractCode">
+				TMPA.COMPCONTRACTCODE like CONCAT('%',#compContractCode#,'%')
+			</isNotEmpty>
+			<!-- 产品编码-->
+			<isNotEmpty prepend="and" property="prodCode">
+				TMPA.PRODCODE like CONCAT('%',#prodCode#,'%')
+			</isNotEmpty>
+			<!-- 规格型号-->
+			<isNotEmpty prepend="and" property="prodType">
+				TMPA.PRODTYPE like CONCAT('%',#prodType#,'%') 
+			</isNotEmpty>
+		    ORDER BY TMPA.PRODCONTRACTCODE,TMPA.IN_STOCK_ID ASC
+		</select>
+	<!-- 入库明细选择分页 -->	
+	<select id="inStockDetail.recordCount" resultClass="java.lang.Integer" parameterClass="inStockSearchForm">
+		SELECT  
+		         count(*)
+		FROM   (SELECT BC.ID AS BUY_CONTRACT_ID,
+		               ISK.ID AS IN_STOCK_ID,
+		               ISD.COUNT AS INSTOCKCOUNT,
+		               ISD.PRICE AS BUYUNITPRICE,
+		               P.ID AS PRODID,
+		               P.CODE AS PRODCODE,
+		               P.NAME AS PRODNAME,
+		               P.TYPE AS PRODTYPE,
+		               P.UNIT AS PRODUNIT,
+		               P.MONEY,
+		               BC.PRODUCT_CONTRACT_CODE AS PRODCONTRACTCODE,
+		               BC.COMPANY_CONTRACT_CODE AS COMPCONTRACTCODE,
+		               BC.TAX_RATE AS TAXRATE
+		        FROM   IN_STOCK ISK,
+		               IN_STOCK_DETAIL ISD,
+		               PRODUCT P,
+		               BUY_CONTRACT BC
+		        WHERE  ISK.STATUS = 6
+		               AND ISK.ID = ISD.IN_STOCK_ID
+		               AND ISD.PRODUCT_ID = P.ID
+		               AND ISK.BUY_CONTRACT_ID = BC.ID
+		               AND BC.PRODUCT_TYPE_ID=#prodTypeId#
+						<isEqual property="roleId" compareValue="8">
+							<isNotEmpty prepend="and" property="userId">
+								BC.PRODUCT_TYPE_ID IN 
+								(
+									SELECT  PRODUCT_TYPE_ID 
+									FROM    USER_PRODUCT
+									WHERE   USER_ID = #userId#
+								)
+							</isNotEmpty>
+						</isEqual>
+						<isNotEmpty prepend="and" property="supplierId">
+							BC.SUPPLIER_ID = #supplierId# 
+						</isNotEmpty>									               
+		               ) TMPA
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+		                           PD.IN_STOCK_ID,
+		                           PD.PRODUCT_ID,
+		                           SUM(PD.MONEY) MONEY
+		                  FROM     
+		                           IN_STOCK ISK,
+		                           PAYMENT_DETAIL PD,
+		                           PAYMENT P
+		                  WHERE    PD.APPOINT_TYPE = 1
+		                           AND P.STATUS = 13
+		                           AND P.ID = PD.PAYMENT_ID
+		                           AND ISK.ID = PD.IN_STOCK_ID
+		                  GROUP BY ISK.BUY_CONTRACT_ID,PD.PRODUCT_ID) TMPB
+		         ON TMPA.BUY_CONTRACT_ID = TMPB.BUY_CONTRACT_ID
+		            AND TMPA.PRODID = TMPB.PRODUCT_ID
+		       LEFT JOIN (SELECT   RID.IN_STOCK_ID,
+		                           RID.PRODUCT_ID,
+		                           SUM(RID.COUNT) AS COUNT
+		                  FROM     RECEIVE_INVOICE_DETAIL RID,
+		                           RECEIVE_INVOICE RI
+		                  WHERE    RI.STATUS = 1
+		                           AND RI.ID = RID.RECEIVE_INVOICE_ID
+		                  GROUP BY RID.IN_STOCK_ID,RID.PRODUCT_ID) TMPC
+		         ON TMPA.IN_STOCK_ID = TMPC.IN_STOCK_ID
+		            AND TMPA.PRODID = TMPC.PRODUCT_ID
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+		                           BBGD.PRODUCT_ID,
+		                           SUM(BBGD.COUNT) COUNT
+		                  FROM     IN_STOCK ISK,
+		                           BUY_BACK_GOODS BBG,
+		                           BUY_BACK_GOODS_DETAIL BBGD
+		                  WHERE    ISK.ID = BBG.IN_STOCK_ID
+		                           AND BBG.STATUS = 11
+		                           AND BBGD.BUY_BACK_GOODS_ID = BBG.ID
+		                  GROUP BY ISK.BUY_CONTRACT_ID,BBGD.PRODUCT_ID) TMPD
+		         ON TMPA.BUY_CONTRACT_ID = TMPD.BUY_CONTRACT_ID
+		            AND TMPA.PRODID = TMPD.PRODUCT_ID
+		WHERE  TMPA.INSTOCKCOUNT > IFNULL(TMPC.COUNT,0)
+			<!-- 产品名称 -->
+			<isNotEmpty prepend="and" property="prodName">
+				TMPA.PRODNAME like CONCAT('%',#prodName#,'%')
+			</isNotEmpty>
+			<!-- 入库单号 -->
+			<isNotEmpty prepend="and" property="inStockId">
+				TMPA.IN_STOCK_ID like CONCAT('%',#inStockId#,'%')
+			</isNotEmpty>
+			<!-- 产品合同号-->
+			<isNotEmpty prepend="and" property="prodContractCode">
+				TMPA.PRODCONTRACTCODE like CONCAT('%',#prodContractCode#,'%')
+			</isNotEmpty>
+			<!-- 公司合同号-->
+			<isNotEmpty prepend="and" property="compContractCode">
+				TMPA.COMPCONTRACTCODE like CONCAT('%',#compContractCode#,'%')
+			</isNotEmpty>
+			<!-- 产品编码-->
+			<isNotEmpty prepend="and" property="prodCode">
+				TMPA.PRODCODE like CONCAT('%',#prodCode#,'%')
+			</isNotEmpty>
+			<!-- 规格型号-->
+			<isNotEmpty prepend="and" property="prodType">
+				TMPA.PRODTYPE like CONCAT('%',#prodType#,'%') 
+			</isNotEmpty>
+	
+	</select>
+	<!-- 根据收票流水号得到入库产品信息 @HanHaiyun 2010-07-29 -->
+	<select id="invoiceView.selReceiveInvoiceCount" resultClass="inStockProdDetailDto" parameterClass="java.lang.String">
+		SELECT RID.IN_STOCK_ID AS INSTOCKID,				<!--入库单号 -->
+		       RID.PRODUCT_ID  AS PRODID,					<!--产品编号 -->
+		       ISD.PRICE       AS BUYUNITPRICE,				<!--采购单价 -->
+		       BC.TAX_RATE     AS TAXRATE,					<!--采购合同税率 -->
+		       RI.INVOICE_TYPE AS INVOICETYPE,				<!--发票类型 -->
+		       RI.TAX_RATE     AS RECEIVERATE,				<!--发票税率 -->
+		       RID.COUNT       AS RECEIVEINVOICECOUNT,		<!--指定数量 -->
+		       P.MONEY         AS MONEY						<!--库存金额 -->
+		FROM   RECEIVE_INVOICE_DETAIL AS RID,
+		       IN_STOCK_DETAIL AS ISD,
+		       RECEIVE_INVOICE AS RI,
+		       IN_STOCK AS ISK,
+		       BUY_CONTRACT AS BC,
+		       PRODUCT AS P
+		WHERE  ISD.IN_STOCK_ID = RID.IN_STOCK_ID
+		       AND RID.RECEIVE_INVOICE_ID = RI.ID
+		       AND ISK.ID = RID.IN_STOCK_ID
+		       AND ISK.BUY_CONTRACT_ID = BC.ID
+		       AND ISD.PRODUCT_ID = RID.PRODUCT_ID
+		       AND P.ID = ISD.PRODUCT_ID
+		       AND RI.ID = #id#
+	</select>
+	<!-- 采购发票查看 -->	
+	<select id="invoiceView.selectInvoiceInfo" resultClass="inStockProdDetailDto" parameterClass="java.lang.String">
+		SELECT TMPA.IN_STOCK_ID AS INSTOCKID,                   <!--入库单号-->
+		       TMPA.PRODID,                                     <!--产品ID-->
+		       TMPA.PRODCODE,                                   <!--产品编码-->
+		       TMPA.PRODNAME,                                   <!--产品名称-->
+		       TMPA.PRODTYPE,                                   <!--规格型号-->
+		       TMPA.PRODUNIT,                                   <!--单位-->
+		       TMPA.PRODCONTRACTCODE,                           <!--产品合同号-->
+		       TMPA.COMPCONTRACTCODE,                           <!--公司合同号-->
+		       TMPA.TAXRATE,                                    <!--产品税率-->
+		       TMPA.MONEY,                                      <!--产品库存金额-->
+		       IFNULL(TMPA.INSTOCKCOUNT,0) AS INSTOCKCOUNT,     <!--入库数-->
+		       IFNULL(TMPA.BUYUNITPRICE,0) AS BUYUNITPRICE,     <!--采购单价-->
+		       IFNULL(TMPB.MONEY,0) AS APPOINTMONEY,            <!--指定金额-->
+		       IFNULL(TMPE.COUNT,0) AS RECEIVEDINVOICECOUNT,    <!--已收票数-->
+		       IFNULL(TMPC.COUNT,0) AS RECEIVEINVOICECOUNT,     <!--收票数-->		       
+		       IFNULL(TMPC.COUNT,0)
+		         * IFNULL(TMPA.BUYUNITPRICE,0) 
+		           AS RECEIVEINVOICEMONEY,                      <!--收票金额-->
+		       IFNULL(TMPD.COUNT,0)
+		         * IFNULL(TMPA.BUYUNITPRICE,0) 
+		           AS BACKGOODSMONEY                            <!--返厂金额-->
+		FROM   (SELECT RID.IN_STOCK_ID,
+		               RID.PRODUCT_ID,
+		               RID.COUNT,
+		               RID.RECEIVE_INVOICE_ID
+		        FROM   RECEIVE_INVOICE_DETAIL RID,
+		               RECEIVE_INVOICE RI
+		        WHERE   RI.ID = RID.RECEIVE_INVOICE_ID
+		               AND RID.RECEIVE_INVOICE_ID = #id#) TMPC
+		       LEFT JOIN (SELECT BC.ID AS BUY_CONTRACT_ID,
+		                         ISK.ID AS IN_STOCK_ID,
+		                         ISD.COUNT AS INSTOCKCOUNT,
+		                         ISD.PRICE AS BUYUNITPRICE,
+		                         P.ID AS PRODID,
+		                         P.CODE AS PRODCODE,
+		                         P.NAME AS PRODNAME,
+		                         P.TYPE AS PRODTYPE,
+		                         P.UNIT AS PRODUNIT,
+		                         P.MONEY,
+		                         BC.PRODUCT_CONTRACT_CODE AS PRODCONTRACTCODE,
+		                         BC.COMPANY_CONTRACT_CODE AS COMPCONTRACTCODE,
+		                         BC.TAX_RATE AS TAXRATE
+		                  FROM   IN_STOCK ISK,
+		                         IN_STOCK_DETAIL ISD,
+		                         PRODUCT P,
+		                         BUY_CONTRACT BC
+		                  WHERE  ISK.STATUS = 6
+		                         AND ISK.ID = ISD.IN_STOCK_ID
+		                         AND ISD.PRODUCT_ID = P.ID
+		                         AND ISK.BUY_CONTRACT_ID = BC.ID) TMPA
+		         ON TMPC.IN_STOCK_ID = TMPA.IN_STOCK_ID
+		            AND TMPC.PRODUCT_ID = TMPA.PRODID
+		       LEFT JOIN (SELECT   RID.IN_STOCK_ID,
+		                           RID.PRODUCT_ID,
+		                           SUM(RID.COUNT) AS COUNT
+		                  FROM     RECEIVE_INVOICE_DETAIL RID,
+		                           RECEIVE_INVOICE RI
+		                  WHERE     RI.ID = RID.RECEIVE_INVOICE_ID
+		                           AND RID.RECEIVE_INVOICE_ID != #id#
+		                           AND RI.STATUS = 1
+		                  GROUP BY RID.IN_STOCK_ID,RID.PRODUCT_ID) TMPE
+		         ON TMPA.IN_STOCK_ID = TMPE.IN_STOCK_ID
+		            AND TMPA.PRODID = TMPE.PRODUCT_ID
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+		                           PD.IN_STOCK_ID,
+		                           PD.PRODUCT_ID,
+		                           SUM(PD.MONEY) MONEY
+		                  FROM     
+		                           IN_STOCK ISK,
+		                           PAYMENT_DETAIL PD,
+		                           PAYMENT P
+		                  WHERE    PD.APPOINT_TYPE = 1
+		                           AND P.STATUS = 13
+		                           AND P.ID = PD.PAYMENT_ID
+		                           AND ISK.ID = PD.IN_STOCK_ID
+		                  GROUP BY ISK.BUY_CONTRACT_ID,PD.PRODUCT_ID) TMPB
+		         ON TMPA.BUY_CONTRACT_ID = TMPB.BUY_CONTRACT_ID
+		            AND TMPA.PRODID = TMPB.PRODUCT_ID
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+		                           BBGD.PRODUCT_ID,
+		                           SUM(BBGD.COUNT) COUNT
+		                  FROM     IN_STOCK ISK,
+		                           BUY_BACK_GOODS BBG,
+		                           BUY_BACK_GOODS_DETAIL BBGD
+		                  WHERE    ISK.ID = BBG.IN_STOCK_ID
+		                           AND BBG.STATUS = 11
+		                           AND BBGD.BUY_BACK_GOODS_ID = BBG.ID
+		                  GROUP BY ISK.BUY_CONTRACT_ID,BBGD.PRODUCT_ID) TMPD
+		         ON TMPA.BUY_CONTRACT_ID = TMPD.BUY_CONTRACT_ID
+		            AND TMPA.PRODID = TMPD.PRODUCT_ID
+	</select>	
+	<!-- 收票明细记录数 -->	
+	<select id="reInvoiceDetail.getRecordCountById" resultClass="java.lang.Integer" parameterClass="java.lang.String">
+		SELECT COUNT(*)
+		FROM   RECEIVE_INVOICE_DETAIL
+		WHERE  RECEIVE_INVOICE_ID = #id# 
+	</select>
+	<!-- 删除收票记录 -->	
+	<delete id="del.deleteRecordById" parameterClass="java.lang.String">
+		DELETE FROM RECEIVE_INVOICE
+		WHERE  ID = #id# 
+	</delete>
+	<!-- 删除收票明细记录 @HanHaiyun 2010-06-22-->	
+	<delete id="del.deleteReceiveInvoiceDetailByReceiveInfoiceId" parameterClass="java.lang.String">
+		DELETE FROM RECEIVE_INVOICE_DETAIL
+		WHERE   RECEIVE_INVOICE_ID = #reciveInvoiceId#
+	</delete>
+	<!-- 更新记录 退票 -->	
+	<update id="update.updateRecordById" parameterClass="java.lang.String">
+		UPDATE RECEIVE_INVOICE
+		SET    STATUS = 2,
+		       BACK_DATE = DATE_FORMAT(NOW(),'%Y-%m-%d')
+		WHERE  ID = #id#
+	</update>
+	<!-- 修改产品的入库金额 @HanHaiyun 2010-07-29 -->
+	<update id="invoiceView.upProduct" parameterClass="java.util.HashMap">
+		UPDATE PRODUCT
+		SET MONEY=money+#money#
+		WHERE id=#id#
+	</update>
+	<!-- 查看发票号的唯一性 -->	
+	<select id="invoice.getRecordCountByNumber" resultClass="java.lang.Integer" parameterClass="java.lang.String">
+		SELECT COUNT(NUMBER)
+		FROM   RECEIVE_INVOICE
+		WHERE  NUMBER =#number#
+	</select>											
+</sqlMap>

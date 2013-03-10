@@ -1,0 +1,680 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="backInvoice_sqlMap">
+	 <typeAlias alias="SellInvoiceDetailDto" type="cn.com.thtf.egov.cms.dto.SellInvoiceDetailDto" />
+	 
+	 <typeAlias alias="backSellInvoiceDto" type="cn.com.thtf.egov.cms.dto.SellInvoiceDto" />
+	 
+	 <typeAlias alias="backInvoiceAssessDto" type="cn.com.thtf.egov.cms.dto.SellInvoiceDto" />
+	 
+	 <typeAlias alias="backInvoicListDto" type="cn.com.thtf.egov.cms.dto.BackInvoicListDto"/>
+	 
+	 <typeAlias alias="userEntity" type="cn.com.thtf.egov.cms.entity.UserEntity"/>
+	 
+	 <typeAlias alias="backInvoicSearchDto" type="cn.com.thtf.egov.cms.dto.BackInvoicSearchDto"/>
+	 
+	 <typeAlias alias="productTypeEntity" type="cn.com.thtf.egov.cms.entity.ProductTypeEntity" /> 
+
+
+<!--根据发票id查询对应的发票明细   zzx-->
+	<select id="selectSellInvoiceDetailList" parameterClass="java.lang.String" resultClass="SellInvoiceDetailDto">
+		SELECT   SELL_INVOICE.ID                                        AS SELLINVOICEID,
+				 SELL_INVOICE_DETAIL.SEND_GOODS_ID                      AS SENDGOODSID,
+		         SELL_CONTRACT.PRODUCT_CONTRACT_CODE                    AS PRODUCTCONTRACTCODE,
+		         SELL_CONTRACT.COMPANY_CONTRACT_CODE                    AS COMPANYCONTRACTCODE,
+		         PRODUCT.CODE                                           AS PRODUCTCODE,
+		         PRODUCT.NAME                                           AS PRODUCTNAME,
+		         PRODUCT.TYPE                                           AS PRODUCTTYPE,
+		         PRODUCT.UNIT                                           AS PRODUCTUNIT,
+		         SELL_INVOICE_DETAIL.COUNT                              AS COUNT,
+		         IFNULL(SELL_CONTRACT_DETAIL.PRICE,0)                   AS PRICE,
+		         IFNULL(SELL_INVOICE_DETAIL.COUNT * SELL_CONTRACT_DETAIL.PRICE,0) AS MAKEINVOICEPRICE
+		FROM     SELL_INVOICE_DETAIL
+		         LEFT JOIN SELL_INVOICE
+		           ON SELL_INVOICE.ID = SELL_INVOICE_DETAIL.SELL_INVOICE_ID
+		         LEFT JOIN PRODUCT_TYPE
+		           ON SELL_INVOICE.PRODUCT_TYPE_ID = product_type.id
+		         LEFT JOIN SEND_GOODS
+		           ON SELL_INVOICE_DETAIL.SEND_GOODS_ID = SEND_GOODS.ID
+		         LEFT JOIN SELL_CONTRACT
+		           ON SELL_CONTRACT.ID = SEND_GOODS.SELL_CONTRACT_ID
+		         LEFT JOIN PRODUCT
+		           ON SELL_INVOICE_DETAIL.PRODUCT_ID = PRODUCT.ID
+		         LEFT JOIN SELL_CONTRACT_DETAIL
+		           ON SELL_INVOICE_DETAIL.PRODUCT_ID = SELL_CONTRACT_DETAIL.PRODUCT_ID
+					AND  SELL_CONTRACT_DETAIL.SELL_CONTRACT_ID = SEND_GOODS.SELL_CONTRACT_ID
+		WHERE    SELL_INVOICE.ID = #sellInvoiceId#
+		order by SELL_INVOICE_DETAIL.SEND_GOODS_ID
+				
+	</select>
+	
+<!--根据发票id查询发票表信息   zzx-->
+	<select id="selectSellInvoiceInfo" parameterClass="java.lang.String" resultClass="backSellInvoiceDto">
+		SELECT SELL_INVOICE.ID AS ID,
+			   PRODUCT_TYPE.NAME AS PRODUCTTYPENAME,
+		       DATE,
+		       NUMBER,
+		       MAKE_INVOICE_ID AS MAKEINVOICEID,
+		       PRODUCT_TYPE_ID AS PRODUCTTYPEID,
+		       CUSTOMER_ID     AS CUSTOMERID,
+		       CUSTOMER_NAME   AS CUSTOMERNAME,
+		       MONEY,
+		       INVOICE_TYPE    AS INVOICETYPE,
+		       STATUS,
+		       REQUEST_DATE    AS REQUESTDATE,
+		       USER_ID         AS USERID,
+		       USER_NAME       AS USERNAME,
+		       USER_AREA_ID    AS USERAREAID,
+		       TEXT,
+		       BACK_DATE       AS BACKDATE,
+		       CONFIRM_ID      AS CONFIRMID,
+		       CONFIRM_NAME    AS CONFIRMNAME,
+		       SELL_MAJ_ID     AS SELLMAJID,
+		       SELL_MAJ_NAME   AS SELLMAJNAME,
+		       SELL_MAJ_DATE   AS SELLMAJDATE,
+		       SELL_MAJ_IDEA   AS SELLMAJIDEA,
+		       SELL_MAJ_TEXT   AS SELLMAJTEXT,
+		       OPE_MAJ_ID      AS OPEMAJID,
+		       OPE_MAJ_NAME    AS OPEMAJNAME,
+		       OPE_MAJ_DATE    AS OPEMAJDATE,
+		       OPE_MAJ_IDEA    AS OPEMAJIDEA,
+		       OPE_MAJ_TEXT    AS OPEMAJTEXT,
+		       remark as remark
+		       
+		FROM   SELL_INVOICE,PRODUCT_TYPE
+		WHERE  SELL_INVOICE.ID = #sellInvoiceId#	
+			AND SELL_INVOICE.PRODUCT_TYPE_ID = 	PRODUCT_TYPE.ID	
+	</select>
+<!--保存修改发票   zzx-->
+	<update id="modifySellInvoiceInfo" parameterClass="backSellInvoiceDto" >
+		update sell_invoice set text=#text# 
+		where id=#id#	
+			
+	</update>
+<!--根据发票id查询查询产品类型id   zzx-->
+	<select id="selectProductTypeId" parameterClass="java.lang.String" resultClass="java.lang.String">
+		SELECT PRODUCT_TYPE_ID
+		FROM   SELL_INVOICE
+		WHERE  ID = #sellInvoiceId#	
+	</select>	
+<!--根据产品类型id查询销售总监id   zzx-->
+	<select id="selectSellMajId" parameterClass="java.lang.String" resultClass="java.lang.String">
+		SELECT USER.ID
+		FROM   USER,
+     		   USER_PRODUCT
+		WHERE  USER.ROLE_ID = '5'
+       		  AND USER_PRODUCT.USER_ID = USER.ID
+       		  AND USER_PRODUCT.PRODUCT_TYPE_ID =  #productTypeId#
+			  AND USER.ENABLE = '1'
+			  LIMIT 1
+	</select>	
+<!--查询运营总监id   zzx-->
+	<select id="selectOpeMajId"  resultClass="java.lang.String">
+		SELECT ID
+		FROM   USER
+		WHERE  USER.ROLE_ID = '17'
+		       AND USER.ENABLE = '1'
+				LIMIT 1
+	</select>	
+<!--查询销售助理id   zzx-->
+	<select id="selectSellAssistantId" parameterClass="java.lang.String" resultClass="java.lang.String">
+		SELECT USER.ID
+		FROM   SELL_INVOICE,
+		       USER_AREA_PRODUCT,
+		       USER
+		WHERE  SELL_INVOICE.ID = #sellInvoiceId#
+		       AND USER_AREA_PRODUCT.PRODUCT_TYPE_ID = SELL_INVOICE.PRODUCT_TYPE_ID
+		       AND USER_AREA_PRODUCT.USER_AREA_ID = SELL_INVOICE.USER_AREA_ID
+		       AND USER_AREA_PRODUCT.USER_ID = USER.ID
+			   AND USER.ENABLE = '1'
+	</select>	
+ 
+<!--查询用户姓名  liuqg-->
+	<select id="selectUserName" parameterClass="java.lang.String" resultClass="java.lang.String">
+		SELECT USER.NAME from USER
+		WHERE  USER.ID = #userId#     
+	</select>	
+<!--提交退票   zzx-->
+	<update id="modifySellInvoiceSubmit" parameterClass="backSellInvoiceDto" >
+		UPDATE SELL_INVOICE
+		SET    STATUS = '2',
+		       REQUEST_DATE = DATE_FORMAT(NOW(),'%Y-%m-%d'),
+			   TEXT=#text#,
+		       SELL_MAJ_ID = #sellMajId#,
+		       SELL_MAJ_NAME = '',
+		       SELL_MAJ_IDEA = '',
+		       SELL_MAJ_DATE = '',
+		       SELL_MAJ_TEXT = '',
+		       OPE_MAJ_ID = #opeMajId#,
+		       OPE_MAJ_NAME = '',
+		       OPE_MAJ_DATE = '',
+		       OPE_MAJ_IDEA = '',
+		       OPE_MAJ_TEXT = '',
+		       CONFIRM_ID = #confirmId#,
+		       CONFIRM_NAME = ''
+		WHERE  ID = #id#
+			
+	</update>	
+<!--销售总监评审退票   zzx-->
+	<update id="sellMajAssessBackInvoice" parameterClass="backSellInvoiceDto" >
+		UPDATE SELL_INVOICE
+		SET    STATUS = #status#,
+		       SELL_MAJ_NAME = #sellMajName#,
+		       SELL_MAJ_DATE = #sellMajDate#,
+		       SELL_MAJ_IDEA = #sellMajIdea#,
+		       SELL_MAJ_TEXT = #sellMajText#			
+		WHERE  ID = #id#	
+	</update>	
+<!--运营总监评审退票   zzx-->
+	<update id="opeMajAssessBackInvoice" parameterClass="backSellInvoiceDto" >
+		UPDATE SELL_INVOICE
+		SET    STATUS = #status#,		      
+			   OPE_MAJ_NAME = #opeMajName#,
+		       OPE_MAJ_DATE = #opeMajDate#,
+		       OPE_MAJ_IDEA = #opeMajIdea#,
+		       OPE_MAJ_TEXT = #opeMajText#
+		WHERE  ID = #id#	
+	</update>	
+
+   <!-- 根据用户ID和权限获取退票一览  by LiuQingGang-->
+	<select id="selectBackInvoiceById.selectBackInvoiceByUserId" parameterClass="userEntity" resultClass="backInvoicListDto">
+	  
+	  select
+	    sell_invoice.id as id, 
+	    sell_invoice.date  as   date,
+	    sell_invoice.number  as   number,
+	    sell_invoice.make_invoice_id  as   makeInvoiceId,
+	    sell_invoice.customer_name  as   customerName,
+	    product_type.name  as productTypeName ,
+	    sell_invoice.money  as   money,
+	    sell_invoice.invoice_type  as   invoiceType,
+	    sell_invoice.user_id  as   userId,
+	    sell_invoice.user_name  as   userName,
+	    sell_invoice.confirm_id  as   confirmId,
+	    sell_invoice.confirm_name  as   confirmName,
+	    sell_invoice.request_date  as   requestDate,
+	    sell_invoice.back_date  as   backDate,
+	    sell_invoice.status  as   status
+	
+	  from sell_invoice left join product_type
+	    on sell_invoice.product_type_id= product_type.id
+		left join user u1
+		       on u1.id = sell_invoice.user_id
+ 
+		
+		<!-- 销售总监 -->
+	    <isEqual prepend="," property="roleId" compareValue="5">
+			user_product
+		</isEqual> 
+		
+		<!-- 销售助理 -->
+	    <isEqual prepend="," property="roleId" compareValue="3">
+			user_area_product
+		</isEqual> 
+		
+		<!-- 区域总监-->
+		<isEqual prepend="," property="roleId" compareValue="9">
+				user_product,user
+		</isEqual>
+		<!-- 区域经理-->
+		<isEqual prepend="," property="roleId" compareValue="19">
+				user_area_mapping
+		</isEqual>
+		<!-- 大区经理-->
+		<isEqual prepend="," property="roleId" compareValue="20">
+				user_area_mapping
+		</isEqual>
+		 
+	 <dynamic prepend="WHERE">
+	  
+	   <!-- 销售经理 -->
+	    <isEqual prepend="" property="roleId" compareValue="4">
+	        sell_invoice.user_id=#id#
+		</isEqual>
+		
+		<!-- 销售总监 (负责产品分类,发票状态为销售总监待评审)-->
+		<isEqual prepend="" property="roleId" compareValue="5">
+			user_product.user_id=#id# and
+       		sell_invoice.product_type_id=user_product.product_type_id and
+	   		sell_invoice.status=2
+		</isEqual>
+		
+		<!-- 运营总监(发票状态为运营总监待评审) -->
+		<isEqual prepend="" property="roleId" compareValue="17">
+	   		sell_invoice.status=4
+		</isEqual>
+		
+		<!-- 销售助理(负责区域、负责产品分类；发票状态为待确认)-->
+		<isEqual prepend="" property="roleId" compareValue="3">
+	   		sell_invoice.user_area_id = user_area_product.user_area_id and 
+			sell_invoice.product_type_id = user_area_product.product_type_id and
+            user_area_product.user_id=#id# and 
+            sell_invoice.status = 6 
+		</isEqual>
+		
+		<!-- 区域总监(负责产品分类，负责区域)-->
+			<isEqual prepend="" property="roleId" compareValue="9">
+				user_product.user_id=#id# and user_product.product_type_id = sell_invoice.product_type_id
+				and user.id = #id# and u1.user_area_id = user.user_area_id 
+			</isEqual>
+		<!-- 区域经理(负责产品分类，负责区域)-->
+			<isEqual prepend="" property="roleId" compareValue="19">
+				user_area_mapping.user_id=#id# AND  
+				 user_area_mapping.user_area_id=sell_invoice.user_area_id 
+			</isEqual>	
+		<!-- 大区经理(负责产品分类，负责区域)-->
+			<isEqual prepend="" property="roleId" compareValue="20">
+				user_area_mapping.user_id=#id# AND  
+				 user_area_mapping.user_area_id=sell_invoice.user_area_id 
+			</isEqual>		
+		 
+	</dynamic>   
+	 order by 
+		  sell_invoice.id desc ,sell_invoice.number
+	
+	</select> 
+	
+	<!-- 根据用户的ID和权限获取退票一览 (分页用) by LiuQingGang-->
+	
+	<select id="selectBackInvoiceById.recordCount" parameterClass="userEntity" resultClass="java.lang.Integer">
+	  
+	  select 
+	    count(*) 
+	    
+	  from sell_invoice left join product_type
+	    on sell_invoice.product_type_id= product_type.id
+ 		left join user u1
+		       on u1.id = sell_invoice.user_id
+		
+		<!-- 销售总监 -->
+	    <isEqual prepend="," property="roleId" compareValue="5">
+			user_product
+		</isEqual> 
+		
+		<!-- 销售助理 -->
+	    <isEqual prepend="," property="roleId" compareValue="3">
+			user_area_product
+		</isEqual> 
+		
+		<!-- 区域总监-->
+		<isEqual prepend="," property="roleId" compareValue="9">
+				user_product,user
+		</isEqual>
+		
+		<!-- 区域经理-->
+		<isEqual prepend="," property="roleId" compareValue="19">
+				user_area_mapping
+		</isEqual>
+		<!-- 大区经理-->
+		<isEqual prepend="," property="roleId" compareValue="20">
+				user_area_mapping
+		</isEqual>
+		 
+	 <dynamic prepend="WHERE">
+	  
+	   <!-- 销售经理 -->
+	    <isEqual prepend="" property="roleId" compareValue="4">
+	        sell_invoice.user_id=#id# 
+		</isEqual>
+		
+		<!-- 销售总监 (负责产品分类,发票状态为销售总监待评审)-->
+		<isEqual prepend="" property="roleId" compareValue="5">
+			user_product.user_id=#id# and
+       		sell_invoice.product_type_id=user_product.product_type_id and
+	   		sell_invoice.status=2
+		</isEqual>
+		
+		<!-- 运营总监(发票状态为运营总监待评审) -->
+		<isEqual prepend="" property="roleId" compareValue="17">
+	   		sell_invoice.status=4
+		</isEqual>
+		
+		<!-- 销售助理(负责区域、负责产品分类；发票状态为待确认)-->
+		<isEqual prepend="" property="roleId" compareValue="3">
+	   		sell_invoice.user_area_id = user_area_product.user_area_id and 
+			sell_invoice.product_type_id = user_area_product.product_type_id and
+            user_area_product.user_id=#id# and 
+            sell_invoice.status = 6 
+		</isEqual>
+		
+		<!-- 区域总监(负责产品分类，负责区域)-->
+			<isEqual prepend="" property="roleId" compareValue="9">
+				user_product.user_id=#id# and user_product.product_type_id = sell_invoice.product_type_id
+				and user.id = #id# and u1.user_area_id = user.user_area_id 
+			</isEqual>	
+		<!-- 区域经理(负责产品分类，负责区域)-->
+			<isEqual prepend="" property="roleId" compareValue="19">
+				user_area_mapping.user_id=#id# AND  
+				 user_area_mapping.user_area_id=sell_invoice.user_area_id 
+			</isEqual>	
+		<!-- 大区经理(负责产品分类，负责区域)-->
+			<isEqual prepend="" property="roleId" compareValue="20">
+				user_area_mapping.user_id=#id# AND  
+				 user_area_mapping.user_area_id=sell_invoice.user_area_id 
+			</isEqual>		 
+	</dynamic>   
+	 order by 
+		  sell_invoice.id desc ,sell_invoice.number
+	</select>
+	 
+  <!-- 根据画面条件检索退票一览 by liuqg -->
+	<select id="selectBackInvoiceByCondition.selectBackInvoiceByCondition" parameterClass="backInvoicSearchDto" resultClass="backInvoicListDto">
+	  
+	  select
+	    sell_invoice.id as id,  
+	    sell_invoice.date  as   date,
+	    sell_invoice.number  as   number,
+	    sell_invoice.make_invoice_id  as   makeInvoiceId,
+	    sell_invoice.customer_name  as   customerName,
+	    product_type.name  as productTypeName ,
+	    sell_invoice.money  as   money,
+	    sell_invoice.invoice_type  as   invoiceType,
+	    sell_invoice.user_id  as   userId,
+	    sell_invoice.user_name  as   userName,
+	    sell_invoice.confirm_id  as   confirmId,
+	    sell_invoice.confirm_name  as   confirmName,
+	    sell_invoice.request_date  as   requestDate,
+	    sell_invoice.back_date  as   backDate,
+	    sell_invoice.status  as   status
+	
+	  from sell_invoice left join product_type
+	    on sell_invoice.product_type_id= product_type.id
+		left join user u1
+		       on u1.id = sell_invoice.user_id
+	    <isNotEmpty prepend="" property="sendGoodsId">
+			inner join sell_invoice_detail on sell_invoice_detail.sell_invoice_id=sell_invoice.id and
+ 			sell_invoice_detail.send_goods_id=#sendGoodsId#
+		</isNotEmpty>  
+		
+		<!-- 销售总监 -->
+	    <isEqual prepend="," property="roleId" compareValue="5">
+			user_product
+		</isEqual> 
+		
+		<!-- 销售助理 -->
+	    <isEqual prepend="," property="roleId" compareValue="3">
+			user_area_product
+		</isEqual> 
+		
+		<!-- 区域总监-->
+		<isEqual prepend="," property="roleId" compareValue="9">
+				user_product,user
+		</isEqual>
+		<!-- 区域经理-->
+		<isEqual prepend="," property="roleId" compareValue="19">
+				user_area_mapping
+		</isEqual>
+		<!-- 大区经理-->
+		<isEqual prepend="," property="roleId" compareValue="20">
+				user_area_mapping
+		</isEqual>
+		 
+	 <dynamic prepend="WHERE">
+	  
+	   <!-- 销售经理 -->
+	    <isEqual prepend="and" property="roleId" compareValue="4">
+	        sell_invoice.user_id=#loginId# 
+		</isEqual>
+		
+		<!-- 销售总监 (负责产品分类,发票状态为销售总监待评审)-->
+		<isEqual prepend="and" property="roleId" compareValue="5">
+			user_product.user_id=#loginId# and
+       		sell_invoice.product_type_id=user_product.product_type_id 
+		</isEqual>
+		 
+		
+		<!-- 销售助理(负责区域、负责产品分类；发票状态为待确认)-->
+		<isEqual prepend="and" property="roleId" compareValue="3">
+	   		sell_invoice.user_area_id = user_area_product.user_area_id and 
+			sell_invoice.product_type_id = user_area_product.product_type_id and
+            user_area_product.user_id=#loginId#
+		</isEqual>
+		
+		<!-- 区域总监(负责产品分类，负责区域)-->
+			<isEqual prepend="and" property="roleId" compareValue="9">
+				user_product.user_id=#loginId# and user_product.product_type_id = sell_invoice.product_type_id
+				and user.id = #loginId# and u1.user_area_id = user.user_area_id 
+			</isEqual>	
+		<!-- 区域经理(负责产品分类，负责区域)-->
+			<isEqual prepend="and" property="roleId" compareValue="19">
+				user_area_mapping.user_id=#loginId# AND  
+				 user_area_mapping.user_area_id=sell_invoice.user_area_id 
+			</isEqual>	
+		<!-- 大区经理(负责产品分类，负责区域)-->
+			<isEqual prepend="and" property="roleId" compareValue="20">
+				user_area_mapping.user_id=#loginId# AND  
+				 user_area_mapping.user_area_id=sell_invoice.user_area_id 
+			</isEqual>
+		<!-- 画面条件 -->
+		
+		<isNotEmpty prepend="and" property="number">
+			sell_invoice.number = #number#
+		</isNotEmpty> 
+		<isNotEmpty prepend="and" property="makeInvoiceId">
+			sell_invoice.make_invoice_id=#makeInvoiceId# 
+		</isNotEmpty>
+		<!-- sell_invoice.customer_name like '%$customerName$%'	 --> 
+		<isNotEmpty prepend="and" property="customerName">
+			
+			sell_invoice.customer_name   like concat( '%' ,#customerName#, '%' ) 
+			 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productTypeId">
+			sell_invoice.product_type_id=#productTypeId#	 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="invoiceType">
+			sell_invoice.invoice_type=#invoiceType#	 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="userName">
+			sell_invoice.user_name like  '%$userName$%'		 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="confirmName">
+			sell_invoice.confirm_name like 	 '%$confirmName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="status">
+			sell_invoice.status=#status#	 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="dateStart">
+			<![CDATA[  DATE_FORMAT(sell_invoice.date,'%Y%m%d')>=  DATE_FORMAT(#dateStart#,'%Y%m%d')  ]]>	 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="dateEnd">
+			<![CDATA[  DATE_FORMAT(sell_invoice.date,'%Y%m%d')<=  DATE_FORMAT(#dateEnd#,'%Y%m%d')  ]]>		 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="requestDateStart">
+			<![CDATA[  DATE_FORMAT(sell_invoice.request_date,'%Y%m%d')>=  DATE_FORMAT(#requestDateStart#,'%Y%m%d')  ]]>	 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="requestDateEnd">
+			<![CDATA[  DATE_FORMAT(sell_invoice.request_date,'%Y%m%d')<=  DATE_FORMAT(#requestDateEnd#,'%Y%m%d')  ]]>	 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="backDateStart">
+			<![CDATA[  DATE_FORMAT(sell_invoice.back_date,'%Y%m%d')>=  DATE_FORMAT(#backDateStart#,'%Y%m%d')  ]]>		 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="backDateEnd">
+			<![CDATA[  DATE_FORMAT(sell_invoice.back_date,'%Y%m%d')<=  DATE_FORMAT(#backDateEnd#,'%Y%m%d')  ]]>	 
+		</isNotEmpty>
+		 
+	</dynamic>   
+	 order by 
+		  sell_invoice.id desc ,sell_invoice.number
+	
+	</select> 
+	
+		 
+  <!-- 根据画面条件检索退票一览(分页用) by LiuQingGang -->
+	<select id="selectBackInvoiceByCondition.recordCount" parameterClass="backInvoicSearchDto" resultClass="java.lang.Integer">
+	  
+	  select 
+	    count(*)
+	
+	   from sell_invoice left join product_type
+	    on sell_invoice.product_type_id= product_type.id
+		left join user u1
+		       on u1.id = sell_invoice.user_id
+	    <isNotEmpty prepend="" property="sendGoodsId">
+			inner join sell_invoice_detail on sell_invoice_detail.sell_invoice_id=sell_invoice.id and
+ 			sell_invoice_detail.send_goods_id=#sendGoodsId#
+		</isNotEmpty>    
+		<!-- 销售总监 -->
+	    <isEqual prepend="," property="roleId" compareValue="5">
+			user_product
+		</isEqual> 
+		
+		<!-- 销售助理 -->
+	    <isEqual prepend="," property="roleId" compareValue="3">
+			user_area_product
+		</isEqual> 
+		
+		<!-- 区域总监-->
+		<isEqual prepend="," property="roleId" compareValue="9">
+				user_product,user
+		</isEqual>
+		<!-- 区域经理-->
+		<isEqual prepend="," property="roleId" compareValue="19">
+				user_area_mapping
+		</isEqual>
+		<!-- 大区经理-->
+		<isEqual prepend="," property="roleId" compareValue="20">
+				user_area_mapping
+		</isEqual>
+		 
+	 <dynamic prepend="WHERE">
+	  
+	   <!-- 销售经理 -->
+	    <isEqual prepend="and" property="roleId" compareValue="4">
+	        sell_invoice.user_id=#loginId# 
+		</isEqual>
+		
+		<!-- 销售总监 (负责产品分类,发票状态为销售总监待评审)-->
+		<isEqual prepend="and" property="roleId" compareValue="5">
+			user_product.user_id=#loginId# and
+       		sell_invoice.product_type_id=user_product.product_type_id 
+		</isEqual>
+		 
+		
+		<!-- 销售助理(负责区域、负责产品分类；发票状态为待确认)-->
+		<isEqual prepend="and" property="roleId" compareValue="3">
+	   		sell_invoice.user_area_id = user_area_product.user_area_id and 
+			sell_invoice.product_type_id = user_area_product.product_type_id and
+            user_area_product.user_id=#loginId#
+		</isEqual>
+		
+		<!-- 区域总监(负责产品分类，负责区域)-->
+			<isEqual prepend="and" property="roleId" compareValue="9">
+				user_product.user_id=#loginId# and user_product.product_type_id = sell_invoice.product_type_id
+				and user.id = #loginId# and u1.user_area_id = user.user_area_id 
+			</isEqual>
+		<!-- 区域经理(负责产品分类，负责区域)-->
+			<isEqual prepend="and" property="roleId" compareValue="19">
+				user_area_mapping.user_id=#loginId# AND  
+				 user_area_mapping.user_area_id=sell_invoice.user_area_id 
+			</isEqual>	
+		<!-- 大区经理(负责产品分类，负责区域)-->
+			<isEqual prepend="and" property="roleId" compareValue="20">
+				user_area_mapping.user_id=#loginId# AND  
+				 user_area_mapping.user_area_id=sell_invoice.user_area_id 
+			</isEqual>	
+		<!-- 画面条件 -->
+		
+		<isNotEmpty prepend="and" property="number">
+			sell_invoice.number = #number#
+		</isNotEmpty> 
+		<isNotEmpty prepend="and" property="makeInvoiceId">
+			sell_invoice.make_invoice_id=#makeInvoiceId# 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="customerName">
+			sell_invoice.customer_name like '%$customerName$%'	 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productTypeId">
+			sell_invoice.product_type_id=#productTypeId#	 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="invoiceType">
+			sell_invoice.invoice_type=#invoiceType#	 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="userName">
+			sell_invoice.user_name like  '%$userName$%'		 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="confirmName">
+			sell_invoice.confirm_name like 	 '%$confirmName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="status">
+			sell_invoice.status=#status#	 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="dateStart">
+			<![CDATA[  DATE_FORMAT(sell_invoice.date,'%Y%m%d')>=  DATE_FORMAT(#dateStart#,'%Y%m%d')  ]]>	 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="dateEnd">
+			<![CDATA[  DATE_FORMAT(sell_invoice.date,'%Y%m%d')<=  DATE_FORMAT(#dateEnd#,'%Y%m%d')  ]]>		 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="requestDateStart">
+			<![CDATA[  DATE_FORMAT(sell_invoice.request_date,'%Y%m%d')>=  DATE_FORMAT(#requestDateStart#,'%Y%m%d')  ]]>	 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="requestDateEnd">
+			<![CDATA[  DATE_FORMAT(sell_invoice.request_date,'%Y%m%d')<=  DATE_FORMAT(#requestDateEnd#,'%Y%m%d')  ]]>	 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="backDateStart">
+			<![CDATA[  DATE_FORMAT(sell_invoice.back_date,'%Y%m%d')>=  DATE_FORMAT(#backDateStart#,'%Y%m%d')  ]]>		 
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="backDateEnd">
+			<![CDATA[  DATE_FORMAT(sell_invoice.back_date,'%Y%m%d')<=  DATE_FORMAT(#backDateEnd#,'%Y%m%d')  ]]>	 
+		</isNotEmpty>
+		 
+	</dynamic>   
+	 order by 
+		  sell_invoice.id desc ,sell_invoice.number
+	
+	</select> 
+	
+	<!--获得所有的产品分类 By LiuQingGang--> 
+		<select id="getproductTypeList"  	resultClass="productTypeEntity">
+			select 
+				product_type.id,
+				product_type.no,
+				product_type.name,
+				product_type.product_dept_id,
+				product_type.climit
+			from  product_type
+			order by 
+			product_type.product_dept_id
+	</select>
+		
+	<!--退票确认 By LiuQingGang--> 
+	<update id="modifyBackInvoiceConfirm" parameterClass="backInvoicListDto" >
+		update sell_invoice set 
+		sell_invoice.status=7,
+		sell_invoice.confirm_name=#confirmName#,
+		sell_invoice.back_date =date_format(now(),'%Y-%m-%d') 
+		where sell_invoice.id=#id#	
+			
+	</update>
+	
+	
+	
+	  <!--更新退票评审  by jiangmx--> 
+	<update id="updateBackInvoiceAssess" parameterClass="backInvoiceAssessDto" >
+	      update sell_invoice
+	
+	       set  status=#status#
+	
+		<isEqual compareValue="5" property="roleId"> 
+			    ,sell_maj_name = #sellMajName#,
+				sell_maj_date = date_format(now(),'%Y-%m-%d'),
+				sell_maj_idea = #sellMajIdea#,  
+				sell_maj_text = #sellMajText#
+		</isEqual>
+		
+		<isEqual compareValue="17" property="roleId"> 
+			    ,ope_maj_name = #opeMajName#,
+				ope_maj_date = date_format(now(),'%Y-%m-%d'),
+				ope_maj_idea = #opeMajIdea#,  
+				ope_maj_text = #opeMajText#
+		</isEqual>				
+ 
+    
+	     where  sell_invoice.id=#id#	
+	    
+			
+	</update>
+	    
+	
+	
+</sqlMap>

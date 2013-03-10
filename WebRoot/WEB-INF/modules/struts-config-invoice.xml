@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="invoincForm" type="cn.com.thtf.egov.cms.form.InvoiceListForm"></form-bean>
+		<form-bean name="customerForm" type="cn.com.thtf.egov.cms.form.CustomerForm"></form-bean>
+		<form-bean name="sendGoodsParticularListForm" type="cn.com.thtf.egov.cms.form.SendGoodsParticularListForm"></form-bean>
+		<form-bean name="makeInvoiceAddForm" type="cn.com.thtf.egov.cms.form.MakeInvoiceAddForm"></form-bean>
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>
+		<!-- 开票列表 -->
+		<action path="/getInvoiceList"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="invoiceManagement" scope="request" name="invoincForm">
+			<forward name="success" path="/jsp/invoice/invoiceManagement.jsp" />
+		</action>
+		<!-- 查找开票列表 -->
+		<action path="/findInvoiceList"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="findInvoiceList" scope="request" name="invoincForm">
+			<forward name="success" path="/jsp/invoice/invoiceManagement.jsp" />
+		</action>
+		<!-- 获得客户列表 -->
+		<action path="/getCustomerList"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="getCustomerList" scope="request" name="customerForm">
+			<forward name="success" path="/jsp/invoice/selectCustomer.jsp" />
+		</action>
+		<!-- 查找客户列表 -->
+		<action path="/findCustomerList"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="findCustomerList" scope="request" name="customerForm">
+			<forward name="success" path="/jsp/invoice/selectCustomer.jsp" />
+		</action>
+		<!-- 删除开票 -->
+		<action path="/delInvoice"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="delInvoice" scope="request" name="customerForm">
+			<forward name="success" path="/getInvoiceList.do" />
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>
+		<!-- 发货明细列表 -->
+		<action path="/getSendGoodsParticularList"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="getSendGoodsParticularList" scope="request" name="sendGoodsParticularListForm">
+			<forward name="success" path="/jsp/invoice/selectSendProduceDetail.jsp" />
+		</action>
+		<!-- 查找明细列表 -->
+		<action path="/findSendGoodsParticularList"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="findSendGoodsParticularList" scope="request" name="sendGoodsParticularListForm">
+			<forward name="success" path="/jsp/invoice/selectSendProduceDetail.jsp" />
+		</action>
+		<!-- 查看评审 -->
+		<action path="/getSyndicInvoice"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="getSyndicInvoice" scope="request">
+			<forward name="sellSuccess" path="/jsp/invoice/addInvoice.jsp?type=sellIdea" />
+			<forward name="opeSuccess" path="/jsp/invoice/addInvoice.jsp?type=opeIdea" />
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>
+		<!-- 执行评审 -->
+		<action path="/syndicInvoice"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="syndicInvoice" scope="request">
+			<forward name="success" path="/getInvoiceList.do" />
+			<forward name="error" path="/jsp/invoice/redirect.jsp" />
+		</action>
+		<!-- 开票添加显示 -->
+		<action path="/addInvoiceOfShow"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="addInvoiceOfShow" scope="request" name="makeInvoiceAddForm">
+			<forward name="success" path="/jsp/invoice/addInvoice.jsp?type=add" />
+		</action>
+		<!-- 开票添加 -->
+		<action path="/addInvoice"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="addInvoice" scope="request" name="makeInvoiceAddForm">
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+			<forward name="success" path="/getInvoiceList.do" />
+		</action>
+		<!-- 开票修改之显示 -->
+		<action path="/modifyInvoiceOfShow"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="modifyInvoiceOfShow" scope="request" name="makeInvoiceAddForm">
+			<forward name="success" path="/jsp/invoice/addInvoice.jsp?type=modify" />
+		</action>
+		<!-- 开票修改之提交 -->
+		<action path="/modifyInvoiceOfSubmit"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="modifyInvoiceOfSubmit" scope="request" name="makeInvoiceAddForm">
+			<forward name="success" path="/getInvoiceList.do" />
+			<forward name="error" path="/jsp/invoice/redirect.jsp" />
+		</action>
+		<!-- 开票查看 -->
+		<action path="/lookInvoice"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="lookInvoice" scope="request" name="makeInvoiceAddForm">
+			<forward name="success" path="/jsp/invoice/addInvoice.jsp?type=look" />
+		</action>
+		<!-- 开票确认 -->
+		<action path="/decideInvoice"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="decideInvoice" scope="request" >
+			<forward name="success" path="/jsp/invoice/decideInvoice.jsp" />
+		</action>	
+		<!-- 发票添加显示 -->
+		<action path="/getSellInvoice"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="getSellInvoice" scope="request">
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+			<forward name="success" path="/jsp/invoice/addSellInvoice.jsp" />
+		</action>		
+			
+		<!-- 发票添加执行 -->
+		<action path="/addSellInvoice"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="addSellInvoice" scope="request" name="makeInvoiceAddForm">
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+			<forward name="success" path="/getInvoiceList.do" />
+		</action>		
+		<!-- 开票通知显示 by lilewei -->
+		<action path="/showNotifiedInvoice"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="showNotifiedInvoice" scope="request" >
+			
+			<forward name="fail" 
+					 path="/getInvoiceList.do" />					 
+			<forward name="success" 
+					 path="/jsp/invoice/showNotifiedInvoice.jsp" />
+		</action>
+		
+		<!-- K3开票确认显示 by liuqg -->
+		<action path="/showConfirmInvoice"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="showConfirmInvoice" scope="request" >
+			
+			<forward name="fail" 
+					 path="/getInvoiceList.do" />					 
+			<forward name="success" 
+					 path="/jsp/invoice/showConfirmInvoice.jsp" />
+		</action>
+		
+		<!-- K3开票确认 by liuqg -->
+		 
+		<action path="/K3ConfirmInvoice"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="K3ConfirmInvoice" scope="request" name="invoincForm"> 
+			<forward name="success" 
+					 path="/getInvoiceList.do" />		 
+		</action>
+	 
+					 
+					 
+		<!-- 开票通知(ajax) by lilewei -->
+		<action path="/notifyInvoice"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="notifyInvoice" scope="request" >
+						
+		</action>
+		<!-- 发票删除 -->
+		<action path="/delSellInvoiceOfInvoice"
+			type="cn.com.thtf.egov.cms.action.sell.InvoiceListAction"
+			parameter="delSellInvoiceOfInvoice" scope="request" >
+			<forward name="success" path="/getInvoiceList.do" />	
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>
+		
+	</action-mappings>
+</struts-config>

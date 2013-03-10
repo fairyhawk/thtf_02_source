@@ -1,0 +1,571 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="instock_sqlMap">
+
+	<typeAlias alias="buyContractDto" type="cn.com.thtf.egov.cms.dto.BuyContractDto" /> 
+	<typeAlias alias="receiveGoodsDetailDto" type="cn.com.thtf.egov.cms.dto.ReceiveGoodsDetailDto" /> 
+	<typeAlias alias="inStockProductDto" type="cn.com.thtf.egov.cms.dto.InStockProductDto" />
+	<typeAlias alias="addInStockDto" type="cn.com.thtf.egov.cms.dto.AddInStockDto" />
+	<typeAlias alias="inStockEntity" type="cn.com.thtf.egov.cms.entity.InStockEntity" />
+	<typeAlias alias="receiveGoodsDetail" type="cn.com.thtf.egov.cms.entity.ReceiveGoodsDetailEntity" />
+	<typeAlias alias="inStockQueryDto" type="cn.com.thtf.egov.cms.dto.InStockQueryDto" />
+	<typeAlias alias="inStockResultDto" type="cn.com.thtf.egov.cms.dto.InStockResultDto" />
+	<typeAlias alias="stockroomEntity" type="cn.com.thtf.egov.cms.entity.StockroomEntity" />
+
+	<!-- 入库单查看 -->
+	<select id="selectStockroomTypeByInStockId" parameterClass="String" resultClass="stockroomEntity"> 
+		select
+			 stockroom.id as id,
+			 stockroom.type as type,
+			 stockroom.product_dept_id as productDeptId,
+			 stockroom.name as name
+		from
+			in_stock,stockroom
+		where 
+				in_stock.id = #id#
+			and	in_stock.stockroom_id = stockroom.id
+	</select>
+	
+	<!-- 修改入库单 -->
+	<update id="updateAudit" parameterClass="inStockEntity">	
+		update in_stock set 
+			pro_maj_id=#proMajId#,pro_maj_name = #proMajName#,
+			pro_maj_date = #proMajDate#,pro_maj_idea = #proMajIdea#,
+			pro_maj_text = #proMajText#,status=#status#
+		where
+			id = #id#
+	</update>
+	
+	<!-- 入库单列表 -->
+	<select id="selectInStockListZ" parameterClass="java.lang.String" resultClass="java.lang.String">
+		select   
+			sum(buy_back_goods.money) money 
+		from 
+			buy_back_goods
+		where 
+			buy_back_goods.status = 11
+		and buy_back_goods.in_stock_id = #id#
+		group by buy_back_goods.in_stock_id
+	</select>
+	<!-- 入库单列表 -->
+	<select id="selectInStockList.data" parameterClass="inStockQueryDto" resultClass="inStockResultDto"> 
+		 select
+			in_stock.id as inStockId,
+			in_stock.supplier_name as inStockSupplierName,
+			in_stock.money as inStockMoney,
+			in_stock.date as inStockDate,
+			in_stock.stk_adm_date as inStockStkAdmDate,
+
+			in_stock.user_name as inStockUserName,
+			in_stock.status as inStockStatus,
+			stockroom.name as stockroomName,
+			product_type.name as productTypeName,
+			buy_contract.product_contract_code as ProductContractCode,
+			buy_contract.company_contract_code as companyContractCode 
+			
+		from 
+			stockroom,product_type,buy_contract,in_stock
+		where
+			in_stock.stockroom_id = stockroom.id
+		and	in_stock.product_type_id = product_type.id
+		and	in_stock.buy_contract_id = buy_contract.id 
+		<isNotEmpty prepend="and" property="productTypeIdArr">
+			in_stock.product_type_id in ($productTypeIdArr$)
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="instockId">
+			in_stock.id like '%$instockId$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="stockroomId">
+			in_stock.stockroom_id = #stockroomId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productTypeId">
+			in_stock.product_type_id in ($productTypeId$)
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productContractCode">
+			buy_contract.product_contract_code like '%$productContractCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="companyContarctCode">
+			buy_contract.company_contract_code like '%$companyContarctCode$%'
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="supplierName">
+			in_stock.supplier_name like '%$supplierName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="starttime">
+			<![CDATA[ in_stock.date >= #starttime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="endtime">
+			<![CDATA[ in_stock.date <= #endtime# ]]>
+		</isNotEmpty>
+		
+		<isNotEmpty prepend="and" property="requestAccountStarttime">
+			<![CDATA[ in_stock.request_account_date >= #requestAccountStarttime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="requestAccountEndtime">
+			<![CDATA[ in_stock.request_account_date <= #requestAccountEndtime# ]]>
+		</isNotEmpty>
+		
+		<isNotEmpty prepend="and" property="stkStarttime">
+				<![CDATA[ in_stock.stk_adm_date >= #stkStarttime# ]]>
+			and in_stock.status=6
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="stkEndtime">
+			<![CDATA[ in_stock.stk_adm_date <= #stkEndtime# ]]>
+			and in_stock.status=6
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="userName">
+			in_stock.user_name like '%$userName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="status">
+			in_stock.status = #status#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="userProduct">
+			in_stock.status = 2
+		</isNotEmpty>
+		order by in_stock.id desc
+	</select>
+	<!-- 入库单列表 -->
+	<select id="selectInStockList.recordCount" parameterClass="inStockQueryDto" resultClass="java.lang.Integer"> 
+		select
+			count(*)
+		from 
+			stockroom,product_type,buy_contract,in_stock 
+		where
+			in_stock.stockroom_id = stockroom.id
+		and	in_stock.product_type_id = product_type.id
+		and	in_stock.buy_contract_id = buy_contract.id 
+		<isNotEmpty prepend="and" property="productTypeIdArr">
+			in_stock.product_type_id in ($productTypeIdArr$)
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="instockId">
+			in_stock.id like '%$instockId$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="stockroomId">
+			in_stock.stockroom_id = #stockroomId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productTypeId">
+			in_stock.product_type_id in ($productTypeId$)
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productContractCode">
+			buy_contract.product_contract_code like '%$productContractCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="companyContarctCode">
+			buy_contract.company_contract_code like '%$companyContarctCode$%'
+		</isNotEmpty>
+		
+		<isNotEmpty prepend="and" property="requestAccountStarttime">
+			<![CDATA[ in_stock.request_account_date >= #requestAccountStarttime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="requestAccountEndtime">
+			<![CDATA[ in_stock.request_account_date <= #requestAccountEndtime# ]]>
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="supplierName">
+			in_stock.supplier_name like '%$supplierName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="starttime">
+			<![CDATA[ in_stock.date >= #starttime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="endtime">
+			<![CDATA[ in_stock.date <= #endtime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="stkStarttime">
+				<![CDATA[ in_stock.stk_adm_date >= #stkStarttime# ]]>
+			and in_stock.status=6
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="stkEndtime">
+			<![CDATA[ in_stock.stk_adm_date <= #stkEndtime# ]]>
+			and in_stock.status=6
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="userName">
+			in_stock.user_name like '%$userName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="status">
+			in_stock.status = #status#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="userProduct">
+			in_stock.status = 2
+		</isNotEmpty>
+	</select> 
+
+	<!-- 入库单查看 -->
+	<select id="selectInStockById" parameterClass="String" resultClass="inStockEntity"> 
+		select
+			in_stock.id as id,
+			in_stock.buy_contract_id  as buyContractId,
+			in_stock.receive_goods_detail_id as receiveGoodsDetailId,
+			in_stock.stockroom_id as stockroomId,
+			in_stock.money as money,
+			in_stock.text as text,
+			pro_maj_id as proMajId,
+			pro_maj_name as proMajName,
+			pro_maj_date as proMajDate,
+			pro_maj_idea as proMajIdea,
+			pro_maj_text as proMajText,
+			
+			stk_adm_name as stkAdmName,
+			stk_adm_date as stkAdmDate,
+			stk_adm_idea as stkAdmIdea,
+			stk_adm_text as stkAdmText,
+			in_stock.factory_send_date as factorySendDate,
+			in_stock.request_account_date as requestAccountDate
+		from
+			in_stock
+		where 
+			in_stock.id = #id# 
+	</select>
+
+	<!-- 新建入库单  --> 
+	<insert id="insertInstock" parameterClass="addInStockDto">
+		insert into
+			 in_stock(id,buy_contract_id,supplier_id,supplier_name,product_type_id,
+						receive_goods_detail_id,stockroom_id,date,user_id,user_name,
+						text,money,status,pro_maj_id,stk_adm_id,
+						datetime,factory_send_date,request_account_date)
+		values 
+			(#id#,#buyContractId#,#supplierId#,#supplierName#,#productTypeId#,
+			 #receiveId#,#stockroomId#,#date#,#userId#,#userName#,
+			 #text#,#money#,#status#,#proMajId#,#stkAdmId#,
+			 #datetime#,#factorySendDate#,date_add(#factorySendDate#, interval #sendPaymentTime# day)) 
+	</insert>
+	<!-- 修改入库单 -->
+	<update id="updateInstock" parameterClass="addInStockDto">	
+		update in_stock set
+			id = #id#,buy_contract_id = #buyContractId#,supplier_id = #supplierId#,
+			supplier_name = #supplierName#,product_type_id = #productTypeId#,
+			receive_goods_detail_id = #receiveId#,
+			stockroom_id = #stockroomId#,date = #date#,user_id = #userId#,
+			user_name = #userName#,text = #text#,money = #money#,
+			status = #status#,pro_maj_id = #proMajId#,stk_adm_id = #stkAdmId#,
+			factory_send_date=#factorySendDate#,request_account_date=date_add(#factorySendDate#, interval #sendPaymentTime# day)
+			<isEqual property="status" compareValue="2">
+				,pro_maj_name = "",pro_maj_date = "",pro_maj_idea = "",pro_maj_text = "",
+				stk_adm_name = "",stk_adm_date = "",stk_adm_idea = "",stk_adm_text = ""
+			</isEqual>
+		where
+			id = #id#
+	</update>
+	<!-- 新建入库单明细  -->
+	<insert id="insertInstockDetail" parameterClass="addInStockDto">
+		insert into
+			 in_stock_detail(in_stock_id,product_id,count,price)
+		values 
+			(#id#,#productId#,#productCount#,#productPrice#) 
+	</insert>
+	<!-- 删除入库单明细  -->
+	<delete id="deleteInstockDetail" parameterClass="java.lang.String">	
+		delete from in_stock_detail where in_stock_id = #id#
+	</delete>
+	<!-- 删除入库单  -->
+	<delete id="deleteInstock" parameterClass="java.lang.String">	
+		delete from in_stock where id = #id#
+	</delete>
+
+	<!-- 根据采购合同ID检索采购合同信息 --> 
+	<select id="selectBuyContractById" parameterClass="String" resultClass="buyContractDto"> 
+		select  
+			 buy_contract.id as id, 
+			 buy_contract.product_contract_code	as productContractCode,
+			 buy_contract.company_contract_code	as companyContractCode,
+			 buy_contract.supplier_id	as supplierId,
+			 supplier.name	as supplierName,
+			 buy_contract.date	as date,
+			 buy_contract.invoice_type	as invoiceType,
+			 buy_contract.tax_rate	as taxRate,
+			 buy_contract.payment_type	as paymentType,
+			 buy_contract.payment_way	as paymentWay,
+			 buy_contract.arterm	as arterm,
+			 buy_contract.contract_payment_time	as contarctPaymentTime,
+			 buy_contract.prepay_money	as prepayMoney,
+			 buy_contract.send_payment_time	as sendPaymentTime,
+			
+			 buy_contract.product_type_id	as productTypeId,
+			 product_type.name	as productTypeName
+		from
+			buy_contract,supplier,product_type
+		where 
+				buy_contract.id = #id#
+			and buy_contract.supplier_id = supplier.id
+			and buy_contract.product_type_id = product_type.id 
+	</select>
+
+	<!-- 选择产品 --> 
+	<select id="selectProductListView" parameterClass="receiveGoodsDetailDto" resultClass="inStockProductDto"> 
+		 select
+			product.id as productId,product.code as productCode,product.name as productName,
+			product.type as productType,product.unit as productUnit,
+
+			receive_goods_detail.count as receiveGoodsDetailCount,
+
+			buy_contract_detail.price as buyContractDetailPrice,
+			(buy_contract_detail.price*buy_contract_detail.count) as money, 
+
+			(case when in_stock.status in (2,4,6) then ifnull(inStock.count,0)-ifnull(sum(in_stock_detail.count),0)
+	          else ifnull(inStock.count,0) end) as inStockCount,
+
+			ifnull(buyBackGoods.count,0) as buyBackGoodsCount,
+
+			ifnull(sum(in_stock_detail.count),0) as count
+		from 
+			product,buy_contract_detail,receive_goods_detail,in_stock,in_stock_detail 
+			left join(
+				select
+					in_stock.id,
+					in_stock_detail.product_id as productId,
+					sum(in_stock_detail.count) as count
+				from 
+					in_stock,in_stock_detail 
+				where
+					in_stock.id=in_stock_detail.in_stock_id
+				and	(in_stock.status=2 or in_stock.status=4 or in_stock.status=6)
+				and	in_stock.buy_contract_id = #buyContractId#
+				
+				<isNotEmpty prepend="and" property="idList">
+					<iterate property="idList" open="(" close=")" conjunction="or" >  
+						in_stock.receive_goods_detail_id = '$idList[]$'
+					</iterate>
+				</isNotEmpty>
+
+				group by in_stock_detail.product_id
+			) as inStock 
+			on inStock.productId=in_stock_detail.product_id 
+			
+			left join(
+				select   
+					buy_back_goods_detail.product_id as productId,
+					sum(buy_back_goods_detail.count) count 
+				from 
+					buy_back_goods,buy_back_goods_detail,in_stock
+				where
+					in_stock.buy_contract_id = #buyContractId#
+				and	buy_back_goods.id=buy_back_goods_detail.buy_back_goods_id 
+				and	buy_back_goods.status=11  
+				and	in_stock.id=buy_back_goods.in_stock_id
+				and	in_stock.buy_contract_id = #buyContractId#
+				<isNotEmpty prepend="and" property="idList">
+					<iterate property="idList" open="(" close=")" conjunction="or" >  
+						in_stock.receive_goods_detail_id = '$idList[]$'
+					</iterate>
+				</isNotEmpty>
+
+				group by buy_back_goods_detail.product_id
+			) as buyBackGoods
+			on buyBackGoods.productId=in_stock_detail.product_id 
+
+		where 
+			in_stock_detail.in_stock_id=#inStockId#
+		and	in_stock_detail.in_stock_id=in_stock.id
+		and	buy_contract_detail.buy_contract_id = #buyContractId#
+		and	buy_contract_detail.product_id=in_stock_detail.product_id
+
+		and	product.id = in_stock_detail.product_id 
+
+		and	receive_goods_detail.buy_contract_id = #buyContractId#
+		and	receive_goods_detail.product_id = in_stock_detail.product_id
+		and	receive_goods_detail.company_type = #companyType# 
+		and receive_goods_detail.address_id = #addressId#
+
+		group by in_stock_detail.product_id
+	</select>
+
+	<!-- 选择产品 --> 
+	<select id="selectReceiveGoodsDetailId" parameterClass="receiveGoodsDetailDto" resultClass="java.lang.String"> 
+		select
+			id as id
+		from 
+			receive_goods_detail
+		where 
+			receive_goods_detail.buy_contract_id = #buyContractId#
+		and	receive_goods_detail.company_type = #companyType# 
+		and receive_goods_detail.address_id = #addressId# 
+	</select>
+
+	<!-- 选择产品 --> 
+	<select id="selectProductList" parameterClass="receiveGoodsDetailDto" resultClass="inStockProductDto"> 
+		select
+			product.id as productId,product.code as productCode,product.name as productName,
+			product.type as productType,product.unit as productUnit,
+			receive_goods_detail.count as receiveGoodsDetailCount,
+			buy_contract_detail.price as buyContractDetailPrice,
+			(buy_contract_detail.price*buy_contract_detail.count) as money,
+			ifnull(inStock.count,0) as inStockCount,ifnull(buyBackGoods.count,0) as buyBackGoodsCount
+		from 
+			product,buy_contract_detail,receive_goods_detail
+
+			left join(
+				select
+					in_stock.id,
+					in_stock_detail.product_id as productId,
+					sum(in_stock_detail.count) as count
+				from 
+					in_stock,in_stock_detail
+				where
+					in_stock.id=in_stock_detail.in_stock_id
+				and	(in_stock.status=2 or in_stock.status=4 or in_stock.status=6)
+				and	in_stock.buy_contract_id = #buyContractId#
+				
+				<isNotEmpty prepend="and" property="idList">
+					<iterate property="idList" open="(" close=")" conjunction="or" >  
+						in_stock.receive_goods_detail_id = '$idList[]$'
+					</iterate>
+				</isNotEmpty>
+
+				group by in_stock_detail.product_id
+			) as inStock 
+			on inStock.productId=receive_goods_detail.product_id
+
+			
+			left join(
+				select 
+					in_stock.buy_contract_id as buyContractId,
+					sum(buy_back_goods_detail.count) count,
+					buy_back_goods_detail.product_id as productId
+				from 
+					buy_back_goods,buy_back_goods_detail,in_stock
+				where
+					buy_back_goods.id=buy_back_goods_detail.buy_back_goods_id 
+				and buy_back_goods.status=11
+				and in_stock.id=buy_back_goods.in_stock_id
+				and	in_stock.buy_contract_id = #buyContractId#
+				<isNotEmpty prepend="and" property="idList">
+					<iterate property="idList" open="(" close=")" conjunction="or" >  
+						in_stock.receive_goods_detail_id = '$idList[]$'
+					</iterate>
+				</isNotEmpty>
+
+				group by buy_back_goods_detail.product_id
+			) as buyBackGoods
+			on buyBackGoods.buyContractId=receive_goods_detail.buy_contract_id and buyBackGoods.productId=receive_goods_detail.product_id 
+		where 
+			buy_contract_detail.buy_contract_id = #buyContractId#
+		and	receive_goods_detail.company_type = #companyType# 
+		and receive_goods_detail.address_id = #addressId#
+		and	buy_contract_detail.product_id = product.id
+		and	receive_goods_detail.buy_contract_id = buy_contract_detail.buy_contract_id
+		and	receive_goods_detail.product_id = buy_contract_detail.product_id
+		and ifnull(receive_goods_detail.count,0)-ifnull(inStock.count,0)+ifnull(buyBackGoods.count,0) > 0
+	</select>
+
+	<!-- 选择收获地址 -->
+	<select id="selectReceiveGoodsDetail" parameterClass="receiveGoodsDetail" resultClass="receiveGoodsDetailDto"> 
+		select  
+			 receive_goods_detail.id as id, 
+			 receive_goods_detail.buy_contract_id	as buyContractId,
+			 receive_goods_detail.company_type	as companyType, 
+			 receive_goods_detail.company_id	as companyId,
+			 receive_goods_detail.address_id	as addressId,
+
+			 receive_goods_detail.product_id	as productId,
+			 receive_goods_detail.count	as count,
+
+			 (case 
+				when receive_goods_detail.company_type = 1 then stockroomAddress.stockroomName
+				when receive_goods_detail.company_type = 2 then companyAddress.companyName
+				when receive_goods_detail.company_type = 3 then customerAddress.customerName end) as companyName,
+			 (case 
+				when receive_goods_detail.company_type = 1 then stockroomAddress.name
+				when receive_goods_detail.company_type = 2 then companyAddress.name
+				when receive_goods_detail.company_type = 3 then customerAddress.name end) as name,
+			 (case 
+				when receive_goods_detail.company_type = 1 then stockroomAddress.address
+				when receive_goods_detail.company_type = 2 then companyAddress.address
+				when receive_goods_detail.company_type = 3 then customerAddress.address end) as address,
+			 (case 
+				when receive_goods_detail.company_type = 1 then stockroomAddress.postcode
+				when receive_goods_detail.company_type = 2 then companyAddress.postcode
+				when receive_goods_detail.company_type = 3 then customerAddress.postcode end) as postcode,
+			 (case 
+				when receive_goods_detail.company_type = 1 then stockroomAddress.linkman
+				when receive_goods_detail.company_type = 2 then companyAddress.linkman
+				when receive_goods_detail.company_type = 3 then customerAddress.linkman end) as linkman,
+			 (case 
+				when receive_goods_detail.company_type = 1 then stockroomAddress.tel
+				when receive_goods_detail.company_type = 2 then companyAddress.tel
+				when receive_goods_detail.company_type = 3 then customerAddress.tel end) as tel,
+			 (case 
+				when receive_goods_detail.company_type = 1 then stockroomAddress.mobile
+				when receive_goods_detail.company_type = 2 then companyAddress.mobile
+				when receive_goods_detail.company_type = 3 then customerAddress.mobile end) as mobile,
+			 (case 
+				when receive_goods_detail.company_type = 1 then stockroomAddress.stockroomId
+				else virtualStockroom.stockroomId end) as stockroomId,
+			 (case 
+				when receive_goods_detail.company_type = 1 then stockroomAddress.stockroomName
+				else virtualStockroom.stockroomName end) as stockroomName
+			 
+		from
+			receive_goods_detail
+
+			left join(
+				select 
+					stockroom_address.id as id,stockroom_address.stockroom_id as stockroomId,
+					stockroom_address.name as name,stockroom_address.address as address,
+					stockroom_address.postcode as postcode,stockroom_address.linkman as linkman,
+					stockroom_address.tel as tel,stockroom_address.mobile as mobile,
+					stockroom.name as stockroomName
+				from 
+					stockroom_address,stockroom
+				where
+					stockroom_address.stockroom_id=stockroom.id
+			) as stockroomAddress 
+			on stockroomAddress.id = receive_goods_detail.address_id and receive_goods_detail.company_type = 1
+
+			left join(
+				select 
+					company_address.id as id,company_address.name as name,
+					company_address.address as address,company_address.postcode as postcode,
+					company_address.linkman as linkman,company_address.tel as tel,
+					company_address.mobile as mobile,company.name as companyName
+				from 
+					company_address,company
+			) as companyAddress 
+			on companyAddress.id = receive_goods_detail.address_id and receive_goods_detail.company_type = 2
+
+			left join(
+				select 
+					customer_address.id as id,customer_address.name as name,
+					customer_address.address as address,customer_address.postcode as postcode,
+					customer_address.linkman as linkman,customer_address.tel as tel,
+					customer_address.mobile as mobile,customer.name as customerName
+				from 
+					customer_address,customer
+				where
+					customer_address.customer_id=customer.id
+			) as customerAddress 
+			on customerAddress.id = receive_goods_detail.address_id and receive_goods_detail.company_type = 3
+
+			left join(
+				select
+					buy_contract.id as buyContractId, 
+					stockroom.id as stockroomId,
+					stockroom.name as stockroomName
+				from 
+					buy_contract,product_type,stockroom
+				where
+					    stockroom.type = 0 
+					and buy_contract.product_type_id = product_type.id
+					and product_type.product_dept_id = stockroom.product_dept_id 
+			) as virtualStockroom
+			on virtualStockroom.buyContractId = receive_goods_detail.buy_contract_id
+
+		<dynamic prepend="where"> 
+			<isNotEmpty prepend="and" property="buyContractId">
+				receive_goods_detail.buy_contract_id = #buyContractId#
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="id">
+				receive_goods_detail.id=#id#
+			</isNotEmpty>
+		</dynamic> 
+
+		group by
+			receive_goods_detail.company_type,receive_goods_detail.address_id
+	</select>
+	 
+</sqlMap> 

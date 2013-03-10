@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="mail_sqlMap">
+
+	<typeAlias alias="mailEntity" type="cn.com.thtf.egov.cms.entity.MailEntity" />
+	<typeAlias alias="mailAddresseeEntity" type="cn.com.thtf.egov.cms.entity.MailAddresseeEntity" /> 
+	<typeAlias alias="mailSendgoodDto" type="cn.com.thtf.egov.cms.dto.MailSendgoodDto" />
+	<typeAlias alias="mailDto" type="cn.com.thtf.egov.cms.dto.MailDto" />
+
+	<!-- 修改email -->
+	<update id="updateMail" parameterClass="mailDto">
+		update mail set datetime=#datetime#,flag=#flag# where id=#id#
+	</update>
+
+	<!-- 邮件列表 -->
+	<select id="selectMail.date" parameterClass="mailDto" resultClass="mailDto"> 
+		select 
+			id as id,
+			datetime as datetime,
+			type as type,
+			user_name as userName,
+			subject as subject,
+			flag as flag
+		from 
+			mail
+		<dynamic prepend="where">
+			<isNotEmpty prepend="and" property="type">
+				type = #type#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="flag">
+				flag = #flag#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="idArr">
+				id in ($idArr$)
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userName">
+				user_name like '%$userName$%'
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="subject">
+				subject like '%$subject$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="starttime">
+				<![CDATA[ datetime >= #starttime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="endtime">
+				<![CDATA[ datetime <= #endtime# ]]>
+			</isNotEmpty>  
+		</dynamic>
+		order by datetime desc,type desc
+	</select>
+	<select id="selectMail.recordCount" parameterClass="mailDto" resultClass="java.lang.Integer"> 
+		select 
+			count(*)
+		from 
+			mail
+		<dynamic prepend="where">
+			<isNotEmpty prepend="and" property="type">
+				type = #type#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="flag">
+				flag = #flag#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="idArr">
+				id in ($idArr$)
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userName">
+				user_name like '%$userName$%'
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="subject">
+				subject like '%$subject$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="starttime">
+				<![CDATA[ datetime >= #starttime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="endtime">
+				<![CDATA[ datetime <= #endtime# ]]>
+			</isNotEmpty> 
+		</dynamic>
+	</select>
+	<!-- 查看邮件 -->
+	<select id="selectMail" parameterClass="mailDto" resultClass="mailDto"> 
+		select 
+			mail.id as id,
+			mail.datetime as datetime,
+			mail.type as type,
+			mail.user_name as userName,
+			mail.subject as subject,
+			mail.flag as flag,
+			mail.text
+		from 
+			mail
+		where
+			mail.id = #id# 
+	</select>
+	<select id="selectMailDetail" parameterClass="mailDto" resultClass="mailDto"> 
+		select 
+			mail_id as mailId,
+			name as name,
+			mail as mail
+		from 
+			mail_addressee
+		where
+			mail_id = #id#
+	</select>
+	<select id="selectMailDetailByName" parameterClass="mailDto" resultClass="mailDto"> 
+		select 
+			mail_id as mailId,
+			name as name,
+			mail as mail
+		from 
+			mail_addressee
+		where
+			name like '%$name$%'
+		group by mail_id
+	</select>
+
+	<!-- 根据发货单号检索k3邮件内容 借出单 -->
+	<select id="selectK3MailVauleBySampleOutId" parameterClass="String" resultClass="mailSendgoodDto"> 
+		 select  
+			product_dept.name as productDeptName,
+			sample_out.send_date as sendDate,
+			sample_out.custos_name as customerName,
+			"" as productContractCode,
+			sample_out.id as id,
+
+			stockroom.name as stockroomname,
+			product_type.name as producttypename,
+			product.code as productCode,
+			product.name as productName,
+			product.type as productType,
+
+			sample_out_detail.count as count,
+			round(sample_out_detail.price,2) as price,
+			round(sample_out_detail.count*sample_out_detail.price,2) as money,
+			sample_out.user_name as userName,
+			sample_out.stk_adm_name as stkAdmName,
+			product.unit as unit
+		from  
+			sample_out_detail,stockroom,product_type,product_dept,product,sample_out 
+			 
+		where
+			sample_out.id = #id#
+		and	sample_out.out_stockroom_id = stockroom.id
+		and	sample_out_detail.sample_out_id = sample_out.id
+		and	sample_out.product_type_id = product_type.id
+		and	product_type.product_dept_id = product_dept.id
+		 
+		and	product.id = sample_out_detail.product_id
+		 
+	</select>
+	<!-- 根据发货单号检索k3邮件内容 移库单 -->
+	<select id="selectK3MailVauleByMoveId" parameterClass="String" resultClass="mailSendgoodDto"> 
+		 select  
+			product_dept.name as productDeptName,
+			move.send_date as sendDate,
+			stockroomAddress.stockroomName as customerName,
+			"" as productContractCode, 
+			move.id as id,
+
+			stockroomoutAddress.stockroomName as stockroomname,
+			product_type.name as producttypename,
+			product.code as productCode,
+			product.name as productName,
+			product.type as productType,
+
+			move_detail.count as count,
+		    move_detail.price as price,
+			move_detail.count*move_detail.price as money,
+			move.user_name as userName,
+			move.stk_adm_name as stkAdmName,
+			product.unit as unit
+		from  
+			move_detail,stockroom,product_type,product_dept,product,move
+
+			left join(
+				select   
+					stockroom.id as id,
+					stockroom.name as stockroomName
+				from 
+					stockroom 
+			) as stockroomAddress on stockroomAddress.id = move.in_stockroom_id
+			
+			left join(
+				select   
+					stockroom.id as id,
+					stockroom.name as stockroomName
+				from 
+					stockroom 
+			) as stockroomoutAddress on stockroomoutAddress.id = move.out_stockroom_id
+		where
+			move.id = #id#
+		and	move.out_stockroom_id = stockroom.id
+		and	move_detail.move_id = move.id
+		and	move.product_type_id = product_type.id
+		and	product_type.product_dept_id = product_dept.id
+		 
+		and	product.id = move_detail.product_id
+		 
+	</select>
+	<!-- 根据发货单号检索k3邮件内容 返厂单 -->
+	<select id="selectK3MailVauleByBuyBackGoodsId" parameterClass="String" resultClass="mailSendgoodDto"> 
+		 select  
+			product_dept.name as productDeptName,
+			buy_back_goods.send_date as sendDate,
+			buy_back_goods.supplier_name as customerName,
+			"" as productContractCode,
+			buy_back_goods.id as id,
+
+			stockroom.name as stockroomname,
+			product_type.name as producttypename,
+			product.code as productCode,
+			product.name as productName,
+			product.type as productType,
+
+			buy_back_goods_detail.count as count, 
+			round(buy_contract_detail.price,5) as price,
+			round(buy_back_goods_detail.count*buy_contract_detail.price,5) as money,
+			buy_back_goods.user_name as userName,
+			buy_back_goods.stk_adm_name as stkAdmName,
+			product.unit as unit
+		from  
+			buy_back_goods,buy_back_goods_detail,stockroom,product_type,product_dept,buy_contract,buy_contract_detail,product,
+			in_stock
+		where
+			buy_back_goods.id = #id#
+		and	buy_back_goods.stockroom_id = stockroom.id
+		and	buy_back_goods_detail.buy_back_goods_id = buy_back_goods.id
+		and	buy_back_goods.product_type_id = product_type.id
+		and	product_type.product_dept_id = product_dept.id
+		and 	buy_back_goods.in_stock_id = in_stock.id 
+		and	in_stock.buy_contract_id = buy_contract.id
+		and	buy_contract_detail.buy_contract_id=buy_contract.id
+		and	product.id = buy_back_goods_detail.product_id 
+		and	buy_contract_detail.product_id=buy_back_goods_detail.product_id
+
+	</select>
+	<!-- 根据发货单号检索k3邮件内容 发货单 -->
+	<select id="selectK3MailVauleBySendgoodsId" parameterClass="String" resultClass="mailSendgoodDto"> 
+		select  
+			product_dept.name as productDeptName,
+			send_goods.send_date as sendDate,
+			send_goods.customer_name as customerName,
+			sell_contract.product_contract_code as productContractCode,
+			send_goods.id as id,
+
+			stockroom.name as stockroomname,
+			product_type.name as producttypename,
+			product.code as productCode,
+			product.name as productName,
+			product.type as productType,
+
+			send_goods_detail.count as count,
+			round(sell_contract_detail.price,2) as price,
+			round(send_goods_detail.count*sell_contract_detail.price,2) as money,
+			send_goods.user_name as userName,
+			ifnull(send_goods.stk_adm_name,"") as stkAdmName,
+			product.unit as unit
+		from  
+			send_goods,send_goods_detail,stockroom,product_type,product_dept,sell_contract,sell_contract_detail,product 
+		where
+			send_goods.id = #id#
+		and	send_goods.stockroom_id = stockroom.id
+		and	send_goods_detail.send_goods_id = send_goods.id
+		and	send_goods.product_type_id = product_type.id
+		and	product_type.product_dept_id = product_dept.id
+		and	send_goods.sell_contract_id = sell_contract.id
+		and	product.id = send_goods_detail.product_id
+		and	sell_contract_detail.sell_contract_id=sell_contract.id
+		and	sell_contract_detail.product_id=send_goods_detail.product_id
+	</select>
+	<!-- 新增 -->
+	<insert id="insertMail" parameterClass="mailEntity">
+		insert into
+			 mail(datetime,type,user_name,subject,text,flag)
+		values 
+			(#datetime#,#type#,#userName#,#subject#,#text#,#flag#)
+		<selectKey resultClass="java.lang.String">select last_insert_id() as ID</selectKey>  
+	</insert>
+
+	<!-- 新增明细 -->
+	<insert id="insertMailAddressee" parameterClass="mailAddresseeEntity">
+		insert into
+			 mail_addressee(mail_id,name,mail)
+		values 
+			(#mailId#,#name#,#mail#) 
+	</insert>
+
+</sqlMap>

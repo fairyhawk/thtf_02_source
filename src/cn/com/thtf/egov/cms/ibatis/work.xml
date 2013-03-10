@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="todowork">
+	<typeAlias alias="todoworkdto"
+		type="cn.com.thtf.egov.cms.dto.TodoWorkDto" />
+
+	<typeAlias alias="workEntity"
+		type="cn.com.thtf.egov.cms.entity.WorkEntity" />
+
+	   
+	<!-- 根据userid取得该用户的待办事项数量 -->
+	<select id="getTodoWorkCount" parameterClass="string" resultClass="int">
+		select sum(count) cnt
+		from work
+		where user_id = #user_id#
+	</select>
+
+	<!-- 根据userid取得该用户的待办事项 -->
+	<select id="getTodoWorkList" parameterClass="string" resultClass="todoworkdto">
+		select  
+			w.work_id,w.count,m.name work_name,n.url
+		from work w inner join work_m m on w.work_id = m.id 
+			inner join node_m n on m.node_id = n.id
+		where w.user_id = #user_id#
+	</select>
+
+	<!-- 查看指定用户指定事物的代办事项 shensi -->
+	<select id="selectWorkCount"  resultClass="java.lang.Integer" parameterClass="workEntity">
+			select count
+			from   work
+			where  user_id =#userId#
+			       and work_id = #workId#
+	</select>
+	<!-- 插入代办事项表  shensi -->
+	<insert id = "insertWork" parameterClass="workEntity">
+			insert into work
+			           (work_id,count,user_id)
+			values     (#workId#,#count#,#userId#)
+	</insert>
+	<!-- 修改代办事项个数  shensi -->
+	<update id="updateWork" parameterClass="workEntity">
+			update work
+			set    count = count + #count#
+			where  work_id =#workId# 
+			       and user_id = #userId#
+	</update>
+	
+</sqlMap>
+

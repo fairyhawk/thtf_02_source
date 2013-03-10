@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<!--管理页面检索-->
+	 <form-bean name="searchSampleInForm" type="org.apache.struts.action.DynaActionForm">
+		<form-property name="searchSampleInDto" type="cn.com.thtf.egov.cms.dto.SampleInSearchDto"/>
+	 </form-bean>
+		 <!--修改归还单-->
+	  <form-bean name="modifySampleInForm" type="org.apache.struts.action.DynaActionForm">
+	 	<form-property name="modifySampleInDto" type="cn.com.thtf.egov.cms.dto.SampleInDto"/>  
+     </form-bean>
+	 
+		 <!-- 样品归还评审     by jiangmx   -->
+	<form-bean name="sampleInAssessForm" type="org.apache.struts.action.DynaActionForm">
+		<form-property name="sampleInAssess" type="cn.com.thtf.egov.cms.dto.SampleInAssessDto"/>
+	</form-bean>
+	
+	 <!-- 新建样品归还单   by jiangmx-->
+	<form-bean name="createSampleInForm" type="org.apache.struts.action.DynaActionForm">
+		<form-property name="createSampleInDto" type="cn.com.thtf.egov.cms.dto.SampleInAssessDto"/>
+	</form-bean>
+	 
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>
+		 <!--显示样品归还评审、查看  by jiangmx-->
+		<action path="/getShowSampleInAssess" type="cn.com.thtf.egov.cms.action.stock.SampleInAction"
+			parameter="getShowSampleInAssess"
+			scope="request" 
+			validate="false">
+			<forward name="showAssess" path="/jsp/sampleIn/sampleInAudit.jsp"/>
+			<forward name="view" path="/jsp/sampleIn/sampleInView.jsp"/>
+			<forward name="failure" path="/getSampleInList.do"/>
+		</action>
+		
+		<!--样品归还评审  by jiangmx-->
+		<action path="/getSampleInAssess" type="cn.com.thtf.egov.cms.action.stock.SampleInAction"
+			parameter="getSampleInAssess"
+			scope="request"
+			validate="false"
+			name="sampleInAssessForm">   
+			<forward name="success" path="/getSampleInList.do"/>
+			<forward name="failure" path="/getShowSampleInAssess.do?type=showAssess"/>
+			<forward name="failureToList" path="/getSampleInList.do"/>
+		</action> 
+		
+		<!-- 新建样品归还单 显示页   by jiangmx--> 
+		<action path="/createSampleInInfo" type="cn.com.thtf.egov.cms.action.stock.SampleInAction"
+			parameter="createSampleInInfo"  scope="request"  validate="false">
+			<forward name="success" path="/jsp/sampleIn/sampleInAdd.jsp"/>
+			<forward name="failure" path="/jsp/sampleIn/sampleInAdd.jsp"/>
+		</action>	
+		
+		<!-- 新建样品归还单  By jiangmx--> 
+		<action path="/createSampleIn" type="cn.com.thtf.egov.cms.action.stock.SampleInAction"
+			parameter="createSampleIn" name="createSampleInForm" scope="request"  validate="false">
+			<forward name="success" path="/getSampleOutList.do"/>
+			<forward name="failure" path="/getSampleOutList.do"/>
+		</action>  	  	 
+
+		<!--样品归还单一览  by zhangzx-->
+		<action path="/getSampleInList" type="cn.com.thtf.egov.cms.action.stock.SampleInAction"
+			parameter="getSampleInList" scope="request" validate="false">
+			<forward name="success" path="/jsp/sampleIn/sampleInManager.jsp"/>
+		</action> 
+		
+		<!--样品归还单检索  by zhangzx-->
+		<action path="/searchSampleIn" type="cn.com.thtf.egov.cms.action.stock.SampleInAction"
+			parameter="searchSampleIn"   
+			scope="request"
+			name="searchSampleInForm" validate="false">
+			<forward name="success" path="/jsp/sampleIn/sampleInManager.jsp"/>
+		</action>
+
+<!-- 修改样品归还单 显示页  By zhangzx   --> 
+		<action path="/getSampleInModifyInfo" type="cn.com.thtf.egov.cms.action.stock.SampleInAction"
+			parameter="getSampleInModifyInfo"  scope="request"  validate="false">
+			<forward name="success" path="/jsp/sampleIn/sampleInModify.jsp"/>			
+		</action>
+		
+		<!-- 修改样品借出单  By zhangzx   --> 
+		<action path="/modifySampleIn" type="cn.com.thtf.egov.cms.action.stock.SampleInAction"
+			parameter="modifySampleIn" name="modifySampleInForm" scope="request"  validate="false">
+			<forward name="success" path="/getSampleInList.do"/>
+			<forward name="failure" path="/getSampleInModifyInfo.do"/>				
+		</action>
+		
+		<!-- 发货地址选择 -->
+		<action path="/getAddressByStockroomId"
+			type="cn.com.thtf.egov.cms.action.stock.SampleInAction"
+			parameter="getAddressByStockroomId"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/sampleIn/receive_address_select.jsp"/> 
+		</action>
+		
+		<!-- 删除归还单 -->
+		<action path="/deleteSampleIn"
+			type="cn.com.thtf.egov.cms.action.stock.SampleInAction"
+			parameter="deleteSampleIn"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/getSampleInList.do"/> 
+			<forward name="failure" path="/getSampleInList.do"/> 
+		</action>
+		
+	</action-mappings>
+	<message-resources
+		parameter="com.tsinghua.mp.web.conf.i18n.ApplicationResources"
+		/>
+</struts-config>

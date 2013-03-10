@@ -1,0 +1,1445 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="base_sqlMap">
+	<typeAlias alias="stockroomEntity"
+		type="cn.com.thtf.egov.cms.entity.StockroomEntity" />
+	<typeAlias alias="area" type="cn.com.thtf.egov.cms.dto.AreaInfoDto" />
+	<typeAlias alias="userdept"
+		type="cn.com.thtf.egov.cms.dto.UserDeptInfoDto" />
+	<typeAlias alias="productdept"
+		type="cn.com.thtf.egov.cms.dto.ProductDeptInfoDto" />
+	<typeAlias alias="producttype"
+		type="cn.com.thtf.egov.cms.dto.ProductTypeInfoDto" />
+	<typeAlias alias="productserie"
+		type="cn.com.thtf.egov.cms.dto.ProductSerieInfoDto" />
+	<typeAlias alias="depot"
+		type="cn.com.thtf.egov.cms.dto.DepotInfoDto" />
+	<typeAlias alias="logistics"
+		type="cn.com.thtf.egov.cms.dto.LogisticsInfoDto" />
+    <typeAlias alias="logisticsEntity"
+		type="cn.com.thtf.egov.cms.entity.LogisticsEntity" />
+
+	<typeAlias alias="province"
+		type="cn.com.thtf.egov.cms.dto.ProvinceInfoDto" />
+	<typeAlias alias="city" type="cn.com.thtf.egov.cms.dto.CityInfoDto" />
+	<typeAlias alias="brand"
+		type="cn.com.thtf.egov.cms.dto.BrandInfoDto" />
+	<typeAlias alias="product"
+		type="cn.com.thtf.egov.cms.dto.ProductInfoDto" />
+	<typeAlias alias="supplier"
+		type="cn.com.thtf.egov.cms.dto.SupplierInfoDto" />
+	<typeAlias alias="customer"
+		type="cn.com.thtf.egov.cms.dto.CustomerInfoDto" />
+	<typeAlias alias="company"
+		type="cn.com.thtf.egov.cms.dto.CompanyInfoDto" />
+	<typeAlias alias="companyaddress"
+		type="cn.com.thtf.egov.cms.dto.CompanyAddressInfoDto" />
+	<typeAlias alias="user" type="cn.com.thtf.egov.cms.dto.UserInfoDto" />
+	<typeAlias alias="userEntity" type="cn.com.thtf.egov.cms.entity.UserEntity" />
+	<typeAlias alias="roleNodeDto" type="cn.com.thtf.egov.cms.dto.RoleNodeDto" /> 
+	
+	<!-- 系统启动时修改在线状态为不在线 -->
+	<update id="updateUserOnline">
+		update user set online = 0
+	</update>
+
+	<!-- 检索树 -->
+	<select id="createLeftTree" parameterClass="java.lang.Integer" resultClass="roleNodeDto">
+		select  
+			r.id as id,
+			r.role_id as roleId,
+			r.node_id as nodeId,
+			m.name as name,
+			m.parent_node_id as parentNodeId,
+			m.url as url 
+		from 
+			role_node r,node_m m
+		where
+			r.node_id = m.id and
+			r.role_id = $role_id$
+		order by 
+			r.node_id
+	</select> 
+	<!-- 查询所有 -->
+	<select id="area.recordCount" resultClass="java.lang.Integer">
+		select count(*) from user_area
+	</select>
+	<!-- 人员区域选择所有 -->
+	<select id="area.areaAll" resultClass="area"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+		select id,name from user_area order by id
+	</select>
+	<select id="areaAll1" resultClass="area">
+		select id,name from user_area order by id
+	</select>
+	<!-- 人员区域查询名称 -->
+	<select id="findAreaName" resultClass="area"
+		parameterClass="java.lang.Integer">
+		select id,name from user_area where id = #id# order by id
+	</select>
+	
+	<select  id="findAreaNameByUserId" resultClass="area" parameterClass="java.lang.String">
+		select  ua.id, ua.name 
+				from user_area as ua, user as u 
+				where u.id = #id# 
+					  and u.user_area_id = ua.id	
+	</select>
+	
+	<!-- 人员区域修改 -->
+	<update id="updateArea" parameterClass="area">
+		update user_area set name = #name# where id = #id#
+	</update>
+	<!-- 人员区域添加 -->
+	<insert id="addArea" parameterClass="area">
+		insert into user_area(name) values(#name#)
+	</insert>
+	<!-- 人员区域判断添加是否重复 -->
+	<select id="isExit" resultClass="java.lang.Integer"
+		parameterClass="java.lang.String">
+		select count(*) from user_area where name = #name#
+	</select>
+	<!-- 人员区域删除 -->
+	<delete id="deleteArea" parameterClass="java.lang.Integer">
+		delete from user_area where id = #id#
+	</delete>
+	<select id="areadept.recordCount" resultClass="java.lang.Integer">
+		select count(*) from user_dept
+	</select>
+	<!-- 人员部门选择所有 -->
+	<select id="areadept.userDeptAll" resultClass="userdept"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+		select id,name from user_dept order by id
+	</select>
+	<!-- 人员部门查询名称 -->
+	<select id="findUserDeptName" resultClass="userdept"
+		parameterClass="java.lang.Integer">
+		select id,name from user_dept where id = #id#
+	</select>
+	<!-- 人员部门修改 -->
+	<update id="updateUserDept" parameterClass="userdept">
+		update user_dept set name = #name# where id = #id#
+	</update>
+	<!-- 人员部门添加 -->
+	<insert id="addUserDept" parameterClass="userdept">
+		insert into user_dept(name) values(#name#)
+	</insert>
+	<!-- 人员部门判断添加是否重复 -->
+	<select id="isExits" resultClass="java.lang.Integer"
+		parameterClass="java.lang.String">
+		select count(*) from user_dept where name = #name#
+	</select>
+	<!-- 人员部门删除 -->
+	<delete id="deleteUserDept" parameterClass="java.lang.Integer">
+		delete from user_dept where id = #id#
+	</delete>
+	<select id="pdept.recordCount" resultClass="java.lang.Integer">
+		select count(*) from product_dept
+	</select>
+	<!-- 产品部门选择所有 -->
+	<select id="pdept.productDeptAll" resultClass="productdept"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+		select * from product_dept order by id
+	</select>
+	<select id="productDeptAll1" resultClass="productdept">
+		select * from product_dept order by id
+	</select>
+	<!-- 产品部门添加 -->
+	<insert id="addProductDept" parameterClass="productdept">
+		insert into product_dept(no,name,account,fax)
+		values(#no#,#name#,#account#,#fax#)
+	</insert>
+	<!-- 产品部门修改 -->
+	<select id="gaiProductDept" resultClass="productdept"
+		parameterClass="java.lang.Integer">
+		select * from product_dept where id = #id#
+	</select>
+	<!-- 产品部门修改 -->
+	<update id="updateProductDept" parameterClass="productdept">
+		update product_dept set no = #no#,name = #name#,account =
+		#account#,fax = #fax# where id = #id#
+	</update>
+	<!-- 产品部门删除 -->
+	<delete id="deleteProductDept" parameterClass="java.lang.Integer">
+		delete from product_dept where id = #id#
+	</delete>
+	<!-- 产品部门去掉重复 -->
+	<select id="isProductExits" resultClass="java.lang.Integer"
+		parameterClass="productdept">
+		select count(*) from product_dept where name = #name# or no =
+		#no#
+	</select>
+	<select id="ptype.recordCount" resultClass="java.lang.Integer">
+		select count(*) from product_dept d,product_type t where d.id =
+		t.product_dept_id order by t.id
+	</select>
+	<!-- 产品分类查询所有 -->
+	<select id="ptype.productTypeAll" resultClass="producttype"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+		select t.id,t.no,t.name,d.no as dno,d.name as dname from
+		product_dept d,product_type t where d.id = t.product_dept_id
+		order by t.id
+	</select>
+	<!-- 产品部门名称所有 -->
+	<select id="productDeptName" resultClass="productdept">
+		select id,name from product_dept
+	</select>
+	<!-- 产品部门名称所有 -->
+	<select id="productDeptNoById" resultClass="java.lang.String"
+		parameterClass="java.lang.String">
+		select no from product_dept where id = #id#
+	</select>
+	<!-- 产品分类添加 -->
+	<insert id="addProductType" parameterClass="producttype">
+		insert into product_type(no,name,product_dept_id)
+		values(#no#,#name#,#product_dept_id#)
+	</insert>
+	<select id="productDeptMsg" resultClass="producttype"
+		parameterClass="java.lang.Integer">
+		select id,name,product_dept_id,no from product_type where id =
+		#id#
+	</select>
+	<select id="creditProductDeptMsg" resultClass="producttype"
+		parameterClass="java.lang.Integer">
+		select id,name,product_dept_id,no,climit from product_type where
+		id = #id#
+	</select>
+	<!-- 产品分类修改 -->
+	<update id="updateProductType" parameterClass="producttype">
+		update product_type set name = #name#,product_dept_id
+		= #product_dept_id# where id = #id#
+	</update>
+	<update id="updateCreditProductType" parameterClass="producttype">
+		update product_type set climit = #climit# where id = #id#
+	</update>
+	<!-- 产品分类去掉重复 -->
+	<select id="isProductTypeExits" resultClass="java.lang.Integer"
+		parameterClass="producttype">
+		select count(*) from product_type where name = #name# or no =
+		#no#
+	</select>
+	<!-- 产品分类删除 -->
+	<delete id="deleteProductType" parameterClass="java.lang.Integer">
+		delete from product_type where id = #id#
+	</delete>
+	<select id="pserie.recordCount" resultClass="java.lang.Integer">
+		select count(*) from product_dept d,product_serie s,product_type
+		t where s.product_type_id = t.id and t.product_dept_id = d.id
+		order by s.id
+	</select>
+	<!-- 产品分类查询所有 -->
+	<select id="productNameAll" resultClass="producttype">
+		select * from product_type
+	</select>
+	<!-- 产品系列查询所有 -->
+	<select id="pserie.productSerieAll" resultClass="productserie"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+		select s.id,s.no,s.name,d.no as dno,d.name as dname,t.no as
+		tno,t.name as tname from product_dept d,product_serie
+		s,product_type t where s.product_type_id = t.id and
+		t.product_dept_id = d.id order by s.id
+	</select>
+	<!-- 选择所有 -->
+	<select id="productTypeName" resultClass="producttype">
+		select id, name,no,concat(id,",",no) as idNo from product_type
+	</select>
+	<!-- 用于销售 -->
+	<select id="productTypeName1" resultClass="producttype"
+		parameterClass="java.lang.String">
+		select p.id, p.name,p.no,concat(p.id,",",p.no) as idNo from
+		product_type p,user_product u where p.id = u.product_type_id and
+		user_id = #user_id# 
+	</select>
+	<!-- 用于销售 -->
+	<select id="productTypeName12" resultClass="producttype"
+		parameterClass="producttype">
+		select p.id, p.name,p.no,concat(p.id,",",p.no) as idNo from
+		product_type p,user_product u where p.id = #id# and
+		user_id = #user_id# and p.id=u.product_type_id
+	</select>
+	<select id="productSerieEdit" resultClass="productserie"
+		parameterClass="java.lang.Integer">
+		select ps.*,p.name as tname,p.no as tno from product_serie
+		ps,product_type p where ps.id = #id# and ps.product_type_id=p.id
+	</select>
+	<!-- 用于产品系列编号生成 -->
+	<select id="maxProductSerieNo" resultClass="java.lang.String"
+		parameterClass="java.lang.String">
+		select max(no)as aa from product_serie ps where
+		ps.product_type_id=#typeid#
+	</select>
+	<!-- 用于产品分类编号生成 -->
+	<select id="maxProductTypeNo" resultClass="java.lang.String">
+		select max(no)as aa from product_type
+	</select>
+	<!-- 根据分类Id选择所有产品系列 -->
+	<select id="productSerieName" resultClass="productserie"
+		parameterClass="java.lang.Integer">
+		select ps.id,ps.name,ps.no,concat(ps.id,",",ps.no) as
+		ssIdNo,pd.name as deptName,pd.account as deptAccount,pd.fax as
+		deptFax,p.name as tname,p.id as product_type_id from
+		product_serie ps,product_dept pd,product_type p where p.id=#id#
+		and p.id=ps.product_type_id and p.product_dept_id=pd.id
+	</select>
+	<!-- 查询所有产品系列 -->
+	<select id="productSerieAll" resultClass="productserie">
+		select id,name,no,concat(id,",",no) as ssIdNo from product_serie
+	</select>
+	<!-- 产品系列删除 -->
+	<delete id="deleteProductSerie"
+		parameterClass="java.lang.Integer">
+		delete from product_serie where id = #id#
+	</delete>
+	<!-- 产品系列添加 -->
+	<insert id="addProductSerie" parameterClass="productserie">
+		insert into product_serie(no,name,product_type_id)
+		values(#no#,#name#,#product_type_id#)
+	</insert>
+	<!-- 产品系列去重复 -->
+	<select id="isSerieExit" resultClass="java.lang.Integer"
+		parameterClass="productserie">
+		select count(*) from product_serie where product_type_id =
+		#product_type_id# and name = #name#
+	</select>
+	<select id="isSerieExit1" resultClass="java.lang.Integer"
+		parameterClass="productserie">
+		select id from product_serie where product_type_id =
+		#product_type_id# and name = #name#
+	</select>
+	<!-- 修改产品系列 -->
+	<update id="updateProductSerie" parameterClass="productserie">
+		update product_serie set name = #name# where id = #id#
+	</update>
+	<select id="pseriec.recordCount" resultClass="java.lang.Integer">
+		select count(*) from product_dept d,product_serie s,product_type
+		t where s.product_type_id = t.id and t.product_dept_id = d.id
+		<isNotEmpty prepend="and" property="query.name">
+			s.name like '%$query.name$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.no">
+			s.no = #query.no#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.tno">
+			t.no = #query.tno#
+		</isNotEmpty>
+		order by s.id
+	</select>
+	<!-- 检索产品系列 -->
+	<select id="pseriec.productSerieCheck"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange"
+		resultClass="productserie">
+		select s.id,s.no,s.name,d.no as dno,d.name as dname,t.no as
+		tno,t.name as tname from product_dept d,product_serie
+		s,product_type t where s.product_type_id = t.id and
+		t.product_dept_id = d.id
+		<isNotEmpty prepend="and" property="query.name">
+			s.name like '%$query.name$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.no">
+			s.no = #query.no#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.tno">
+			t.no = #query.tno#
+		</isNotEmpty>
+		order by s.id
+	</select>
+	<!-- 库房选择所有 -->
+	<select id="dept.recordCount" resultClass="java.lang.Integer">
+		select count(*) from stockroom d,product_dept p where
+		d.product_dept_id=p.id order by d.id
+	</select>
+	<select id="dept.depotAll" resultClass="depot"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+		select d.id,d.name,d.type,d.product_dept_id as
+		productDeptId,p.name as productDeptName from stockroom
+		d,product_dept p where d.product_dept_id=p.id order by d.id
+	</select>
+	<!-- 库房判断添加是否重复 -->
+	<select id="isDepotExit" resultClass="java.lang.Integer"
+		parameterClass="depot">
+		select count(*) from stockroom where name = #name# and
+		product_dept_id = #productDeptId#
+	</select>
+	<!-- 库房判断修改是否重复 -->
+	<select id="isDepotUpdateExit" resultClass="java.lang.Integer"
+		parameterClass="depot">
+		select id from stockroom where name = #name# and product_dept_id
+		= #productDeptId#
+	</select>
+	<!-- 库房添加 -->
+	<insert id="addDepot" parameterClass="depot">
+		INSERT INTO stockroom(TYPE,product_dept_id,NAME,short_name)
+		VALUES(#type#,#productDeptId#,#name#,#shortName#)
+	</insert>
+	<!-- 库房删除 -->
+	<delete id="deleteDepot" parameterClass="java.lang.Integer">
+		delete from stockroom where id = #id#
+	</delete>
+	<!-- 根据库房Id查询库房 -->
+	<select id="getDepotById" resultClass="depot"
+		parameterClass="java.lang.Integer">
+		select d.id,d.type,d.name,d.product_dept_id as
+		productDeptId,d.short_name as deptAndName ,d.short_name as shortName from stockroom
+		d,product_dept p where d.product_dept_id=p.id and d.id=#id#
+	</select>
+	<!-- 根据库房Id查询所有发货地址 -->
+	<select id="queryAddressListByDepotId" resultClass="depot"
+		parameterClass="java.lang.Integer">
+		select s.id as receiveId,s.name as receiveName,s.address as
+		supplierAddress,s.postcode as supplierPostcode,s.linkman as
+		supplierLinkman,s.tel as supplierTel ,s.mobile as supplierMobile
+		from stockroom_address s where s.stockroom_id=#id# order by s.id
+	</select>
+	<!-- 添加库房发货地址 -->
+	<insert id="addDepotAddress" parameterClass="depot">
+		insert stockroom_address( stockroom_id, name, address, postcode,
+		linkman, tel, mobile )
+		values(#id#,#receiveName#,#supplierAddress#,#supplierPostcode#,
+		#supplierLinkman#,#supplierTel#,#supplierMobile#)
+	</insert>
+	<!-- 根据库房发货地址Id查询该发货地址信息 -->
+	<select id="queryDepotAddressByAddressId" resultClass="depot"
+		parameterClass="java.lang.Integer">
+		select a.id as receiveId,a.stockroom_id as id,a.name as
+		receiveName,a.address as supplierAddress,a.postcode as
+		supplierPostcode,a.linkman as supplierLinkman,a.tel as
+		supplierTel, a.mobile as supplierMobile from stockroom_address a
+		where a.id=#addressId#
+	</select>
+	<!-- 库房发货地址修改 -->
+	<update id="saveDepotAddress" parameterClass="depot">
+		update stockroom_address a set
+		a.name=#receiveName#,a.address=#supplierAddress#,a.postcode=#supplierPostcode#,a.linkman=#supplierLinkman#,a.tel=#supplierTel#,
+		a.mobile=#supplierMobile# where a.id=#receiveId#
+	</update>
+	<!-- 删除库房发货地址 -->
+	<delete id="deleteDepotAddress"
+		parameterClass="java.lang.Integer">
+		delete from stockroom_address where id = #id#
+	</delete>
+	<!-- 修改库房信息 -->
+	<update id="saveUpdateDepot" parameterClass="depot">
+		update stockroom set name=#name#,product_dept_id=#productDeptId#,short_name = #shortName#
+		where id=#id#
+	</update>
+	<!-- 省选择所有 -->
+	<select id="provinceAll" resultClass="province">
+		select p.id,p.name,p.area_id as areaId,a.name as areaName from
+		province_m p,area_m a where p.area_id=a.id
+	</select>
+	<!-- 区域选择所有 -->
+	<select id="queryAreaAll" resultClass="area">
+		select id,name from area_m order by id
+	</select>
+	<!-- 根据省Name查询该省所有市 -->
+	<select id="getCitysByProvinceId" resultClass="city"
+		parameterClass="java.lang.String">
+		select c.id,c.name,a.id as areaId,a.name as areaName from city_m
+		c,area_m a,province_m p where c.province_id=p.id and
+		p.area_id=a.id and p.name=#name#
+	</select>
+
+	<!-- 检索所有物流公司 -->
+	<select id="queryAllLogistics.queryDate" resultClass="logisticsEntity"
+		parameterClass="logisticsEntity">
+		select	
+			id,name,area,province,city,address,postcode,linkman,
+			role,tel,fax,mobile,mail,msn,qq, remit_bank_name as
+			remitBankName,remit_bank_account as remitBankAccount,date 
+		from
+			logistics
+		<isNotEmpty prepend="where" property="name">
+			name like '%$name$%'
+		</isNotEmpty>
+		order by id
+	</select>
+	<select id="queryAllLogistics.recordCount" resultClass="java.lang.Integer">
+		select count(*) from logistics
+		<isNotEmpty prepend="where" property="name">
+			name like '%$name$%'
+		</isNotEmpty>
+	</select> 
+
+	<select id="logistics.recordCount"
+		resultClass="java.lang.Integer">
+		select count(*) from logistics
+		<isNotEmpty prepend="where" property="query.name">
+			name like '%$query.name$%'
+		</isNotEmpty>
+	</select>
+	<!-- 物流公司选择所有 -->
+	<select id="logistics.logisticsAll" resultClass="logistics"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+		select id,name,area,province,city,address,postcode,linkman,
+		role,tel,fax,mobile,mail,msn,qq, remit_bank_name as
+		remitBankName,remit_bank_account as remitBankAccount,date from
+		logistics
+		<isNotEmpty prepend="where" property="query.name">
+			name like '%$query.name$%'
+		</isNotEmpty>
+		order by id
+	</select>
+	<!-- 物流公司判断添加是否重复 -->
+	<select id="isLogisticsExit" resultClass="java.lang.Integer"
+		parameterClass="java.lang.String">
+		select count(*) from logistics where name = #name#
+	</select>
+	<!-- 物流公司添加 -->
+	<insert id="addLogistics" parameterClass="logistics">
+		insert into
+		logistics(name,area,province,city,address,postcode,linkman,role,tel,
+		fax,mobile,mail,msn,qq,remit_bank_name,remit_bank_account,date)
+		values(#name#,#area#,#province#,#city#,#address#,#postcode#,#linkman#,#role#,#tel#,
+		#fax#,#mobile#,#mail#,#msn#,#qq#,#remitBankName#,#remitBankAccount#,#date#)
+	</insert>
+	<!-- 物流公司删除 -->
+	<delete id="deleteLogistics" parameterClass="java.lang.Integer">
+		delete from logistics where id = #id#
+	</delete>
+	<!-- 根据物流公司Id查询物流公司 -->
+	<select id="getLogisticsById" resultClass="logistics"
+		parameterClass="java.lang.Integer">
+		select id,name,area,province,city,address,postcode,linkman,
+		role,tel,fax,mobile,mail,msn,qq, remit_bank_name as
+		remitBankName,remit_bank_account as remitBankAccount,date from
+		logistics where id=#id#
+	</select>
+	<!-- 修改物流公司信息 -->
+	<update id="saveUpdateLogistics" parameterClass="logistics">
+		update logistics set
+		name=#name#,area=#area#,province=#province#,city=#city#,address=#address#,postcode=#postcode#,
+		linkman=#linkman#,role=#role#,tel=#tel#,fax=#fax#,mobile=#mobile#,mail=#mail#,msn=#msn#,qq=#qq#,
+		remit_bank_name= #remitBankName#,remit_bank_account=
+		#remitBankAccount#,date=#date# where id=#id#
+	</update>
+	<select id="logisticsByName.recordCount"
+		resultClass="java.lang.Integer">
+		select count(*) from logistics
+		<isNotEmpty prepend="where" property="query.name">
+			name like '%$query.name$%'
+		</isNotEmpty>
+		order by id
+	</select>
+	<!-- 检索物流公司 -->
+	<select id="logisticsByName.checkLogistics"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange"
+		resultClass="logistics">
+		select id,name,area,province,city,address,postcode,linkman,
+		role,tel,fax,mobile,mail,msn,qq, remit_bank_name as
+		remitBankName,remit_bank_account as remitBankAccount,date from
+		logistics
+		<isNotEmpty prepend="where" property="query.name">
+			name like '%$query.name$%'
+		</isNotEmpty>
+		order by id
+	</select>
+
+	<!-- 查询所有品牌 -->
+	<select id="brand.recordCount" resultClass="java.lang.Integer">
+		select count(*) from brand
+	</select>
+	<!-- 品牌选择所有 -->
+	<select id="brand.brandAll" resultClass="brand"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+		select * from brand order by id
+	</select>
+	<!-- 选择所有品牌 -->
+	<select id="brandAllName" resultClass="brand">
+		select * from brand
+	</select>
+	<!-- 品牌添加 -->
+	<insert id="addBrand" parameterClass="java.lang.String">
+		insert into brand(name) values(#name#)
+	</insert>
+	<!-- 品牌去重 -->
+	<select id="brandIsExit" resultClass="java.lang.Integer"
+		parameterClass="java.lang.String">
+		select count(*) from brand where name = #name#
+	</select>
+	<!-- 品牌用于修改 -->
+	<select id="showUpdateBrand" resultClass="brand"
+		parameterClass="java.lang.Integer">
+		select * from brand where id = #id#
+	</select>
+	<!-- 品牌信息 -->
+	<update id="saveBrand" parameterClass="brand">
+		update brand set name=#name# where id = #id#
+	</update>
+	<!-- 品牌删除 -->
+	<delete id="deleteBrand" parameterClass="java.lang.Integer">
+		delete from brand where id = #id#
+	</delete>
+
+	<!-- 产品 -->
+	<select id="product.recordCount" resultClass="java.lang.Integer">
+		select count(*) from product_dept d,product_serie s,product_type
+		t,product p where p.product_series_id = s.id and
+		s.product_type_id = t.id and t.product_dept_id = d.id
+
+		<isNotEmpty prepend="and" property="query.name">
+			p.name like '%$query.name$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.type">
+			p.type like '%$query.type$%'
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="query.tno">
+			t.no = #query.tno#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.sno">
+			s.no = #query.sno#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.no">
+			p.no = #query.no#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.product_series_id">
+			p.product_series_id = #query.product_series_id#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.tid">
+			t.id = #query.tid#
+		</isNotEmpty>
+	</select>
+	<!-- 产品 -->
+	<select id="product.productAll"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange"
+		resultClass="product">
+		select p.id,t.id,t.no as tno,s.no as sno,p.limit_price as limitPrice,
+		p.type,p.unit,p.name,s.name as sname ,t.name as tname ,d.name as
+		dname,p.no from product_dept d, product_serie s, product_type t,
+		product p where p.product_series_id = s.id and s.product_type_id
+		= t.id and t.product_dept_id = d.id
+		<isNotEmpty prepend="and" property="query.name">
+			p.name like '%$query.name$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.type">
+			p.type like '%$query.type$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.tno">
+			t.no = #query.tno#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.sno">
+			s.no = #query.sno#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.no">
+			p.no = #query.no#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.product_series_id">
+			p.product_series_id = #query.product_series_id#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.tid">
+			t.id = #query.tid#
+		</isNotEmpty>
+		group by p.id order by p.id
+	</select>
+
+	<!-- 产品编号自动生成用于-->
+	<select id="autoProductNo" resultClass="java.lang.String"
+		parameterClass="product">
+		select max(p.no) as no from product p,product_serie ps
+		,product_type pt where pt.id=#product_type_id# and
+		ps.id=#product_series_id# and pt.id=ps.product_type_id and
+		p.product_series_id=ps.id
+	</select>
+	<!--产品添加 -->
+	<insert id="addProduct" parameterClass="product">
+		insert into product(no,name,type,unit,product_series_id,code,limit_price)
+		values(#no#,#name#,#type#,#unit#,#product_series_id#,#productcode#,#limitPrice#)
+	</insert>
+	<!-- 显示产品修改页面 -->
+	<select id="showProductUpdate" resultClass="product"
+		parameterClass="java.lang.Integer">
+		select p.id,t.id as tid,t.no as tno,t.name as
+		tname,concat(t.id,",",t.no) as tIdNo,p.limit_price as limitPrice,p.no,p.name,s.id as
+		sid,s.no as sno,concat(s.id,",",s.no) as ssIdNo,s.name as
+		sname,p.product_series_id,p.unit,p.type from product
+		p,product_type t,product_serie s where p.product_series_id =
+		s.id and s.product_type_id = t.id and p.id = #id#
+
+	</select>
+	<!-- 产品信息修改 -->
+	<update id="saveUpdateProduct" parameterClass="product">
+		update product p set
+		p.code=#productcode#,p.name=#name#,p.type=#type#,p.unit=#unit#,p.limit_price=#limitPrice# where
+		p.id=#id#
+	</update>
+	<!-- 产品删除 -->
+	<delete id="deleteProduct" parameterClass="java.lang.Integer">
+		delete from product where id = #id#
+	</delete>
+	<!-- 产品去重 -->
+	<select id="isProductExit" resultClass="java.lang.Integer"
+		parameterClass="product">
+		select count(*) from product_serie s,product_type t,product p
+		where p.product_series_id = s.id and s.product_type_id = t.id
+		and p.type =#type# and p.name = #name# and t.id = #tid# and
+		p.product_series_id = #product_series_id#
+	</select>
+	<select id="isProductExit1" resultClass="java.lang.Integer"
+		parameterClass="product">
+		select p.id from product_serie s,product_type t,product p where
+		p.product_series_id = s.id and s.product_type_id = t.id and
+		p.type =#type# and p.name = #name# and product_type_id =
+		#product_type_id# and p.product_series_id = #product_series_id#
+	</select>
+	
+	
+	<!-- 根据产品的id 查询产品 -->
+	<select id="queryProductById" parameterClass="java.lang.Integer" resultClass="product">
+		select  id, code as productcode, no, name, type, unit, product_series_id, 
+		        money, buy_count as buy, sell_count as sell,
+		        ifnull(s.total,0) + p.buy_count - p.sell_count as sellok
+		        from product as p left join
+
+		             (select product_id as pid ,sum(stock.num- stock.prepared - stock.send_lock) as total 
+                      from stock  
+                      group by pid
+                     )  as s
+		              
+				on    s.pid = p.id
+				where p.id = #productId#
+				order by p.code
+	</select>
+
+
+
+	<select id="queryProductDeptByProductTypeId" parameterClass="java.lang.Integer" resultClass="productdept">
+		select pd.id, pd.no, pd.name, pd.account, pd.fax 
+		       from product_dept as pd, product_type as pt
+			   where pt.product_dept_id = pd.id
+				     and 
+				     pt.id = #id#
+	
+	</select>
+
+
+
+	<!-- 供货商列表 -->
+	<select id="supplier.recordCount" resultClass="java.lang.Integer">
+		select count(*) from supplier s
+		<dynamic prepend="where">
+			<isNotEmpty prepend="and" property="query.name">
+				s.name like '%$query.name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.area">
+				s.area like '%$query.area$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.province">
+				s.province like '%$query.province$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.city">
+				s.city like '%$query.city$%'
+			</isNotEmpty>
+		</dynamic>
+		order by s.id
+	</select>
+	<select id="supplier.supplierAll" resultClass="supplier"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+		select s.id,s.name,s.area,s.province,s.city from supplier s
+		<dynamic prepend="where">
+			<isNotEmpty prepend="and" property="query.name">
+				s.name like '%$query.name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.area">
+				s.area like '%$query.area$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.province">
+				s.province like '%$query.province$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.city">
+				s.city like '%$query.city$%'
+			</isNotEmpty>
+		</dynamic>
+		order by s.id
+	</select>
+	<!-- 根据供货商Id查询供货商 -->
+	<select id="querySupplierById" resultClass="supplier"
+		parameterClass="java.lang.Integer">
+		select
+		s.id,s.name,s.area,s.province,s.city,s.address,s.postcode,s.invoice_bank_name
+		as invoiceBankName, s.invoice_bank_account as
+		invoiceBankAccount,s.tax_number as taxNumber,
+		s.invoice_bank_address as invoiceBankAddress,s.invoice_bank_tel
+		as invoiceBankTel, s.invoice_type as invoiceType,s.tax_rate as
+		taxRate,s.remit_bank_name as remitBankName,s.remit_bank_account
+		as remitBankAccount from supplier s where s.id=#id#
+	</select>
+	<!-- 根据供货商Id查询所有联系人 -->
+	<select id="queryLinkmanListById" resultClass="supplier"
+		parameterClass="java.lang.Integer">
+		select sl.id as linkmanId,sl.name as linkman,sl.role,
+		sl.tel,sl.fax, sl.mobile,sl.mail,sl.msn,sl.qq from
+		supplier_linkman sl where sl.supplier_id=#id# order by sl.id
+	</select>
+	<!-- 添加供货商联系人 -->
+	<insert id="addSupplierLinkman" parameterClass="supplier">
+		insert supplier_linkman(supplier_id, name, role, tel, fax,
+		mobile, mail, msn, qq)
+		values(#id#,#linkman#,#role#,#tel#,#fax#,#mobile#,#mail#,#msn#,#qq#)
+	</insert>
+	<!-- 添加供货商发货地址 -->
+	<insert id="addSupplierAddress" parameterClass="supplier">
+		insert into supplier_address( supplier_id, name, address, postcode,
+		linkman, tel, mobile )
+		values(#id#,#receiveName#,#supplierAddress#,#supplierPostcode#,
+		#supplierLinkman#,#supplierTel#,#supplierMobile#)
+	</insert>
+	<!-- 根据供货商联系人Id查询该联系人信息 -->
+	<select id="queryLinkmanByLinkmanId" resultClass="supplier"
+		parameterClass="java.lang.Integer">
+		select l.id as linkmanId,l.supplier_id as id,s.name as
+		name,l.name as
+		linkman,l.role,l.tel,l.fax,l.mobile,l.mail,l.msn,l.qq from
+		supplier_linkman l ,supplier s where l.id=#linkmanId# and
+		l.supplier_id=s.id
+	</select>
+	<!-- 根据供货商发货地址Id查询该发货地址信息 -->
+	<select id="queryAddressByAddressId" resultClass="supplier"
+		parameterClass="java.lang.Integer">
+		select a.id as receiveId,a.supplier_id as id,a.name as
+		receiveName,a.address as supplierAddress,a.postcode as
+		supplierPostcode,a.linkman as supplierLinkman,a.tel as
+		supplierTel, a.mobile as supplierMobile from supplier_address a
+		where a.id=#addressId#
+	</select>
+	<!-- 供货商联系人修改 -->
+	<update id="saveSupplierLinkman" parameterClass="supplier">
+		update supplier_linkman l set
+		l.name=#linkman#,l.role=#role#,l.tel=#tel#,l.fax=#fax#,l.mobile=#mobile#,l.mail=#mail#,l.msn=#msn#,l.qq=#qq#
+		where l.id=#linkmanId#
+	</update>
+	<!-- 供货商发货地址修改 -->
+	<update id="saveSupplierAddress" parameterClass="supplier">
+		update supplier_address a set
+		a.name=#receiveName#,a.address=#supplierAddress#,a.postcode=#supplierPostcode#,a.linkman=#supplierLinkman#,a.tel=#supplierTel#,
+		a.mobile=#supplierMobile# where a.id=#receiveId#
+	</update>
+	<!-- 根据供货商Id查询所有发货地址 -->
+	<select id="queryAddressListById" resultClass="supplier"
+		parameterClass="java.lang.Integer">
+		select s.id as receiveId,s.name as receiveName,s.address as
+		supplierAddress,s.postcode as supplierPostcode,s.linkman as
+		supplierLinkman,s.tel as supplierTel ,s.mobile as supplierMobile
+		from supplier_address s where s.supplier_id=#id# order by s.id
+	</select>
+	<!-- 供货商添加 -->
+	<insert id="addSupplier" parameterClass="supplier">
+		insert supplier( name, area, province, city, address, postcode,
+		invoice_bank_name, invoice_bank_account, tax_number,
+		invoice_bank_address, invoice_bank_tel, invoice_type, tax_rate,
+		remit_bank_name, remit_bank_account )
+		values(#name#,#area#,#province#,#city#,#address#,#postcode#,
+		#invoiceBankName#,#invoiceBankAccount#,#taxNumber#,
+		#invoiceBankAddress#,#invoiceBankTel#,
+		#invoiceType#,#taxRate#,#remitBankName#,#remitBankAccount#)
+	</insert>
+	<!-- 供货商修改 -->
+	<insert id="saveSupplier" parameterClass="supplier">
+		update supplier set name=#name#, area=#area#,
+		province=#province#, city=#city#, address=#address#,
+		postcode=#postcode#, invoice_bank_name=#invoiceBankName#,
+		invoice_bank_account=#invoiceBankAccount#,
+		tax_number=#taxNumber#,
+		invoice_bank_address=#invoiceBankAddress#,
+		invoice_bank_tel=#invoiceBankTel#, invoice_type=#invoiceType#,
+		tax_rate=#taxRate#, remit_bank_name=#remitBankName#,
+		remit_bank_account=#remitBankAccount# where id=#id#
+	</insert>
+	<!-- 删除供货商联系人 -->
+	<delete id="deleteSupplierAddress"
+		parameterClass="java.lang.Integer">
+		delete from supplier_address where id = #id#
+	</delete>
+	<!-- 删除供货商发货地址 -->
+	<delete id="deleteSupplierLinkman"
+		parameterClass="java.lang.Integer">
+		delete from supplier_linkman where id = #id#
+	</delete>
+	<!-- 删除供货商 -->
+	<delete id="deleteSupplier" parameterClass="java.lang.Integer">
+		delete from supplier where id = #id#
+	</delete>
+
+
+    <!-- 根据当前登录的用户id查询所有他负责的客户 -->
+    <select id="queryAllCustomerByUserId" resultClass="customer" parameterClass="java.lang.String">
+		select c.id,c.name,c.invoice_Bank_Name as invoiceBankName,invoice_Bank_account as invoiceBankAccount,
+		c.tax_Number as taxNumber,c.invoice_type as invoiceType
+		from customer as c, user as u, user_customer as uc
+		where u.id = uc.user_id and uc.customer_id = c.id
+		      and u.id=#id#
+	</select>	
+
+	<!-- 客户列表 -->
+	<select id="customer.recordCount" resultClass="java.lang.Integer">
+		select count(*) from customer s
+		<dynamic prepend="where">
+			<isNotEmpty prepend="and" property="query.name">
+				s.name like '%$query.name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.area">
+				s.area like '%$query.area$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.province">
+				s.province like '%$query.province$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.city">
+				s.city like '%$query.city$%'
+			</isNotEmpty>
+		</dynamic>
+		order by s.id
+	</select>
+	<!-- 
+	<select id="customer.customerByUserId" resultClass="customer"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+		select c.id,c.name,c.area,c.province,c.city from customer c,user_customer u 
+		where 
+		u.customer_id=c.id and u.user_id=#query.user_id#
+		order by c.id
+		
+	</select>
+	-->
+	<select id="customer.customerAll" resultClass="customer"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+		select s.id,s.name,s.area,s.province,s.city from customer s
+		<dynamic prepend="where">
+			<isNotEmpty prepend="and" property="query.name">
+				s.name like '%$query.name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.area">
+				s.area like '%$query.area$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.province">
+				s.province like '%$query.province$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.city">
+				s.city like '%$query.city$%'
+			</isNotEmpty>
+		</dynamic>
+		order by s.id
+	</select>
+	<!-- 根据客户Id查询所有客户 -->
+	<select id="queryCustomerById" resultClass="customer"
+		parameterClass="java.lang.Integer">
+		select
+		s.id,s.name,s.area,s.province,s.city,s.address,s.postcode,s.invoice_bank_name
+		as invoiceBankName, s.invoice_bank_account as
+		invoiceBankAccount,s.tax_number as taxNumber,
+		s.invoice_bank_address as invoiceBankAddress,s.invoice_bank_tel
+		as invoiceBankTel, s.invoice_type as invoiceType,s.tax_rate as
+		taxRate,s.remit_bank_name as remitBankName,s.remit_bank_account
+		as remitBankAccount 
+		from customer as s 
+		
+		where s.id=#id#
+	</select>
+	<!-- 根据客户Id查询所有联系人 -->
+	<select id="queryCustomerLinkmanListById" resultClass="customer"
+		parameterClass="java.lang.Integer">
+		select sl.id as linkmanId,sl.name as linkman,sl.role,
+		sl.tel,sl.fax, sl.mobile,sl.mail,sl.msn,sl.qq from
+		customer_linkman sl where sl.customer_id=#id# order by sl.id
+	</select>
+	<!-- 根据人员Id查询所负责的所有客户 -->
+	<select id="getCustomerByUserId.result" resultClass="customer"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+		select c.id,c.name,c.area,c.province,c.city from customer c,user_customer u where
+		u.customer_id=c.id and u.user_id='$query.userid$'
+			<isNotEmpty prepend="and" property="query.name">
+				c.name like '%$query.name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.area">
+				c.area = '$query.area$'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.province">
+				c.province = '$query.province$'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.city">
+				c.city = '$query.city$'
+			</isNotEmpty>
+	</select>
+	<select id="getCustomerByUserId.recordCount" resultClass="java.lang.Integer">
+		select count(*) from customer c,user_customer u  where
+		u.customer_id=c.id and u.user_id='$query.userid$'
+			<isNotEmpty prepend="and" property="query.name">
+				c.name like '%$query.name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.area">
+				c.area = '$query.area$'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.province">
+				c.province = '$query.province$'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.city">
+				c.city = '$query.city$'
+			</isNotEmpty>
+	</select>
+	<!-- 查询区域总监下所有销售经理所负责的所有客户 -->
+	<select id="queryCustomerByAreaManagerId.result" resultClass="customer"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+		select distinct(c.id),c.name,c.area,c.province,c.city from customer c,user_customer uc 
+			where c.id=uc.customer_id and uc.user_id in(select us.id from user  us 
+				where us.user_area_id = (select us.user_area_id from user  us 
+					where us.id='$query.userid$') and role_id = 4) 
+			<isNotEmpty prepend="and" property="query.name">
+				c.name like '%$query.name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.area">
+				c.area = '$query.area$'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.province">
+				c.province = '$query.province$'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.city">
+				c.city = '$query.city$'
+			</isNotEmpty>
+	</select>
+	<!-- 查询 区域 下所有销售经理所负责的所有客户 -->
+	<select id="queryCustomerByUserAreaMapping.result" resultClass="customer"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+			select
+			  customer.id,customer.name,
+			  customer.area,customer.province,
+			  customer.city  
+			from 
+			   user_area_mapping
+			left join user on user.user_area_id = user_area_mapping.user_area_id
+			right join user_customer on user.id = user_customer.user_id
+			left join customer on user_customer.customer_id = customer.id
+			where
+			user_area_mapping.user_id = '$query.userid$'
+			<isNotEmpty prepend="and" property="query.name">
+				customer.name like '%$query.name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.area">
+				customer.area = '$query.area$'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.province">
+				customer.province = '$query.province$'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.city">
+				customer.city = '$query.city$'
+			</isNotEmpty>
+	</select>
+	<!-- 查询 区域 下所有销售经理所负责的所有客户 -->
+	<select id="queryCustomerByUserAreaMapping.recordCount" resultClass="java.lang.Integer">
+			select
+			  count(*)  
+			from 
+			   user_area_mapping
+			left join user on user.user_area_id = user_area_mapping.user_area_id
+			right join user_customer on user.id = user_customer.user_id
+			left join customer on user_customer.customer_id = customer.id
+			where
+			user_area_mapping.user_id = '$query.userid$'
+			<isNotEmpty prepend="and" property="query.name">
+				customer.name like '%$query.name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.area">
+				customer.area = '$query.area$'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.province">
+				customer.province = '$query.province$'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.city">
+				customer.city = '$query.city$'
+			</isNotEmpty>
+	</select>
+	<select id="queryCustomerByAreaManagerId.recordCount" resultClass="java.lang.Integer">
+		select count(distinct(c.id)) from customer c,user_customer uc 
+			where c.id=uc.customer_id and uc.user_id in(select us.id from user  us 
+				where us.user_area_id = (select us.user_area_id from user  us 
+					where us.id='$query.userid$') and role_id = 4) 
+			<isNotEmpty prepend="and" property="query.name">
+				c.name like '%$query.name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.area">
+				c.area = '$query.area$'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.province">
+				c.province = '$query.province$'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.city">
+				c.city = '$query.city$'
+			</isNotEmpty>
+	</select>
+	
+	<!-- 根据客户Id查询该客户信息和所有联系人列表(销售合同用) -->
+	<select id="getCustomerAndLinkman" resultClass="customer"
+		parameterClass="java.lang.Integer">
+		select c.id,c.name,c.province,c.city,c.invoice_bank_name as
+		invoiceBankName, c.invoice_bank_account as
+		invoiceBankAccount,c.tax_number as taxNumber,c.invoice_type as
+		invoiceType,sl.id as linkmanId,sl.name as linkman, sl.tel,sl.fax
+		from customer_linkman sl,customer c where sl.customer_id=c.id
+		and c.id=#customerid#
+	</select>
+	<!-- 添加客户联系人 -->
+	<insert id="addCustomerLinkman" parameterClass="customer">
+		insert customer_linkman(customer_id, name, role, tel, fax,
+		mobile, mail, msn, qq)
+		values(#id#,#linkman#,#role#,#tel#,#fax#,#mobile#,#mail#,#msn#,#qq#)
+	</insert>
+	<!-- 添加客户发货地址 -->
+	<insert id="addCustomerAddress" parameterClass="customer">
+		insert customer_address( customer_id, name, address, postcode,
+		linkman, tel, mobile )
+		values(#id#,#receiveName#,#supplierAddress#,#supplierPostcode#,
+		#supplierLinkman#,#supplierTel#,#supplierMobile#)
+	</insert>
+	<!-- 根据客户联系人Id查询该联系人信息 -->
+	<select id="queryCustomerLinkmanByLinkmanId" resultClass="customer"
+		parameterClass="java.lang.Integer">
+		select l.id as linkmanId,l.customer_id as id,s.name as
+		name,l.name as
+		linkman,l.role,l.tel,l.fax,l.mobile,l.mail,l.msn,l.qq from
+		customer_linkman l ,customer s where l.id=#linkmanId# and
+		l.customer_id=s.id
+	</select>
+	<!-- 根据客户发货地址Id查询该发货地址信息 -->
+	<select id="queryCustomerAddressByAddressId" resultClass="customer"
+		parameterClass="java.lang.Integer">
+		select a.id as receiveId,a.customer_id as id,a.name as
+		receiveName,a.address as supplierAddress,a.postcode as
+		supplierPostcode,a.linkman as supplierLinkman,a.tel as
+		supplierTel, a.mobile as supplierMobile from customer_address a
+		where a.id=#addressId#
+	</select>
+
+	<select id="ss.recordCount" resultClass="java.lang.Integer">
+		select count(*) from customer_address a where a.customer_id =
+		$query.id$
+	</select>
+	<select id="ss.queryCustomerAddressByAddressId"
+		resultClass="customer"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange">
+		select a.id as receiveId, a.customer_id as id, a.name as
+		receiveName, a.address as supplierAddress, a.postcode as
+		supplierPostcode, a.linkman as supplierLinkman, a.tel as
+		supplierTel, a.mobile as supplierMobile from customer_address a
+		where a.customer_id=$query.id$
+	</select>
+
+	<!-- 客户联系人修改 -->
+	<update id="saveCustomerLinkman" parameterClass="customer">
+		update customer_linkman l set
+		l.name=#linkman#,l.role=#role#,l.tel=#tel#,l.fax=#fax#,l.mobile=#mobile#,l.mail=#mail#,l.msn=#msn#,l.qq=#qq#
+		where l.id=#linkmanId#
+	</update>
+	<!-- 客户发货地址修改 -->
+	<update id="saveCustomerAddress" parameterClass="customer">
+		update customer_address a set
+		a.name=#receiveName#,a.address=#supplierAddress#,a.postcode=#supplierPostcode#,a.linkman=#supplierLinkman#,a.tel=#supplierTel#,
+		a.mobile=#supplierMobile# where a.id=#receiveId#
+	</update>
+	<!-- 根据客户Id查询所有发货地址 -->
+	<select id="queryCustomerAddressListById" resultClass="customer"
+		parameterClass="java.lang.Integer">
+		select s.id as receiveId,s.name as receiveName,s.address as
+		supplierAddress,s.postcode as supplierPostcode,s.linkman as
+		supplierLinkman,s.tel as supplierTel ,s.mobile as supplierMobile
+		from customer_address s where s.customer_id=#id# order by s.id
+	</select>
+	<!-- 客户添加 -->
+	<insert id="addCustomer" parameterClass="customer">
+		insert customer( name, area, province, city, address, postcode,
+		invoice_bank_name, invoice_bank_account, tax_number,
+		invoice_bank_address, invoice_bank_tel, invoice_type, tax_rate,
+		remit_bank_name, remit_bank_account )
+		values(#name#,#area#,#province#,#city#,#address#,#postcode#,
+		#invoiceBankName#,#invoiceBankAccount#,#taxNumber#,
+		#invoiceBankAddress#,#invoiceBankTel#,
+		#invoiceType#,#taxRate#,#remitBankName#,#remitBankAccount#)
+	</insert>
+	<!-- 客户修改 -->
+	<insert id="saveCustomer" parameterClass="customer">
+		update customer set name=#name#, area=#area#,
+		province=#province#, city=#city#, address=#address#,
+		postcode=#postcode#, invoice_bank_name=#invoiceBankName#,
+		invoice_bank_account=#invoiceBankAccount#,
+		tax_number=#taxNumber#,
+		invoice_bank_address=#invoiceBankAddress#,
+		invoice_bank_tel=#invoiceBankTel#, invoice_type=#invoiceType#,
+		tax_rate=#taxRate#, remit_bank_name=#remitBankName#,
+		remit_bank_account=#remitBankAccount# where id=#id#
+	</insert>
+	<!-- 删除客户发货地址 -->
+	<delete id="deleteCustomerAddress"
+		parameterClass="java.lang.Integer">
+		delete from customer_address where id = #id#
+	</delete>
+	<!-- 删除客户联系人 -->
+	<delete id="deleteCustomerLinkman"
+		parameterClass="java.lang.Integer">
+		delete from customer_linkman where id = #id#
+	</delete>
+	<!-- 删除客户 -->
+	<delete id="deleteCustomer" parameterClass="java.lang.Integer">
+		delete from customer where id = #id#
+	</delete>
+	<!-- 选择所有的公司地址 -->
+	<select id="companyAddressAll" resultClass="companyaddress">
+		select * from company_address
+	</select>
+	<!-- 公司地址添加 -->
+	<insert id="addCompanyAdress" parameterClass="companyaddress">
+		insert into
+		company_address(name,address,postcode,linkman,tel,mobile)
+		values(#name#,#address#,#postcode#,#linkman#,#tel#,#mobile#)
+	</insert>
+	<!-- 修改公司地址 -->
+	<select id="updateCompanyAddress" resultClass="companyaddress"
+		parameterClass="java.lang.Integer">
+		select * from company_address where id = #id#
+	</select>
+	<!-- 公司收获信息修改 -->
+	<update id="saveUpdateAddress" parameterClass="companyaddress">
+		update company_address set name=#name#,address =
+		#address#,postcode
+		=#postcode#,linkman=#linkman#,tel=#tel#,mobile=#mobile# where id
+		= #id#
+	</update>
+	<!-- 添加公司 -->
+	<insert id="addCompany" parameterClass="company">
+		insert into
+		company(name,invoice_bank_name,invoice_bank_account,tax_number,invoice_bank_address,invoice_bank_tel,tax_rate,remit_bank_name,remit_bank_account)
+		values(#name#,#invoice_bank_name#,#invoice_bank_account#,#tax_number#,#invoice_bank_address#,#invoice_bank_tel#,#tax_rate#,#remit_bank_name#,#remit_bank_account#)
+	</insert>
+	<!-- 公司信息 -->
+	<select id="companymsg" resultClass="company"
+		parameterClass="java.lang.Integer">
+		select * from company where id = #id#
+	</select> 
+	
+	<select id="companyInfo" resultClass="company">
+		select * from company
+	</select>
+	
+	<select id="companyId" resultClass="java.lang.Integer">
+		select id from company
+	</select>
+	<!-- 公司信息修改 -->
+	<update id="saveUpdateCompany" parameterClass="company">
+		update company set name=#name#,invoice_bank_name =
+		#invoice_bank_name#,invoice_bank_account
+		=#invoice_bank_account#,
+		tax_number=#tax_number#,invoice_bank_address=#invoice_bank_address#,invoice_bank_tel=#invoice_bank_tel#,tax_rate=#tax_rate#
+		where id = #id#
+	</update>
+	<!-- 公司地址删除 -->
+	<delete id="deleteAddress" parameterClass="java.lang.Integer">
+		delete from company_address where id = #id#
+	</delete>
+	<!-- 个人信息 -->
+	<select id="userMsg" resultClass="userEntity" parameterClass="java.lang.String">
+		select 
+			id,name,password,tel,mobile,mail,msn,qq,datetime,enable,online,role_id as roleId,user_area_id as userAreaId,user_dept_id as userDeptId,logistics_id as logisticsId 
+		from 
+			user 
+		where id = #id#
+	</select>
+	<!-- 修改个人信息 -->
+	<update id="updateUser" parameterClass="userEntity">
+		update user
+		<dynamic prepend="set">
+			<isNotEmpty prepend="," property="password">
+				password = #password#
+			</isNotEmpty>
+			<isNotEmpty prepend="," property="tel">
+				tel=#tel#
+			</isNotEmpty>
+			<isNotEmpty prepend="," property="mobile">
+				mobile=#mobile#
+			</isNotEmpty>
+			<isNotEmpty prepend="," property="mail">
+				mail=#mail#
+			</isNotEmpty>
+			<isNotEmpty prepend="," property="msn">
+				msn=#msn#
+			</isNotEmpty>
+			<isNotEmpty prepend="," property="qq">qq=#qq#</isNotEmpty>
+			<isNotEmpty prepend="," property="online">
+				online=#online#
+			</isNotEmpty>
+			where id = #id#
+		</dynamic>
+	</update>
+
+	<!-- 修改个人登录状态-->
+	<update id="updateUserStatus" parameterClass="userEntity">
+		update 
+			user 
+		set 
+			online=#online#  
+		where 
+			id = #id# 
+	</update>
+	<!-- 修改个人登录时间-->
+	<update id="updateUserDatetime" parameterClass="userEntity">
+		update 
+			user 
+		set  
+			datetime=#datetime# 
+		where 
+			id = #id# 
+	</update>
+
+	<!-- 销售产品 -->
+	<select id="sell.recordCount" resultClass="java.lang.Integer">
+		select count(*) from ( select
+		pt.product_type_id,pt.tno,pt.ptname,ps.id as psid,ps.no as
+		sno,ps.name as psname,p.id as pid,p.no as no,p.name as
+		name,p.type,p.unit,p.buy_count,p.sell_count from product_serie ps,product p,
+		( select pt.id as product_type_id,pt.no as tno,pt.name as ptname
+		from product_type pt where pt.id in (select u.product_type_id
+		from user_product u where u.user_id=#query.user_id#) )as pt
+		where pt.product_type_id=ps.product_type_id and
+		ps.id=p.product_series_id
+		<isNotEmpty prepend="and" property="query.name">
+			p.name like '%$query.name$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.type">
+			p.type like '%$query.type$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.tno">
+			pt.tno = #query.tno#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.sno">
+			ps.no = #query.sno#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.no">
+			p.no = #query.no#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.product_series_id">
+			ps.id = #query.product_series_id#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.tid">
+			pt.product_type_id = #query.tid#
+		</isNotEmpty>
+		) sa left join ( select
+		s.product_id,sum(s.num-s.send_lock-s.prepared)as snum from
+		stock s group by s.product_id ) sb on sa.pid=sb.product_id
+	</select>
+	<!-- 销售产品（测试） -->
+	<select id="sell.productAll" parameterClass="cn.com.thtf.egov.cms.application.ListRange"
+		resultClass="product">
+		select sa.pid as id, sa.product_type_id,sa.tno,sa.ptname,sa.psid,sa.sno,sa.money,sb.stocknum,sa.sell_count as sell,
+		sa.psname,sa.pid,sa.no,sa.name,sa.type,sa.unit,
+		(ifnull(sb.snum,0)+sa.buy_count-sa.sell_count)as sbs 
+		from ( select pt.product_type_id,pt.tno,pt.ptname,ps.id as psid,ps.no as sno,ps.name as psname,p.id as pid,p.no as no,p.name as	name,p.type,p.unit,p.buy_count,p.sell_count as sell_count,p.money as money 
+				from product_serie ps,product p,
+					( select pt.id as product_type_id,pt.no as tno,pt.name as ptname
+					  from product_type pt 
+				          where pt.id in (select u.product_type_id
+							  from user_product u 
+							  where u.user_id=#query.user_id#) )as pt
+				where pt.product_type_id=ps.product_type_id and	ps.id=p.product_series_id
+				<isNotEmpty prepend="and" property="query.name">
+					p.name like '%$query.name$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="query.type">
+					p.type like '%$query.type$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="query.tno">
+					pt.tno = #query.tno#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="query.sno">
+					ps.no = #query.sno#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="query.no">
+					p.no = #query.no#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="query.product_series_id">
+					ps.id = #query.product_series_id#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="query.tid">
+					pt.product_type_id = #query.tid#
+				</isNotEmpty>
+				) sa 
+		left join ( select s.product_id,s.num as stocknum,sum(s.num-sc.sgdsend_lock-sd.sgdprepared)as snum 
+				from (SELECT coalesce(sum(sgd.count),0) as sgdsend_lock,sgd.product_id as sgdid1
+					from send_goods_detail sgd,
+						(SELECT sg.id as id 
+						from send_goods sg 
+						where (sg.send_goods_type=1 and sg.status=2 ) or (sg.send_goods_type=1 and sg.status=3)) ssgg
+					where ssgg.id=sgd.send_goods_id group by sgd.product_id) sc, 
+					(SELECT coalesce(sum(sgd.count),0) as sgdprepared,sgd.product_id as sgdid2
+					 from send_goods_detail sgd,
+						(SELECT sg.id as id 
+							from send_goods sg 
+							where (sg.send_goods_type=0 and sg.status=5 ) or (sg.send_goods_type=0 and sg.status=6)) ssgg
+					where ssgg.id=sgd.send_goods_id group by sgd.product_id) sd,
+					stock s 
+					where s.product_id=sc.sgdid1 and s.product_id=sgdid2 group by s.product_id ) sb 
+		on sa.pid=sb.product_id 
+	
+	</select>
+	<!-- 销售产品 -->
+	<select id="sell.productAll1"
+		parameterClass="cn.com.thtf.egov.cms.application.ListRange"
+		resultClass="product">
+		select sa.pid as id, sa.product_type_id,sa.tno,sa.ptname,sa.psid,sa.sno,sa.money,sb.stocknum,sa.sell_count as sell,
+		sa.psname,sa.pid,sa.no,sa.name,sa.type,sa.unit,
+		(ifnull(sb.snum,0)+sa.buy_count-sa.sell_count)as sbs from ( select
+		pt.product_type_id,pt.tno,pt.ptname,ps.id as psid,ps.no as
+		sno,ps.name as psname,p.id as pid,p.no as no,p.name as
+		name,p.type,p.unit,p.buy_count,p.sell_count as sell_count,p.money as money from product_serie ps,product p,
+		( select pt.id as product_type_id,pt.no as tno,pt.name as ptname
+		from product_type pt where pt.id in (select u.product_type_id
+		from user_product u where u.user_id=#query.user_id#) )as pt
+		where pt.product_type_id=ps.product_type_id and
+		ps.id=p.product_series_id
+		<isNotEmpty prepend="and" property="query.name">
+			p.name like '%$query.name$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.type">
+			p.type like '%$query.type$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.tno">
+			pt.tno = #query.tno#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.sno">
+			ps.no = #query.sno#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.no">
+			p.no = #query.no#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.product_series_id">
+			ps.id = #query.product_series_id#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="query.tid">
+			pt.product_type_id = #query.tid#
+		</isNotEmpty>
+		) sa left join ( select
+		s.product_id,s.num as stocknum,sum(s.num-s.send_lock-s.prepared)as snum from
+		stock s group by s.product_id ) sb on sa.pid=sb.product_id
+	</select>
+	
+	
+	<update id="addProductSellCount" parameterClass="product">
+    	update product set sell_count = sell_count + #sell#
+    				   where id = #id#	
+    </update>
+    <!--   根据 产品部门编号查询部门名称     -->
+    <select id="selectProductDeptName" resultClass="java.lang.String"
+		parameterClass="java.lang.Integer">
+		select name from product_dept where id = #id#
+	</select>
+	
+	<!--   根据 产品部门编号查询库房信息     -->
+    <select id="productDeptIdselectStockroom" resultClass="stockroomEntity"
+		parameterClass="java.lang.Integer">
+			SELECT
+			  id              AS id,
+			  NAME            AS 'name',
+			  product_dept_id AS productDeptId,
+			  short_name      AS shortName
+			FROM stockroom
+			WHERE product_dept_id = #id#
+	</select>
+	<update id="productSaveUpdateDepot" parameterClass="stockroomEntity">
+		update stockroom set name=#name#,product_dept_id=#productDeptId#,short_name = #shortName#
+		where id=#id#
+	</update>
+</sqlMap>

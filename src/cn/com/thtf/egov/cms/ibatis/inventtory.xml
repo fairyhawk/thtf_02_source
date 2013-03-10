@@ -1,0 +1,1264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="inventtory_sqlMap">
+
+	<typeAlias alias="stockroomEntity" type="cn.com.thtf.egov.cms.entity.StockroomEntity" />
+	<typeAlias alias="stockEntity" type="cn.com.thtf.egov.cms.entity.StockEntity" />
+	<typeAlias alias="sendGoodsEntity" type="cn.com.thtf.egov.cms.entity.SendGoodsEntity" />
+	<typeAlias alias="stockroomAnAddressDto" type="cn.com.thtf.egov.cms.dto.StockroomAndAddressDto" />
+	<typeAlias alias="stockQueryDto" type="cn.com.thtf.egov.cms.dto.StockQueryDto" />
+	<typeAlias alias="stockProductDto" type="cn.com.thtf.egov.cms.dto.StockProductDto" />
+	<typeAlias alias="userStockroomProductEntity" type="cn.com.thtf.egov.cms.entity.UserStockroomProductEntity" />
+	<typeAlias alias="stockSendGoods" type="cn.com.thtf.egov.cms.dto.StockSendGoodsDto" />
+
+	<typeAlias alias="buyBackGoodsEntity" type="cn.com.thtf.egov.cms.entity.BuyBackGoodsEntity" />
+	<typeAlias alias="moveEntity" type="cn.com.thtf.egov.cms.entity.MoveEntity" />
+	<typeAlias alias="sampleOutEntity" type="cn.com.thtf.egov.cms.entity.SampleOutEntity" /> 
+
+	<!-- 检索发货管理 --> 
+	<select id="selectStockSendGoods.data" parameterClass="stockSendGoods" resultClass="stockSendGoods">
+		 select 
+			orderType,
+			orderId,
+			stockroomId,
+			stockroomName,
+			productTypeId,
+			productType,
+			customerName,
+
+			customerAddressName, 
+			customerAddress,
+			transportWay,
+			date,
+			requestDate,
+
+			sendDate, 
+			userName,
+			status, 
+			changeStatus
+			
+		from  
+
+		(select 
+			1 as orderType,
+			send_goods.id as orderId,
+			stockroom.id as stockroomId,
+			stockroom.name as stockroomName,
+			product_type.id as productTypeId,
+			product_type.name as productType,
+			customer.name as customerName,
+
+			send_goods.ca_name as customerAddressName, 
+			send_goods.ca_address as customerAddress,
+			send_goods.transport_way as transportWay,
+			send_goods.date as date,
+			send_goods.request_date as requestDate,
+
+			send_goods.send_date as sendDate, 
+			send_goods.user_name as userName,
+			send_goods.status as status,
+
+			(case 
+			when send_goods.status = 2 then 0
+			when send_goods.status = 3 then 1
+			when send_goods.status = 4 then 2
+			when send_goods.status = 5 then 3  
+			else 99 end) as changeStatus
+		from 
+
+			stockroom,customer,product_type,send_goods
+
+			left join(
+				select
+					customer_address.id as id,
+					customer_address.name as name,
+					customer_address.address as address
+				from
+					customer_address
+			) as customerAddress on customerAddress.id = send_goods.customer_address_id
+
+		where
+			stockroom.id = send_goods.stockroom_id
+		and	customer.id = send_goods.customer_id 
+		and	product_type.id = send_goods.product_type_id
+
+		union all
+
+		select 
+			2 as orderType,
+			buy_back_goods.id as orderId,
+			stockroom.id as stockroomId,
+			stockroom.name as stockroomName,
+			product_type.id as productTypeId,
+			product_type.name as productType,
+			supplier.name as customerName,
+
+			supplierAddress.name as customerAddressName, 
+			supplierAddress.address as customerAddress,
+			buy_back_goods.transport_way as transportWay,
+			buy_back_goods.date as date,
+			buy_back_goods.request_date as requestDate,
+
+			buy_back_goods.send_date as sendDate, 
+			buy_back_goods.user_name as userName,
+			buy_back_goods.status as status,
+
+			(case 
+			when buy_back_goods.status = 8 then 0
+			when buy_back_goods.status = 9 then 1
+			when buy_back_goods.status = 10 then 2
+			when buy_back_goods.status = 11 then 3
+			else 99 end) as changeStatus
+		from 
+
+			stockroom,supplier,product_type,buy_back_goods
+
+			left join(
+				select
+					supplier_address.id as id,
+					supplier_address.name as name,
+					supplier_address.address as address
+				from
+					supplier_address
+			) as supplierAddress on supplierAddress.id = buy_back_goods.supplier_address_id
+
+		where
+			stockroom.id = buy_back_goods.stockroom_id
+		and	supplier.id = buy_back_goods.supplier_id 
+		and	product_type.id = buy_back_goods.product_type_id
+
+		union all
+
+		select 
+			3 as orderType,
+			move.id as orderId,
+			stockroom.id as stockroomId,
+			stockroom.name as stockroomName,
+			product_type.id as productTypeId,
+			product_type.name as productType,
+			stockroomAddress.stockroomName as customerName,
+
+			stockroomAddress.name as customerAddressName, 
+			stockroomAddress.address as customerAddress,
+			move.transport_way as transportWay,
+			move.date as date,
+			move.request_date as requestDate,
+
+			move.send_date as sendDate, 
+			move.user_name as userName,
+			move.status as status,
+
+			(case 
+			when move.status = 4 then 0
+			when move.status = 5 then 1
+			when move.status = 6 then 2
+			when move.status = 7 then 3
+			when move.status = 8 then 3
+
+			else 99 end) as changeStatus
+		from 
+
+		stockroom,product_type,move
+
+		left join(
+			select 
+				stockroom_address.id as id,
+				stockroom.name as stockroomName,
+				stockroom_address.name as name,
+				stockroom_address.address as address
+			from 
+				stockroom,stockroom_address
+			where
+				stockroom_address.stockroom_id = stockroom.id
+		) as stockroomAddress on stockroomAddress.id = move.stockroom_address_id
+
+		where
+			stockroom.id = move.out_stockroom_id  
+		and	product_type.id = move.product_type_id
+
+		union all
+
+		select 
+			4 as orderType,
+			sample_out.id as orderId,
+			stockroom.id as stockroomId,
+			stockroom.name as stockroomName,
+			product_type.id as productTypeId,
+			product_type.name as productType,
+
+			 (case 
+				when sample_out.company_type = 1 then companyAddress.companyName
+				when sample_out.company_type = 2 then customerAddress.customerName
+				when sample_out.company_type = 3 then supplierAddress.supplierName end) as customerName,
+			 (case 
+				when sample_out.company_type = 1 then companyAddress.name
+				when sample_out.company_type = 2 then customerAddress.name
+				when sample_out.company_type = 3 then supplierAddress.name end) as customerAddressName,
+			 (case                                    
+				when sample_out.company_type = 1 then companyAddress.address
+				when sample_out.company_type = 2 then customerAddress.address
+				when sample_out.company_type = 3 then supplierAddress.address end) as customerAddress,
+														
+			sample_out.transport_way as transportWay,
+			sample_out.date as date,
+			sample_out.request_date as requestDate,
+
+			sample_out.send_date as sendDate, 
+			sample_out.user_name as userName,
+			sample_out.status as status,
+
+			(case 
+			when sample_out.status = 6 then 0
+			when sample_out.status = 7 then 1
+			when sample_out.status = 8 then 2
+			when sample_out.status = 9 then 3  
+			else 99 end) as changeStatus
+		from
+
+		stockroom,product_type,sample_out
+
+		left join(
+			select 
+				company_address.id as id,
+				company.name as companyName,
+				company_address.name as name,
+				company_address.address as address
+			from 
+				company_address,company
+		) as companyAddress 
+		on companyAddress.id = sample_out.address_id and sample_out.company_type = 1
+
+		left join(
+			select 
+				customer_address.id as id,
+				customer.name as customerName,
+				customer_address.name as name,
+				customer_address.address as address
+			from 
+				customer_address,customer
+			where
+				customer_address.customer_id=customer.id
+		) as customerAddress 
+		on customerAddress.id = sample_out.address_id and sample_out.company_type = 2
+
+		left join(
+			select 
+				supplier_address.id as id,
+				supplier.name as supplierName,
+				supplier_address.name as name,
+				supplier_address.address as address
+			from 
+				supplier_address,supplier
+			where
+				supplier_address.supplier_id=supplier.id
+		) as supplierAddress 
+		on supplierAddress.id = sample_out.address_id and sample_out.company_type = 3
+
+		where
+			stockroom.id = sample_out.out_stockroom_id 
+		and	product_type.id = sample_out.product_type_id) as orderData
+
+		where
+			changeStatus != 99 
+			<isNotEmpty prepend="and" property="userStockroomList">
+				<iterate property="userStockroomList" open="(" close=")" conjunction="or" >  
+						(productTypeId = $userStockroomList[].productTypeId$ 
+					and stockroomId = $userStockroomList[].stockroomId$)
+				</iterate>
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="init">
+				<isEqual property="roleId" compareValue="12">
+					changeStatus = 0
+				</isEqual>
+			</isNotEmpty> 
+
+			<isNotEmpty prepend="and" property="orderTypeArr">
+				<iterate property="orderTypeArr" open="(" close=")" conjunction="or" >  
+					orderType = $orderTypeArr[]$
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="changeStatus"> 
+				changeStatus = #changeStatus# 
+			</isNotEmpty> 
+
+			<isNotEmpty prepend="and" property="orderId">
+				orderId like '%$orderId$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="stockroomId">
+				stockroomId = #stockroomId#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="productTypeId">
+				productTypeId = #productTypeId#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="customerName">
+				customerName like '%$customerName$%'
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="customerAddressName">
+				customerAddressName  = #customerAddressName#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="transportWay">
+				transportWay like '%$transportWay$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="starttime"> 
+				<![CDATA[ sendDate >= #starttime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="endtime"> 
+				<![CDATA[ sendDate <= #endtime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userName">
+				userName like '%$userName$%'
+			</isNotEmpty> 
+			ORDER BY orderType,orderId desc
+	</select>
+
+	<!-- 检索发货管理 --> 
+	<select id="selectStockSendGoods.recordCount" parameterClass="stockSendGoods" resultClass="java.lang.Integer">
+		 select count(*) from (
+		  select 
+			orderType,
+			orderId,
+			stockroomId,
+			stockroomName,
+			productTypeId,
+			productType,
+			customerName,
+
+			customerAddressName, 
+			customerAddress,
+			transportWay,
+			date,
+			requestDate,
+
+			sendDate, 
+			userName,
+			status, 
+			changeStatus
+			
+		from  
+
+		(select 
+			1 as orderType,
+			send_goods.id as orderId,
+			stockroom.id as stockroomId,
+			stockroom.name as stockroomName,
+			product_type.id as productTypeId,
+			product_type.name as productType,
+			customer.name as customerName,
+
+			customerAddress.name as customerAddressName, 
+			customerAddress.address as customerAddress,
+			send_goods.transport_way as transportWay,
+			send_goods.date as date,
+			send_goods.request_date as requestDate,
+
+			send_goods.send_date as sendDate, 
+			send_goods.user_name as userName,
+			send_goods.status as status,
+
+			(case 
+			when send_goods.status = 2 then 0
+			when send_goods.status = 3 then 1
+			when send_goods.status = 4 then 2
+			when send_goods.status = 5 then 3  
+			else 99 end) as changeStatus
+		from 
+
+			stockroom,customer,product_type,send_goods
+
+			left join(
+				select
+					customer_address.id as id,
+					customer_address.name as name,
+					customer_address.address as address
+				from
+					customer_address
+			) as customerAddress on customerAddress.id = send_goods.customer_address_id
+
+		where
+			stockroom.id = send_goods.stockroom_id
+		and	customer.id = send_goods.customer_id 
+		and	product_type.id = send_goods.product_type_id
+
+		union all
+
+		select 
+			2 as orderType,
+			buy_back_goods.id as orderId,
+			stockroom.id as stockroomId,
+			stockroom.name as stockroomName,
+			product_type.id as productTypeId,
+			product_type.name as productType,
+			supplier.name as customerName,
+
+			supplierAddress.name as customerAddressName, 
+			supplierAddress.address as supplierAddress,
+			buy_back_goods.transport_way as customerAddress,
+			buy_back_goods.date as date,
+			buy_back_goods.request_date as requestDate,
+
+			buy_back_goods.send_date as sendDate, 
+			buy_back_goods.user_name as userName,
+			buy_back_goods.status as status,
+
+			(case 
+			when buy_back_goods.status = 8 then 0
+			when buy_back_goods.status = 9 then 1
+			when buy_back_goods.status = 10 then 2
+			when buy_back_goods.status = 11 then 3
+			else 99 end) as changeStatus
+		from 
+
+			stockroom,supplier,product_type,buy_back_goods
+
+			left join(
+				select
+					supplier_address.id as id,
+					supplier_address.name as name,
+					supplier_address.address as address
+				from
+					supplier_address
+			) as supplierAddress on supplierAddress.id = buy_back_goods.supplier_address_id
+
+		where
+			stockroom.id = buy_back_goods.stockroom_id
+		and	supplier.id = buy_back_goods.supplier_id 
+		and	product_type.id = buy_back_goods.product_type_id
+
+		union all
+
+		select 
+			3 as orderType,
+			move.id as orderId,
+			stockroom.id as stockroomId,
+			stockroom.name as stockroomName,
+			product_type.id as productTypeId,
+			product_type.name as productType,
+			stockroomAddress.stockroomName as customerName,
+
+			stockroomAddress.name as customerAddressName, 
+			stockroomAddress.address as customerAddress,
+			move.transport_way as transportWay,
+			move.date as date,
+			move.request_date as requestDate,
+
+			move.send_date as sendDate, 
+			move.user_name as userName,
+			move.status as status,
+
+			(case 
+			when move.status = 4 then 0
+			when move.status = 5 then 1
+			when move.status = 6 then 2
+			when move.status = 7 then 3
+			when move.status = 8 then 3
+
+			else 99 end) as changeStatus
+		from 
+
+		stockroom,product_type,move
+
+		left join(
+			select 
+				stockroom_address.id as id,
+				stockroom.name as stockroomName,
+				stockroom_address.name as name,
+				stockroom_address.address as address
+			from 
+				stockroom,stockroom_address
+			where
+				stockroom_address.stockroom_id = stockroom.id
+		) as stockroomAddress on stockroomAddress.id = move.stockroom_address_id
+
+		where
+			stockroom.id = move.out_stockroom_id  
+		and	product_type.id = move.product_type_id
+
+		union all
+
+		select 
+			4 as orderType,
+			sample_out.id as orderId,
+			stockroom.id as stockroomId,
+			stockroom.name as stockroomName,
+			product_type.id as productTypeId,
+			product_type.name as productType,
+
+			 (case 
+				when sample_out.company_type = 1 then companyAddress.companyName
+				when sample_out.company_type = 2 then customerAddress.customerName
+				when sample_out.company_type = 3 then supplierAddress.supplierName end) as customerName,
+			 (case 
+				when sample_out.company_type = 1 then companyAddress.name
+				when sample_out.company_type = 2 then customerAddress.name
+				when sample_out.company_type = 3 then supplierAddress.name end) as customerAddressName,
+			 (case                                    
+				when sample_out.company_type = 1 then companyAddress.address
+				when sample_out.company_type = 2 then customerAddress.address
+				when sample_out.company_type = 3 then supplierAddress.address end) as customerAddress,
+														
+			sample_out.transport_way as transportWay,
+			sample_out.date as date,
+			sample_out.request_date as requestDate,
+
+			sample_out.send_date as sendDate, 
+			sample_out.user_name as userName,
+			sample_out.status as status,
+
+			(case 
+			when sample_out.status = 6 then 0
+			when sample_out.status = 7 then 1
+			when sample_out.status = 8 then 2
+			when sample_out.status = 9 then 3  
+			else 99 end) as changeStatus
+		from
+
+		stockroom,product_type,sample_out
+
+		left join(
+			select 
+				company_address.id as id,
+				company.name as companyName,
+				company_address.name as name,
+				company_address.address as address
+			from 
+				company_address,company
+		) as companyAddress 
+		on companyAddress.id = sample_out.address_id and sample_out.company_type = 1
+
+		left join(
+			select 
+				customer_address.id as id,
+				customer.name as customerName,
+				customer_address.name as name,
+				customer_address.address as address
+			from 
+				customer_address,customer
+			where
+				customer_address.customer_id=customer.id
+		) as customerAddress 
+		on customerAddress.id = sample_out.address_id and sample_out.company_type = 2
+
+		left join(
+			select 
+				supplier_address.id as id,
+				supplier.name as supplierName,
+				supplier_address.name as name,
+				supplier_address.address as address
+			from 
+				supplier_address,supplier
+			where
+				supplier_address.supplier_id=supplier.id
+		) as supplierAddress 
+		on supplierAddress.id = sample_out.address_id and sample_out.company_type = 3
+
+		where
+			stockroom.id = sample_out.out_stockroom_id 
+		and	product_type.id = sample_out.product_type_id) as orderData
+
+		where
+			changeStatus != 99
+			<isNotEmpty prepend="and" property="userStockroomList">
+				<iterate property="userStockroomList" open="(" close=")" conjunction="or" >  
+						(productTypeId = $userStockroomList[].productTypeId$ 
+					and stockroomId = $userStockroomList[].stockroomId$)
+				</iterate>
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="init">
+				<isEqual property="roleId" compareValue="12">
+					changeStatus = 0
+				</isEqual> 
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="and" property="orderTypeArr">
+				<iterate property="orderTypeArr" open="(" close=")" conjunction="or" >  
+					orderType = $orderTypeArr[]$
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="changeStatus"> 
+				changeStatus = #changeStatus# 
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="orderId">
+				orderId like '%$orderId$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="stockroomId">
+				stockroomId = #stockroomId#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="productTypeId">
+				productTypeId = #productTypeId#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="customerName">
+				customerName like '%$customerName$%'
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="customerAddressName">
+				customerAddressName  = #customerAddressName#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="transportWay">
+				transportWay like '%$transportWay$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="starttime"> 
+				<![CDATA[ sendDate >= #starttime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="endtime"> 
+				<![CDATA[ sendDate <= #endtime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userName">
+				userName like '%$userName$%'
+			</isNotEmpty> 
+		) as data
+	</select> 
+
+	<!-- 修改返场单 发货异常  --> 
+	<update id="updateBuyBackGoodsComplete" parameterClass="buyBackGoodsEntity">
+		update buy_back_goods set 
+			 send_date = #sendDate#,
+			 status = #status#,
+			 stk_adm_name = #stkAdmName#,
+			 stk_adm_date = #stkAdmDate#,
+			 stk_adm_idea = #stkAdmIdea#,
+
+			 stk_adm_text =#stkAdmText#
+		where
+			id = #id# 
+	</update>
+	<!-- 修改移库单 发货异常  --> 
+	<update id="updateMoveComplete" parameterClass="moveEntity">
+		update move set 
+			 send_date = #sendDate#,
+			 status = #status#,
+			 stk_adm_name = #stkAdmName#,
+			 stk_adm_date = #stkAdmDate#,
+			 stk_adm_idea = #stkAdmIdea#,
+
+			 stk_adm_text =#stkAdmText#
+		where
+			id = #id# 
+	</update>
+	<!-- 修改借出单 发货异常  --> 
+	<update id="updateSampleOutComplete" parameterClass="sampleOutEntity">
+		update sample_out set 
+			 send_date = #sendDate#,
+			 status = #status#,
+			 stk_adm_name = #stkAdmName#,
+			 stk_adm_date = #stkAdmDate#,
+			 stk_adm_idea = #stkAdmIdea#,
+
+			 stk_adm_text =#stkAdmText#
+		where
+			id = #id# 
+	</update>
+
+
+	<!-- 检索库房管理员 --> 
+	<select id="selectTreasuryManagerById" parameterClass="string" resultClass="userStockroomProductEntity">
+		select 
+			stockroom_id as stockroomId,
+			product_type_id as productTypeId
+		from 
+			user_stockroom_product 
+		where 
+			user_id = #userId#
+	</select>
+	
+	<!-- 获取库存明细 --> 
+	<select id="selectStockProductDetail.data" parameterClass="stockQueryDto" resultClass="stockProductDto">
+		select 
+			product_type.name as productTypeName,
+			product_serie.name as productSerieName,
+			product.id as productId,
+			product.code as productCode,
+			product.name as productName,
+			product.type as productType,
+			product.unit as productUnit,  
+			ifnull(round(product.money/stockData.stockNum,2),0) as stockPrice,
+			stockroom.name as stockroomName,
+			ifnull(stock.num,0) as stockNum,
+
+			ifnull(stock.send_lock,0) as stockSendLock,
+			ifnull(stock.prepared,0) as stockPrepared,
+			(CASE 
+			WHEN stockroom.type IN (2) THEN 0
+			ELSE IFNULL(stock.num,0)-IFNULL(stock.send_lock,0)-IFNULL(stock.prepared,0)
+			END) AS sendGoodsUseCount
+		from 
+			product_type,product_serie,stock,stockroom,product
+
+			left join(
+				select 
+					stock.product_id as productId,  
+					sum(stock.num) as stockNum 
+				from
+					stock 
+				group by stock.product_id
+			) as stockData on stockData.productId = product.id  
+
+		where
+			product.id = #productId#
+		and	stock.product_id = product.id  
+		and	product.product_series_id = product_serie.id
+		and	product_serie.product_type_id = product_type.id
+		and	stock.stockroom_id = stockroom.id 
+		<isNotEmpty prepend="and" property="stockroomId">
+			stockroom.id = #stockroomId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="stockroomType">
+			stockroom.type = #stockroomType#
+		</isNotEmpty>  
+
+	</select>
+	<select id="selectStockProductDetail.recordCount" parameterClass="stockQueryDto" resultClass="java.lang.Integer">
+		select count(*) from
+			(select 
+			product_type.name as productTypeName,
+			product_serie.name as productSerieName,
+			product.id as productId,
+			product.code as productCode,
+			product.name as productName,
+			product.type as productType,
+			product.unit as productUnit,  
+			ifnull(round(product.money/stockData.stockNum,2),0) as stockPrice,
+			stockroom.name as stockroomName,
+			ifnull(stock.num,0) as stockNum,
+
+			ifnull(stock.send_lock,0) as stockSendLock,
+			ifnull(stock.prepared,0) as stockPrepared,
+			ifnull(stock.num,0)-ifnull(stock.send_lock,0)-ifnull(stock.prepared,0) as sendGoodsUseCount 
+		from 
+			product_type,product_serie,stock,stockroom,product
+
+			left join(
+				select 
+					stock.product_id as productId,  
+					sum(stock.num) as stockNum 
+				from
+					stock 
+				group by stock.product_id
+			) as stockData on stockData.productId = product.id  
+
+		where
+			product.id = #productId#
+		and	stock.product_id = product.id  
+		and	product.product_series_id = product_serie.id
+		and	product_serie.product_type_id = product_type.id
+		and	stock.stockroom_id = stockroom.id
+		<isNotEmpty prepend="and" property="stockroomId">
+			stockroom.id = #stockroomId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="stockroomType">
+			stockroom.type = #stockroomType#
+		</isNotEmpty>
+		) as data
+	</select>
+
+	<!-- 获取库存列表 --> 
+	<select id="selectStockProduct.data" parameterClass="stockQueryDto" resultClass="stockProductDto">
+		SELECT 
+			product_type.name AS productTypeName,
+			product_serie.name AS productSerieName,
+			product.id AS productId,
+			product.code AS productCode,
+			product.name AS productName,
+			product.type AS productType,
+			product.unit AS productUnit, 
+			IFNULL(stockData.stockNum,0) AS stockNum,
+			IFNULL(ROUND(product.money/stockData.stockNum,2),0) AS stockPrice,
+			IFNULL(buyContractData.count,0)-IFNULL(inStockData.count,0) AS buyContractCount,
+			IFNULL(sellContractData.count,0)-IFNULL(sendGoodsData.count,0) AS sellContractCount,
+ 			IFNULL(bugStockData.stockNum,0)+(IFNULL(buyContractData.count,0)-IFNULL(inStockData.count,0)  )-(IFNULL(sellContractData.count,0)-IFNULL(sendGoodsData.count,0)) sellUseCount,
+ 
+			IFNULL(bugStockData.stockSendLock,0) AS stockSendLock,
+			IFNULL(bugStockData.stockPrepared,0) AS stockPrepared,
+			IFNULL(bugStockData.stockNum,0)-IFNULL(bugStockData.stockSendLock,0)-IFNULL(bugStockData.stockPrepared,0) AS sendGoodsUseCount,
+			IFNULL(stockroomData.stockNum,0) AS stockroomNum
+		FROM 
+			product_type,product_serie,product
+			
+			LEFT JOIN(
+				SELECT 
+					stock.product_id AS productId, 
+					SUM(stock.num) AS stockNum,
+					SUM(stock.prepared) AS stockPrepared,
+					SUM(stock.send_lock) AS stockSendLock
+				FROM
+					stock
+				GROUP BY stock.product_id 
+			) AS stockData ON stockData.productId = product.id
+			
+			LEFT JOIN(
+				SELECT 
+					stock.product_id AS productId, 
+					SUM(stock.num) AS stockNum,
+					SUM(stock.prepared) AS stockPrepared,
+					SUM(stock.send_lock) AS stockSendLock
+				FROM
+					stock,stockroom
+				WHERE stock.stockroom_id = stockroom.id
+				AND   stockroom.type IN (0,1)
+				<isNotEmpty prepend="and" property="stockroomType">
+					stockroom.type  = #stockroomType#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="stockroomId">
+					stock.stockroom_id = #stockroomId#
+				</isNotEmpty> 
+				GROUP BY stock.product_id 
+			) AS bugStockData ON bugStockData.productId = product.id
+			
+			LEFT JOIN(
+				SELECT
+				  buy_contract_detail.product_id AS productId,
+				  SUM(buy_contract_detail.count) AS COUNT
+				FROM buy_contract_detail,
+				  buy_contract
+				WHERE buy_contract.status = 13
+				    AND buy_contract.id = buy_contract_detail.buy_contract_id
+				GROUP BY buy_contract_detail.product_id
+			) AS buyContractData ON buyContractData.productId = product.id
+
+			LEFT JOIN(
+				SELECT
+				  sell_contract_detail.product_id AS productId,
+				  SUM(sell_contract_detail.count) AS COUNT
+				FROM sell_contract_detail,
+				  sell_contract
+				WHERE sell_contract.id = sell_contract_detail.sell_contract_id
+				    AND sell_contract.status IN(2,4,6,8,10,12,13,14)
+				GROUP BY sell_contract_detail.product_id
+			) AS sellContractData ON sellContractData.productId = product.id  
+			 
+			LEFT JOIN(
+				SELECT 
+					stock.product_id AS productId,
+					stock.stockroom_id AS stockroomId,
+					stockroom.type AS stockroomType,
+					SUM(stock.num) AS stockNum
+				FROM
+					stock,stockroom
+				WHERE
+					stock.stockroom_id = stockroom.id
+					<isNotEmpty prepend="and" property="stockroomType">
+						stockroom.type  = #stockroomType#
+					</isNotEmpty>
+					<isNotEmpty prepend="and" property="stockroomId">
+						stock.stockroom_id = #stockroomId#
+					</isNotEmpty> 
+				GROUP BY stock.product_id 
+			) AS stockroomData ON stockroomData.productId = product.id
+
+			LEFT JOIN(
+				SELECT 
+					send_goods_detail.product_id AS productId,
+					SUM(send_goods_detail.count) AS COUNT
+				FROM 
+					send_goods_detail,send_goods
+				WHERE
+					send_goods.id = send_goods_detail.send_goods_id
+				AND	send_goods.status = 5
+				group by send_goods_detail.product_id  
+			) as sendGoodsData on sendGoodsData.productId = product.id
+			 
+			left join(
+				select
+					in_stock_detail.product_id as productId,
+					sum(in_stock_detail.count) as count
+				from
+					in_stock,in_stock_detail
+				where
+					in_stock.id = in_stock_detail.in_stock_id
+				and	in_stock.status = 6
+				
+				group by in_stock_detail.product_id
+
+			) as inStockData on inStockData.productId = product.id
+
+		where
+			product.product_series_id = product_serie.id
+		AND	product_serie.product_type_id = product_type.id
+		<isNotEmpty prepend="and" property="productTypeIdArr">
+			product_type.id in ($productTypeIdArr$)
+		</isNotEmpty> 
+
+		<isNotEmpty prepend="and" property="userStockroomList">
+			<iterate property="userStockroomList" open="(" close=")" conjunction="or" >  
+					(product_type.id = $userStockroomList[].productTypeId$ 
+				and stockroomData.stockroomId = $userStockroomList[].stockroomId$)
+			</iterate>
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="productTypeId">
+			product_type.id = #productTypeId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productSerieId">
+			product_serie.id = #productSerieId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="stockroomId">
+			stockroomData.stockroomId = #stockroomId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="stockroomType">
+			stockroomData.stockroomType = #stockroomType#
+		</isNotEmpty>  
+		<isEqual prepend="and" compareValue="1" property="sendgoodsType">
+			ifnull(stockData.stockPrepared,0) >  0
+		</isEqual>
+		<isEqual prepend="and" compareValue="2" property="sendgoodsType">
+			ifnull(stockData.stockPrepared,0) =  0
+		</isEqual>
+		<isNotEmpty prepend="and" property="productCode">
+			product.code like '%$productCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productName">
+			product.name like '%$productName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productType">
+			product.type like '%$productType$%'
+		</isNotEmpty>
+		order by product.code
+	</select>
+	<select id="selectStockProduct.recordCount" parameterClass="stockQueryDto" resultClass="java.lang.Integer">
+		select 
+			count(*)
+		from 
+			product_type,product_serie,product 
+
+			LEFT JOIN(
+				SELECT 
+					stock.product_id AS productId, 
+					SUM(stock.num) AS stockNum,
+					SUM(stock.prepared) AS stockPrepared,
+					SUM(stock.send_lock) AS stockSendLock
+				FROM
+					stock
+				GROUP BY stock.product_id 
+			) AS stockData ON stockData.productId = product.id
+
+			left join(
+				select 
+					stock.product_id as productId,
+					stock.stockroom_id as stockroomId,
+					stockroom.type as stockroomType,
+					sum(stock.num) as stockNum
+				from
+					stock,stockroom
+				where
+					stock.stockroom_id = stockroom.id
+					<isNotEmpty prepend="and" property="stockroomType">
+						stockroom.type  = #stockroomType#
+					</isNotEmpty>
+					<isNotEmpty prepend="and" property="stockroomId">
+						stock.stockroom_id = #stockroomId#
+					</isNotEmpty> 
+				group by stock.product_id 
+			) as stockroomData on stockroomData.productId = product.id
+
+			left join(
+				select 
+					send_goods_detail.product_id as productId,
+					sum(send_goods_detail.count) as count
+				from 
+					send_goods_detail,send_goods
+				where
+					send_goods.id = send_goods_detail.send_goods_id
+				and	send_goods.status = 5
+
+				group by send_goods_detail.product_id  
+			) as sendGoodsData on sendGoodsData.productId = product.id
+			 
+
+		where
+			product.product_series_id = product_serie.id
+		and	product_serie.product_type_id = product_type.id
+		<isNotEmpty prepend="and" property="productTypeIdArr">
+			product_type.id in ($productTypeIdArr$)
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="userStockroomList">
+			<iterate property="userStockroomList" open="(" close=")" conjunction="or" >  
+					(product_type.id = $userStockroomList[].productTypeId$ 
+				and stockroomData.stockroomId = $userStockroomList[].stockroomId$)
+			</iterate>
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="productTypeId">
+			product_type.id = #productTypeId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productSerieId">
+			product_serie.id = #productSerieId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="stockroomId">
+			stockroomData.stockroomId = #stockroomId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="stockroomType">
+			stockroomData.stockroomType = #stockroomType#
+		</isNotEmpty>  
+		<isEqual prepend="and" compareValue="1" property="sendgoodsType">
+			ifnull(stockData.stockPrepared,0) >  0
+		</isEqual>
+		<isEqual prepend="and" compareValue="2" property="sendgoodsType">
+			ifnull(stockData.stockPrepared,0) =  0
+		</isEqual>
+		<isNotEmpty prepend="and" property="productCode">
+			product.code like '%$productCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productName">
+			product.name like '%$productName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productType">
+			product.type like '%$productType$%'
+		</isNotEmpty>
+	</select>
+
+	<!-- 获取库房信息 --> 
+	<select id="getStockroomById" parameterClass="java.lang.String" resultClass="stockroomEntity">
+		select
+			 stockroom.id as id,
+			 stockroom.type as type,
+			 stockroom.product_dept_id as productDeptId,
+			 stockroom.name as name
+		from
+			 stockroom
+		where  
+			 stockroom.id = #id#
+	</select>
+	<!-- 更新发货冻结数和库存数 -->
+	<update id="updateSendLockAndNum" parameterClass="stockEntity">	
+		update 
+			stock 
+		set 
+			time_stamp = now(),
+			send_lock = #sendLock#,
+			num = #num# 
+		where
+				time_stamp = #timeStamp#
+			and stockroom_id = #stockroomId#
+			and product_id = #productId#
+	</update>
+	<!-- 更新发货冻结数和备货数 -->
+	<update id="updateSendLockAndPrepared" parameterClass="stockEntity">	
+		update 
+			stock 
+		set 
+			time_stamp = now(),
+			send_lock = #sendLock#,
+			prepared = #prepared# 
+		where
+				time_stamp = #timeStamp#
+			and stockroom_id = #stockroomId#
+			and product_id = #productId#
+	</update>
+
+	<!-- 更新发货冻结数 -->
+	<update id="updateSendLock" parameterClass="stockEntity">	
+		update 
+			stock 
+		set 
+			time_stamp = now(),
+			send_lock = #sendLock# 
+		where
+				time_stamp = #timeStamp#
+			and stockroom_id = #stockroomId#
+			and product_id = #productId#
+	</update>
+
+	<!-- 更新备货数 -->
+	<update id="updatePrepared" parameterClass="stockEntity">	
+		update 
+			stock 
+		set 
+			time_stamp = now(),
+			prepared = #prepared# 
+		where
+				time_stamp = #timeStamp#
+			and stockroom_id = #stockroomId#
+			and product_id = #productId#
+	</update>
+
+	<!-- 获取指定库房的所有库存产品 --> 
+	<select id="getStockByStockroomId" parameterClass="java.lang.String" resultClass="stockEntity">
+		select 
+			id as id,
+			stockroom_id as stockroomId,
+			product_id as productId,
+			send_lock as sendLock,
+			prepared as prepared,
+			num as num,
+			time_stamp as timeStamp
+		from
+			stock
+		where
+			stockroom_id = #stockroomId#
+	</select>
+
+	<!-- 更新指定发货单的冻结数 --> 
+	<update id="updateSendLockBySendgoodsId" parameterClass="java.lang.String" > 
+		update  stock,send_goods,send_goods_detail set 
+			stock.send_lock = stock.send_lock - send_goods_detail.count  
+		where
+			send_goods_detail.send_goods_id = send_goods.id
+		and	send_goods_detail.product_id = stock.product_id
+		and 	send_goods.stockroom_id = stock.stockroom_id
+		and	send_goods_detail.send_goods_id = #id#
+	</update>
+	<!-- 更新指定借出单的冻结数 --> 
+	<update id="updateSendLockBySampleOutId" parameterClass="java.lang.String" > 
+		update  stock,sample_out,sample_out_detail set 
+			stock.send_lock = stock.send_lock - sample_out_detail.count  
+		where
+			sample_out_detail.sample_out_id = sample_out.id
+		and	sample_out_detail.product_id = stock.product_id
+		and sample_out.out_stockroom_id = stock.stockroom_id
+		and	sample_out_detail.sample_out_id = #id#
+	</update>
+	<!-- 更新指定移库单的冻结数 --> 
+	<update id="updateSendLockByMoveId" parameterClass="java.lang.String" > 
+		update  stock,move,move_detail set 
+			stock.send_lock = stock.send_lock - move_detail.count  
+		where
+			move_detail.move_id = move.id
+		and	move_detail.product_id = stock.product_id
+		and 	 move.out_stockroom_id = stock.stockroom_id
+		and	move_detail.move_id = #id#
+	</update>
+
+	<!-- 获取指定库房的所有库存产品 --> 
+	<select id="getStockByCondition" parameterClass="stockEntity" resultClass="stockEntity">
+		select 
+			id as id,
+			stockroom_id as stockroomId,
+			product_id as productId,
+			send_lock as sendLock,
+			prepared as prepared,
+			num as num,
+			time_stamp as timeStamp
+		from
+			stock
+		where
+			stockroom_id = #stockroomId#
+		and	product_id = #productId#
+	</select>
+
+	<!-- 获取指定库房的所有库存产品 --> 
+	<select id="getStockMoneyByCondition" parameterClass="stockEntity" resultClass="stockEntity">
+		select  
+			sum(num) as num 
+		from
+			stock
+		where
+		    product_id = #productId#
+	</select>
+
+	<!-- 获取所有正常库和虚拟库 --> 
+	<select id="getTypicallyAndVirtualAll" resultClass="stockroomEntity">
+		select 
+			id as id,
+			type as type,
+			product_dept_id as productDeptId,
+			name as name
+		from
+			stockroom
+		where
+			    type = 0 or type = 1
+	</select>
+
+	<!-- 获取指定产品分类正常库和虚拟库 --> 
+	<select id="getTypicallyAndVirtual" parameterClass="java.lang.Integer" resultClass="stockroomEntity">
+		select 
+			stockroom.id as id,
+			stockroom.type as type,
+			stockroom.product_dept_id as productDeptId,
+			stockroom.name as name
+		from
+			stockroom,product_type
+		where
+			    (stockroom.type = 0 or stockroom.type = 1)
+			and product_type.id = #productType#
+			and product_type.product_dept_id = stockroom.product_dept_id 
+	</select>
+
+	<!-- 获取本合同未备货的库房 --> 
+	<select id="getNotPrepareStockroom" parameterClass="sendGoodsEntity" resultClass="stockroomEntity"> 
+		select  
+			stockroom.id as id, 
+			stockroom.type as type, 
+			stockroom.name as name 
+		from
+			stockroom,product_type  
+		where 
+				stockroom.type = 1
+		  and	product_type.product_dept_id = stockroom.product_dept_id
+		  and   product_type.id =#productTypeId#
+		  and   stockroom.id not in  
+			(select 
+				send_goods.stockroom_id 	as stockroomId 
+			 
+			 from 
+				send_goods 
+			 where 
+					send_goods.product_type_id = #productTypeId#
+			 and    send_goods.sell_contract_id = #sellContractId#  
+		 
+			 and   (   send_goods.status = 6
+					or send_goods.status = 7 
+					or send_goods.status = 10
+					or send_goods.status = 11
+					or send_goods.status = 8)
+					)
+	</select>
+	<!-- 查询所有库房 -->
+	<select id="queryAllStockRoomInventtory" resultClass="stockroomEntity">
+		SELECT id,name FROM stockroom
+	</select>
+	
+	<!-- 查询所有正常库和索赔库(如果有参数则查询相对应的库房收货地址) -->
+	<select id="queryAllConditionStockRoom" parameterClass="java.util.Map" resultClass="stockroomAnAddressDto">
+		SELECT
+		  sk.id        AS stockRoomId,
+		  sk.name      AS stockRoomName,
+	      ska.id       AS stockRoomAddressId,
+		  ska.name     AS goodsName,
+		  ska.address  AS goodsAddress,
+		  ska.postcode AS postcode,
+		  ska.linkman  AS linkman,
+		  ska.tel      AS tel,
+		  ska.mobile   AS mobile
+		FROM stockroom sk
+		  LEFT JOIN (SELECT
+		               id,
+		               stockroom_id,
+		               NAME,
+		               address,
+		               postcode,
+		               linkman,
+		               tel,
+		               mobile
+		             FROM stockroom_address) AS ska
+		    ON sk.id = ska.stockroom_id
+		WHERE sk.type != 0
+		<isNotEmpty prepend="and" property="stockRoomId">
+	    	sk.id  = #stockRoomId#
+		</isNotEmpty>
+		<isEmpty prepend="GROUP BY" property="stockRoomId">
+	    	 sk.id
+		</isEmpty>
+	</select>
+	
+	<!-- 查询所有正常库和索赔库(如果有参数则查询相对应的库房收货地址) -->
+	<select id="queryAllConditionStockRoom1" parameterClass="java.util.Map" resultClass="stockroomAnAddressDto">
+		SELECT
+		  stockroom.id   AS stockRoomId,
+		  stockroom.name AS stockRoomName
+		FROM stockroom
+		  LEFT JOIN (SELECT
+		               stockroom.product_dept_id AS skpdid
+		             FROM stockroom
+		             WHERE stockroom.id = #stockRoomId#) AS sk
+		    ON sk.skpdid = stockroom.product_dept_id
+		WHERE stockroom.type = 2
+		    AND sk.skpdid != ''
+	</select>
+</sqlMap> 

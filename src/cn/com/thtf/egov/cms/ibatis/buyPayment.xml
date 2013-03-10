@@ -1,0 +1,1330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="buyPayment_sqlMap">
+
+	<!-- 通用DTO -->
+	<typeAlias alias="buyPaymentInfoDto" type="cn.com.thtf.egov.cms.dto.BuyPaymentInfoDto" />
+	 
+	<!--	列表检索 -->
+	<typeAlias alias="buyPaymentListQueryDto" type="cn.com.thtf.egov.cms.dto.BuyPaymentListQueryDto" />
+	<!--	供货商  -->
+	<typeAlias alias="buyPaymentSupplierDto" type="cn.com.thtf.egov.cms.dto.BuyPaymentSupplierDto" />
+	<!--	供货商联系人-->
+	<typeAlias alias="buyPaymentSupplierLinkmanE" type="cn.com.thtf.egov.cms.entity.SupplierLinkmanEntity" />
+	<!-- 查看页面销售合同信   -->
+	<typeAlias alias="buyPaymentBuyContractDto" type="cn.com.thtf.egov.cms.dto.BuyPaymentBuyContractDto" />
+	<!--	产品分类  -->
+	<typeAlias alias="buyPaymentProductTypeE" type="cn.com.thtf.egov.cms.entity.ProductEntity" />
+	<!--  付款   -->
+	<typeAlias alias="paymentEntity" type="cn.com.thtf.egov.cms.entity.PaymentEntity" />
+	<!-- 付款申请~~付款单   -->
+	<typeAlias alias="buyPaymentAddDto" type="cn.com.thtf.egov.cms.dto.BuyPaymentAddDto" />
+	<!--  付款申请~~明细   -->
+	<typeAlias alias="buyPaymentEntityD" type="cn.com.thtf.egov.cms.entity.PaymentDetailEntity" />
+	<!--  入库明细   -->
+	<typeAlias alias="inStockDetailEntity" type="cn.com.thtf.egov.cms.entity.InStockDetailEntity" />
+	<!--	采购付款列表  -->
+	<select id="getBuyPaymentList.search" parameterClass="buyPaymentListQueryDto" resultClass="buyPaymentInfoDto">
+	SELECT
+	  pm.id                  AS id,
+	  pm.product_type_id     AS productTypeId,
+	  pt.name                AS productTypeName,
+	  pm.supplier_id         AS supplierId,
+	  sup.name               AS supplierName,
+	  pm.supplier_linkman_id AS supplierLinkmanId,
+	  pm.date                AS 'date',
+	  pm.payment_way         AS paymentWay,
+	  pm.accept_date         AS acceptDate,
+	  pm.arterm              AS arterm,
+	  pm.accept_number       AS acceptNumber,
+	  pm.payment_date        AS paymentDate,
+	  pm.number              AS number,
+	  IFNULL(pm.money,0)     AS money,
+	  IFNULL(appm1.money,0)  AS appointMoney1,
+	  IFNULL(appm0.money,0)  AS appointMoney0,
+	  IFNULL(bm.backMoney,0) AS backMoney,
+	  (CASE WHEN pm.status =13 THEN IFNULL(pm.money,0)-IFNULL(appm1.money,0)-IFNULL(appm0.money,0)
+	   ELSE 0 END) AS productMoney,
+	  pm.status              AS 'status',
+	  pm.user_id             AS userId,
+	  pm.user_name           AS userName
+FROM 
+		<!--	采购专员 -->
+			<isEqual compareValue="8" property="nowUserRole"> 
+				user_product up,
+			</isEqual>
+			<!--   采购主管、  -->
+			<isEqual compareValue="11" property="nowUserRole"> 
+				user_product up,
+			</isEqual>
+			<!--	产品总监  -->
+			<isEqual compareValue="10" property="nowUserRole"> 
+				user_product up,
+			</isEqual>
+	payment pm
+	  LEFT JOIN product_type pt
+	    ON pt.id = pm.product_type_id
+	  LEFT JOIN supplier sup
+	    ON pm.supplier_id = sup.id
+	  LEFT JOIN (SELECT
+			pm.id                   AS id,
+			SUM(pmd.money) AS money
+		     FROM payment pm,
+		       payment_detail pmd
+		     WHERE pm.id = pmd.payment_id
+			 AND pm.status = 13
+			 AND pmd.appoint_type = 1 GROUP BY pm.id) AS appm1
+		    ON pm.id = appm1.id
+	  LEFT JOIN (SELECT
+			pm.id                   AS id,
+			SUM(pmd.money) AS money
+		     FROM payment pm,
+		       payment_detail pmd
+		     WHERE pm.id = pmd.payment_id
+			 AND pm.status = 13
+			 AND pmd.appoint_type = 0 GROUP BY pm.id) AS appm0
+		    ON pm.id = appm0.id
+	  LEFT JOIN (SELECT
+		       pm.id                   AS id,
+		       SUM( bb.money )         AS backMoney
+		     FROM payment pm,
+		       buy_back bb
+		     WHERE pm.id = bb.payment_id
+		     GROUP BY pm.id) AS bm
+	    ON pm.id = bm.id
+      WHERE pm.id = pm.id
+		<isNotEmpty prepend="AND" property="id">
+				pm.id LIKE '%$id$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="productTypeId">
+				pm.product_type_id = #productTypeId#
+		</isNotEmpty>
+<!--		入库单-->
+		<isNotEmpty prepend="AND" property="inStockId">
+				pm.id in (SELECT 
+								pdetail.payment_id          AS paymentid
+				                FROM payment_detail pdetail
+								WHERE pdetail.in_stock_id = #inStockId#)
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="productContractCode">
+				pm.id in (SELECT
+			                    pdetail.payment_id          AS paymentid
+				                FROM payment_detail pdetail,
+				                  buy_contract bcontract
+				                WHERE bcontract.id = pdetail.buy_contract_id
+				                    AND bcontract.product_contract_code = #productContractCode#) 
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="supplierName">
+				sup.name LIKE '%$supplierName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="money">
+				pm.money = #money#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="paymentWay">
+				pm.payment_way = #paymentWay#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="status">
+				pm.status = #status#
+		</isNotEmpty>
+		<!-- 根据申请起始日期 -->
+			<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[ pm.date >= #startDate# ]]>
+			</isNotEmpty>
+		<!-- 根据申请终止日期 -->
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[ pm.date <= #endDate# ]]>
+			</isNotEmpty> 
+		<!-- 根据承兑开具起始日期 -->
+			<isNotEmpty prepend="AND" property="startAcceptDate">
+				<![CDATA[ pm.accept_date >= #startAcceptDate# ]]>
+			</isNotEmpty>
+		<!-- 根据承兑开具终止日期 -->
+			<isNotEmpty prepend="AND" property="endAcceptDate">
+				<![CDATA[ pm.accept_date <= #endAcceptDate# ]]>
+			</isNotEmpty> 
+		<!-- 根据付款起始日期 -->
+			<isNotEmpty prepend="AND" property="startPaymentDate">
+				<![CDATA[ pm.payment_date >= #startPaymentDate# ]]>
+			</isNotEmpty>
+		<!-- 根据付款终止日期 -->
+			<isNotEmpty prepend="AND" property="endPaymentDate">
+				<![CDATA[ pm.payment_date <= #endPaymentDate# ]]>
+			</isNotEmpty> 
+		<isNotEmpty prepend="AND" property="userName">
+				pm.user_name LIKE '%$userName$%'
+		</isNotEmpty>
+		<!--   权限判断   -->
+		<isNotEmpty prepend="and" property="nowUserId">
+			<!--	采购专员 -->
+			<isEqual compareValue="8" property="nowUserRole"> 
+				pm.product_type_id = up.product_type_id
+				AND	up.user_id = #nowUserId# 
+			</isEqual>
+			<!--   采购主管、  -->
+			<isEqual compareValue="11" property="nowUserRole"> 
+				pm.product_type_id = up.product_type_id
+				AND	up.user_id = #nowUserId# 
+				<isEmpty prepend="AND" property="init">
+					pm.status = 4
+				</isEmpty>
+			</isEqual>
+			<!--	产品总监  -->
+			<isEqual compareValue="10" property="nowUserRole"> 
+				pm.product_type_id = up.product_type_id
+				AND	up.user_id = #nowUserId# 
+				<isEmpty prepend="AND" property="init">
+					pm.status = 2
+				</isEmpty>
+			</isEqual>
+			<!--   运营总监助理   -->
+			<isEqual compareValue="16" property="nowUserRole">
+				<isEmpty  property="init">
+					pm.status = 6
+				</isEmpty>
+			</isEqual>
+			<!--	运营总监 -->
+			<isEqual compareValue="17" property="nowUserRole">
+				<isEmpty  property="init">
+					pm.status = 8
+				</isEmpty>
+			</isEqual>
+		</isNotEmpty>
+		GROUP BY pm.id desc
+	</select>
+	
+	<select id="getBuyPaymentList.recordCount"  parameterClass="buyPaymentListQueryDto"  resultClass="java.lang.Integer">
+	SELECT count(*) FROM (
+	SELECT
+	  pm.id
+	FROM <!--	采购专员 -->
+			<isEqual compareValue="8" property="nowUserRole"> 
+				user_product up,
+			</isEqual>
+			<!--   采购主管、  -->
+			<isEqual compareValue="11" property="nowUserRole"> 
+				user_product up,
+			</isEqual>
+			<!--	产品总监  -->
+			<isEqual compareValue="10" property="nowUserRole"> 
+				user_product up,
+			</isEqual>
+	  payment pm
+	  LEFT JOIN product_type pt
+	    ON pt.id = pm.product_type_id
+	  LEFT JOIN supplier sup
+	    ON pm.supplier_id = sup.id
+	  LEFT JOIN (SELECT
+			pm.id                   AS id,
+			pmd.money AS money
+		     FROM payment pm,
+		       payment_detail pmd
+		     WHERE pm.id = pmd.payment_id
+			 AND pm.status = 13
+			 AND pmd.appoint_type = 1 GROUP BY pm.id) AS appm1
+		    ON pm.id = appm1.id
+	  LEFT JOIN (SELECT
+			pm.id                   AS id,
+			pmd.money AS money
+		     FROM payment pm,
+		       payment_detail pmd
+		     WHERE pm.id = pmd.payment_id
+			 AND pm.status = 13
+			 AND pmd.appoint_type = 0 GROUP BY pm.id) AS appm0
+		    ON pm.id = appm0.id
+	  LEFT JOIN (SELECT
+		       pm.id                   AS id,
+		       SUM( bb.money )         AS backMoney
+		     FROM payment pm,
+		       buy_back bb
+		     WHERE pm.id = bb.payment_id
+		     GROUP BY pm.id) AS bm
+	    ON pm.id = bm.id
+      WHERE pm.id = pm.id
+		<isNotEmpty prepend="AND" property="id">
+				pm.id LIKE '%$id$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="productTypeId">
+				pm.product_type_id = #productTypeId#
+		</isNotEmpty>
+		<!--		入库单-->
+		<isNotEmpty prepend="AND" property="inStockId">
+				pm.id in (SELECT 
+								pdetail.payment_id          AS paymentid
+				                FROM payment_detail pdetail
+								WHERE pdetail.in_stock_id = #inStockId#)
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="productContractCode">
+				pm.id in (SELECT
+			                    pdetail.payment_id          AS paymentid
+				                FROM payment_detail pdetail,
+				                  buy_contract bcontract
+				                WHERE bcontract.id = pdetail.buy_contract_id
+				                    AND bcontract.product_contract_code = #productContractCode#) 
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="supplierName">
+				sup.name LIKE '%$supplierName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="money">
+				pm.money = #money#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="paymentWay">
+				pm.payment_way = #paymentWay#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="status">
+				pm.status = #status#
+		</isNotEmpty>
+		<!-- 根据申请起始日期 -->
+			<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[ pm.date >= #startDate# ]]>
+			</isNotEmpty>
+		<!-- 根据申请终止日期 -->
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[ pm.date <= #endDate# ]]>
+			</isNotEmpty> 
+		<!-- 根据承兑开具起始日期 -->
+			<isNotEmpty prepend="AND" property="startAcceptDate">
+				<![CDATA[ pm.accept_date >= #startAcceptDate# ]]>
+			</isNotEmpty>
+		<!-- 根据承兑开具终止日期 -->
+			<isNotEmpty prepend="AND" property="endAcceptDate">
+				<![CDATA[ pm.accept_date <= #endAcceptDate# ]]>
+			</isNotEmpty> 
+		<!-- 根据付款起始日期 -->
+			<isNotEmpty prepend="AND" property="startPaymentDate">
+				<![CDATA[ pm.payment_date >= #startPaymentDate# ]]>
+			</isNotEmpty>
+		<!-- 根据付款终止日期 -->
+			<isNotEmpty prepend="AND" property="endPaymentDate">
+				<![CDATA[ pm.payment_date <= #endPaymentDate# ]]>
+			</isNotEmpty> 
+		<isNotEmpty prepend="AND" property="userName">
+				pm.user_name LIKE '%$userName$%'
+		</isNotEmpty>
+		<!--   权限判断   -->
+		<isNotEmpty prepend="and" property="nowUserId">
+			<!--	采购专员 -->
+			<isEqual compareValue="8" property="nowUserRole"> 
+				pm.product_type_id = up.product_type_id
+				AND	up.user_id = #nowUserId# 
+			</isEqual>
+			<!--   采购主管、  -->
+			<isEqual compareValue="11" property="nowUserRole"> 
+				pm.product_type_id = up.product_type_id
+				AND	up.user_id = #nowUserId# 
+				<isEmpty prepend="AND" property="init">
+					pm.status = 4
+				</isEmpty>
+			</isEqual>
+			<!--	产品总监  -->
+			<isEqual compareValue="10" property="nowUserRole"> 
+				pm.product_type_id = up.product_type_id
+				AND	up.user_id = #nowUserId# 
+				<isEmpty prepend="AND" property="init">
+					pm.status = 2
+				</isEmpty>
+			</isEqual>
+			<!--   运营总监助理   -->
+			<isEqual compareValue="16" property="nowUserRole">
+				<isEmpty  property="init">
+					pm.status = 6
+				</isEmpty>
+			</isEqual>
+			<!--	运营总监 -->
+			<isEqual compareValue="17" property="nowUserRole">
+				<isEmpty  property="init">
+					pm.status = 8
+				</isEmpty>
+			</isEqual>
+		</isNotEmpty>
+		GROUP BY pm.id) as pmg
+	</select>
+	
+	<!--   查询付款查看部分页面信息     -->
+	<select id="selectViewBuyPayment" parameterClass="java.lang.String" resultClass="buyPaymentInfoDto">
+		SELECT
+	 	  payment.supplier_id         AS supplierId,
+		  supplier.supplierName       AS supplierName,
+		  payment.supplier_linkman_id AS supplierLinkmanId,
+		  sl.name                     AS linkmanName,
+		  supplier.supplierProvince   AS supplierProvince,
+		  sl.tel                      AS linkmanTel,
+		  supplier.supplierCity               AS supplierCity,
+		  sl.fax                      AS linkmanFax,
+		  supplier.supplierRemitBankName    AS supplierRemitBankName,
+		  supplier.supplierRemitBankAccount AS supplierRemitBankAccount,
+		  supplier.supplierInvoiceType       AS supplierInvoiceType,
+		  supplier.supplierTaxRate           AS supplierTaxRate,
+		  payment.payment_way         AS paymentWay,
+		  payment.arterm              AS arterm,
+		  payment.money               AS money,
+		  payment.product_type_id     AS productTypeId,
+		  pt.productTypeName          AS productTypeName,
+		  payment.text                AS TEXT,
+		  payment.pro_maj_id          AS proMajId,
+		  payment.pro_maj_name        AS proMajName,
+		  payment.pro_maj_date        AS proMajDate,
+		  payment.pro_maj_idea        AS proMajIder,
+		  payment.pro_maj_text        AS proMajText,
+		  payment.buy_man_id          AS buyManId,
+		  payment.buy_man_name        AS buyManName,
+		  payment.buy_man_date        AS buyManDate,
+		  payment.buy_man_idea        AS buyManIdea,
+		  payment.buy_man_text        AS buyManText,
+		  payment.ope_maj_id          AS opeMajId,
+		  payment.ope_maj_name        AS opeMajName,
+		  payment.ope_maj_date        AS opeMajDate,
+		  payment.ope_maj_idea        AS opeMajIder,
+		  payment.ope_maj_text        AS opeMajText,
+	      payment.status              AS status,
+		  bc.contract_type			  AS contractType
+		FROM payment
+		  LEFT JOIN (
+			SELECT
+			  sl.id   AS slid,
+			  sl.fax  AS fax,
+			  sl.tel  AS tel,
+			  sl.name
+			FROM supplier_linkman sl
+		  ) AS sl ON sl.slid = payment.supplier_linkman_id
+		  LEFT JOIN (
+			SELECT
+			  supplier.id                 AS supplierId,
+			  supplier.name               AS supplierName,
+			  supplier.city               AS supplierCity,
+			  supplier.province           AS supplierProvince,
+			  supplier.remit_bank_name    AS supplierRemitBankName,
+			  supplier.remit_bank_account AS supplierRemitBankAccount,
+			  supplier.invoice_type       AS supplierInvoiceType,
+			  supplier.tax_rate           AS supplierTaxRate
+			FROM supplier
+		  ) AS supplier 
+			ON supplier.supplierId = payment.supplier_id
+		 LEFT JOIN (
+		         SELECT 
+		         product_type.id AS productTypeId,
+		         product_type.name AS productTypeName	
+		         FROM product_type	
+		 ) AS pt 
+			ON pt.productTypeId = payment.product_type_id
+		 LEFT JOIN buy_contract bc
+		 	ON bc.supplier_id=payment.supplier_id
+		WHERE  payment.id = #id#
+		GROUP BY payment.id
+	</select>
+	<!--	获取供货商 	-->
+	<select id="getBuyPaymentAllSupplier.search" parameterClass="java.util.Map" resultClass="buyPaymentSupplierDto">
+		SELECT
+		  s.`id`,
+		  s.`name`,
+		  s.`province`,
+		  s.`city`,
+		  (CASE WHEN s.invoice_type IN (0) THEN '普通' WHEN s.invoice_type IN (1) THEN '增值税' ELSE '' END) AS invoiceType,
+		  s.`tax_rate`           AS taxRate,
+		  s.`remit_bank_name`    AS remitBankName,
+		  s.`remit_bank_account` AS remitBankAccount,
+		  bc.contract_type	AS contractType
+		FROM supplier s
+		  LEFT JOIN (SELECT
+               bc.supplier_id,
+               bc.contract_type
+             FROM buy_contract bc
+             GROUP BY bc.supplier_id) AS bc
+			 ON bc.supplier_id=s.id
+		<isNotEmpty prepend="WHERE" property="supplierName">
+				s.name like '%$supplierName$%'
+		</isNotEmpty>
+	</select>
+	<select id="getBuyPaymentAllSupplier.recordCount" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+		select count(*) from(	
+			SELECT
+		      `id`,
+			  `name`,
+			  `province`,
+			  `city`,
+			  (CASE WHEN invoice_type IN (0) THEN '普通' WHEN invoice_type IN (1) THEN '增值税' ELSE '' END) AS invoiceType,
+			  `tax_rate` 			AS 	taxRate,
+			  `remit_bank_name` 	AS 	remitBankName,
+			  `remit_bank_account` 	AS  remitBankAccount
+			FROM supplier
+			<isNotEmpty prepend="WHERE" property="supplierName">
+				`name` like '%$supplierName$%'
+			</isNotEmpty>
+		)AS su	
+	</select>
+<!--	根据供货商ID获取联系人  -->
+	<select id="getBuyPaymentSupplierLinkManBySupplierId" parameterClass="java.lang.String" resultClass="buyPaymentSupplierLinkmanE">
+		SELECT
+		  `id`,
+		  `name`,
+		  `tel`,
+		  `fax`
+		FROM supplier_linkman
+		WHERE supplier_id = #supplier_id#
+	</select>
+<!--	获取负责产品分类  -->
+	<select id="getBuyPaymentProductTypeByUserId" parameterClass="java.lang.String" resultClass="buyPaymentProductTypeE">
+		SELECT
+		  pt.id,
+		  pt.name
+		FROM product_type pt,
+		  user_product up
+		  WHERE up.user_id = #userId#
+			AND up.product_type_id = pt.id
+		group by pt.id
+	</select>
+	<!--   付款查看采购合同   -->
+	<select id="viewBuyPaymentBuyContract" parameterClass="java.lang.String" resultClass="buyPaymentBuyContractDto">
+	SELECT
+		  BC.ID                    AS buyContractId,		/*合同流水号*/
+		  BC.PRODUCT_CONTRACT_CODE AS productContractCode,		/*产品合同号*/
+		  BC.COMPANY_CONTRACT_CODE AS companyContractCode,		/*公司合同号*/
+		  IFNULL(BC.MONEY,0)       AS contractMomey,			/*合同金额*/
+		  IFNULL(ISTK.MONEY,0)     AS inStockMoney,				/*入库金额*/
+		  IFNULL(TMPAPP.APPOINTMONEY,0) AS zdMoney,		/*指定金额*/
+		  (CASE 
+			WHEN p.status IN (2,4,6,8,10,11,12,13) THEN IFNULL(TMPADVA.ADVANCEMONEY,0)-IFNULL(pd.money ,0)
+			ELSE IFNULL(TMPADVA.ADVANCEMONEY,0)
+			END) AS yysMoney,            		        /*已预付预付金额*/
+		  IFNULL(TMPINVO.INVOICEMONEY,0) AS spMoney,		/*收票金额*/
+		  IFNULL(BBC.BACKCONTRACTMONEY,0) AS backContractMoney,	/*退货合同金额*/
+	          IFNULL(TMPBG.BACKGOODSMONEY,0) AS fcMoney,			/*返厂金额*/
+		  IFNULL(pd.money,0)             AS yfMoney
+		FROM payment p,
+		     payment_detail pd,	
+		BUY_CONTRACT BC
+			INNER JOIN PRODUCT_TYPE PT
+		         ON BC.PRODUCT_TYPE_ID = PT.ID
+		       INNER JOIN SUPPLIER_LINKMAN SL
+		         ON BC.SUPPLIER_LINKMAN_ID = SL.ID
+		       LEFT JOIN (SELECT   BUY_CONTRACT_ID,
+		                           SUM(MONEY) AS MONEY
+		                  FROM     IN_STOCK
+		                  WHERE    STATUS = 6
+		                  GROUP BY BUY_CONTRACT_ID,PRODUCT_TYPE_ID) ISTK
+		         ON BC.ID = ISTK.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   ISTK.BUY_CONTRACT_ID,
+		                           SUM(PD.MONEY) AS APPOINTMONEY
+		                  FROM     IN_STOCK ISTK,
+		                           PAYMENT P,
+		                           PAYMENT_DETAIL PD
+		                  WHERE    P.STATUS = 13
+		                           AND P.ID = PD.PAYMENT_ID
+		                           AND PD.APPOINT_TYPE = 1
+		                           AND PD.IN_STOCK_ID = ISTK.ID
+		                  GROUP BY ISTK.BUY_CONTRACT_ID) TMPAPP
+		         ON BC.ID = TMPAPP.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   PD.BUY_CONTRACT_ID,
+		                           SUM(PD.MONEY) AS ADVANCEMONEY
+		                  FROM     
+		                           PAYMENT P,
+		                           PAYMENT_DETAIL PD
+		                  WHERE    P.STATUS IN (2,4,6,8,10,11,12,13)
+		                           AND P.ID = PD.PAYMENT_ID
+		                           AND PD.APPOINT_TYPE = 0
+		                  GROUP BY PD.BUY_CONTRACT_ID) TMPADVA
+		         ON BC.ID = TMPADVA.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   ISTK.BUY_CONTRACT_ID,
+		                           SUM(RID.MONEY) AS INVOICEMONEY
+		                  FROM     IN_STOCK ISTK,
+		                           RECEIVE_INVOICE RI,
+		                           RECEIVE_INVOICE_DETAIL RID
+		                  WHERE    RI.STATUS = 1
+		                           AND RI.ID = RID.RECEIVE_INVOICE_ID
+		                           AND RID.IN_STOCK_ID = ISTK.ID
+		                  GROUP BY ISTK.BUY_CONTRACT_ID) TMPINVO
+		         ON BC.ID = TMPINVO.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   BUY_CONTRACT_ID,
+		                           SUM(MONEY) AS BACKCONTRACTMONEY
+		                  FROM     BUY_BACK_CONTRACT
+		                  WHERE    STATUS = 11
+		                  GROUP BY BUY_CONTRACT_ID) BBC
+		         ON BC.ID = BBC.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   ISTK.BUY_CONTRACT_ID,
+		                           SUM(BBG.MONEY) AS BACKGOODSMONEY
+		                  FROM     IN_STOCK ISTK,
+		                           BUY_BACK_GOODS BBG
+		                  WHERE    BBG.STATUS = 11
+		                           AND BBG.IN_STOCK_ID = ISTK.ID
+		                  GROUP BY ISTK.BUY_CONTRACT_ID) TMPBG
+		         ON BC.ID = TMPBG.BUY_CONTRACT_ID
+		WHERE 
+		     BC.STATUS = 13
+		    AND p.id = pd.payment_id
+		    AND pd.buy_contract_id = bc.id
+		    AND p.id =#id#
+			GROUP BY BC.ID
+	</select>
+<!--	采购合同选择  -->
+	<select id="getBuyPaymentSelectBuyContracts.search" parameterClass="java.util.Map" resultClass="cn.com.thtf.egov.cms.dto.BuyContractDto">
+		SELECT		  
+		  BC.ID,							/*合同流水号*/
+		  BC.PRODUCT_CONTRACT_CODE AS PRODUCTCONTRACTCODE,		/*产品合同号*/
+		  BC.COMPANY_CONTRACT_CODE AS COMPANYCONTRACTCODE,		/*公司合同号*/
+		  IFNULL(BC.MONEY,0)       AS CONTRACTMONEY,			/*合同金额*/
+		  IFNULL(ISTK.MONEY,0)     AS INSTOCKMONEY,			/*入库金额*/
+		  IFNULL(TMPAPP.APPOINTMONEY,0) AS APPOINTMONEY,		/*指定金额*/
+		  IFNULL(TMPADVA.ADVANCEMONEY,0) AS ADVANCEMONEY,		/*已预付预付金额*/
+		  IFNULL(TMPINVO.INVOICEMONEY,0) AS INVOICEMONEY,		/*收票金额*/
+		  IFNULL(BBC.BACKCONTRACTMONEY,0) AS BACKCONTRACTMONEY,		/*退货合同金额*/
+  		  IFNULL(TMPBG.BACKGOODSMONEY,0) AS BACKGOODSMONEY			/*返厂金额*/
+		FROM   BUY_CONTRACT BC
+		       INNER JOIN PRODUCT_TYPE PT
+		         ON BC.PRODUCT_TYPE_ID = PT.ID
+		       INNER JOIN SUPPLIER SL
+		         ON BC.SUPPLIER_ID = SL.ID
+		       LEFT JOIN (SELECT   BUY_CONTRACT_ID,
+		                           SUM(MONEY) AS MONEY
+		                  FROM     IN_STOCK
+		                  WHERE    STATUS = 6
+		                  GROUP BY BUY_CONTRACT_ID,PRODUCT_TYPE_ID) ISTK
+		         ON BC.ID = ISTK.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   ISTK.BUY_CONTRACT_ID,
+		                           SUM(PD.MONEY) AS APPOINTMONEY
+		                  FROM     IN_STOCK ISTK,
+		                           PAYMENT P,
+		                           PAYMENT_DETAIL PD
+		                  WHERE    P.STATUS = 13
+		                           AND P.ID = PD.PAYMENT_ID
+		                           AND PD.APPOINT_TYPE = 1
+		                           AND PD.IN_STOCK_ID = ISTK.ID
+		                  GROUP BY ISTK.BUY_CONTRACT_ID) TMPAPP
+		         ON BC.ID = TMPAPP.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   PD.BUY_CONTRACT_ID,
+		                           SUM(PD.MONEY) AS ADVANCEMONEY
+		                  FROM     
+		                           PAYMENT P,
+		                           PAYMENT_DETAIL PD
+		                  WHERE    P.STATUS IN (2,4,6,8,10,11,12,13)
+		                           AND P.ID = PD.PAYMENT_ID
+		                           AND PD.APPOINT_TYPE = 0
+		                  GROUP BY PD.BUY_CONTRACT_ID) TMPADVA
+		         ON BC.ID = TMPADVA.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   ISTK.BUY_CONTRACT_ID,
+		                           SUM(RID.MONEY) AS INVOICEMONEY
+		                  FROM     IN_STOCK ISTK,
+		                           RECEIVE_INVOICE RI,
+		                           RECEIVE_INVOICE_DETAIL RID
+		                  WHERE    RI.STATUS = 1
+		                           AND RI.ID = RID.RECEIVE_INVOICE_ID
+		                           AND RID.IN_STOCK_ID = ISTK.ID
+		                  GROUP BY ISTK.BUY_CONTRACT_ID) TMPINVO
+		         ON BC.ID = TMPINVO.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   BUY_CONTRACT_ID,
+		                           SUM(MONEY) AS BACKCONTRACTMONEY
+		                  FROM     BUY_BACK_CONTRACT
+		                  WHERE    STATUS = 11
+		                  GROUP BY BUY_CONTRACT_ID) BBC
+		         ON BC.ID = BBC.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   ISTK.BUY_CONTRACT_ID,
+		                           SUM(BBG.MONEY) AS BACKGOODSMONEY
+		                  FROM     IN_STOCK ISTK,
+		                           BUY_BACK_GOODS BBG
+		                  WHERE    BBG.STATUS = 11
+		                           AND BBG.IN_STOCK_ID = ISTK.ID
+		                  GROUP BY ISTK.BUY_CONTRACT_ID) TMPBG
+		         ON BC.ID = TMPBG.BUY_CONTRACT_ID
+		WHERE pt.id = #productTypeId#
+		    AND sl.id = #supplierId#
+		    AND BC.STATUS = 13
+		    AND (IFNULL(BC.MONEY,0) - IFNULL(TMPADVA.ADVANCEMONEY,0) - IFNULL(BBC.BACKCONTRACTMONEY,0)) > 0
+			<isNotEmpty prepend="AND" property="companyContractCode">
+				BC.COMPANY_CONTRACT_CODE like '%$companyContractCode$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="productContractCode">
+				BC.PRODUCT_CONTRACT_CODE like '%$productContractCode$%'	
+			</isNotEmpty>
+	</select>
+	<!--	采购合同选择分页  -->
+	<select id="getBuyPaymentSelectBuyContracts.recordCount" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+	select count(*) from(	
+	SELECT		  
+		  BC.ID,												/*合同流水号*/
+		  BC.PRODUCT_CONTRACT_CODE AS PRODUCTCONTRACTCODE,		/*产品合同号*/
+		  BC.COMPANY_CONTRACT_CODE AS COMPANYCONTRACTCODE,		/*公司合同号*/
+		  IFNULL(BC.MONEY,0)       AS CONTRACTMONEY,			/*合同金额*/
+		  IFNULL(ISTK.MONEY,0)     AS INSTOCKMONEY,				/*入库金额*/
+		  IFNULL(TMPAPP.APPOINTMONEY,0) AS APPOINTMONEY,		/*指定金额*/
+		  IFNULL(TMPADVA.ADVANCEMONEY,0) AS ADVANCEMONEY,		/*已预付预付金额*/
+		  IFNULL(TMPINVO.INVOICEMONEY,0) AS INVOICEMONEY,		/*收票金额*/
+		  IFNULL(BBC.BACKCONTRACTMONEY,0) AS BACKCONTRACTMONEY,	/*退货合同金额*/
+	  IFNULL(TMPBG.BACKGOODSMONEY,0) AS BACKGOODSMONEY			/*返厂金额*/
+		FROM   BUY_CONTRACT BC
+		       INNER JOIN PRODUCT_TYPE PT
+		         ON BC.PRODUCT_TYPE_ID = PT.ID
+		       INNER JOIN SUPPLIER SL
+		         ON BC.SUPPLIER_ID = SL.ID
+		       LEFT JOIN (SELECT   BUY_CONTRACT_ID,
+		                           SUM(MONEY) AS MONEY
+		                  FROM     IN_STOCK
+		                  WHERE    STATUS = 6
+		                  GROUP BY BUY_CONTRACT_ID,PRODUCT_TYPE_ID) ISTK
+		         ON BC.ID = ISTK.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   ISTK.BUY_CONTRACT_ID,
+		                           SUM(PD.MONEY) AS APPOINTMONEY
+		                  FROM     IN_STOCK ISTK,
+		                           PAYMENT P,
+		                           PAYMENT_DETAIL PD
+		                  WHERE    P.STATUS = 13
+		                           AND P.ID = PD.PAYMENT_ID
+		                           AND PD.APPOINT_TYPE = 1
+		                           AND PD.IN_STOCK_ID = ISTK.ID
+		                  GROUP BY ISTK.BUY_CONTRACT_ID) TMPAPP
+		         ON BC.ID = TMPAPP.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   PD.BUY_CONTRACT_ID,
+		                           SUM(PD.MONEY) AS ADVANCEMONEY
+		                  FROM     
+		                           PAYMENT P,
+		                           PAYMENT_DETAIL PD
+		                  WHERE    P.STATUS = 13
+		                           AND P.ID = PD.PAYMENT_ID
+		                           AND PD.APPOINT_TYPE = 0
+		                  GROUP BY PD.BUY_CONTRACT_ID) TMPADVA
+		         ON BC.ID = TMPADVA.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   ISTK.BUY_CONTRACT_ID,
+		                           SUM(RID.MONEY) AS INVOICEMONEY
+		                  FROM     IN_STOCK ISTK,
+		                           RECEIVE_INVOICE RI,
+		                           RECEIVE_INVOICE_DETAIL RID
+		                  WHERE    RI.STATUS = 1
+		                           AND RI.ID = RID.RECEIVE_INVOICE_ID
+		                           AND RID.IN_STOCK_ID = ISTK.ID
+		                  GROUP BY ISTK.BUY_CONTRACT_ID) TMPINVO
+		         ON BC.ID = TMPINVO.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   BUY_CONTRACT_ID,
+		                           SUM(MONEY) AS BACKCONTRACTMONEY
+		                  FROM     BUY_BACK_CONTRACT
+		                  WHERE    STATUS = 11
+		                  GROUP BY BUY_CONTRACT_ID) BBC
+		         ON BC.ID = BBC.BUY_CONTRACT_ID
+		       LEFT JOIN (SELECT   ISTK.BUY_CONTRACT_ID,
+		                           SUM(BBG.MONEY) AS BACKGOODSMONEY
+		                  FROM     IN_STOCK ISTK,
+		                           BUY_BACK_GOODS BBG
+		                  WHERE    BBG.STATUS = 11
+		                           AND BBG.IN_STOCK_ID = ISTK.ID
+		                  GROUP BY ISTK.BUY_CONTRACT_ID) TMPBG
+		         ON BC.ID = TMPBG.BUY_CONTRACT_ID
+		WHERE pt.id = #productTypeId#
+		    AND sl.id = #supplierId#
+		    AND BC.STATUS = 13
+		    AND (IFNULL(BC.MONEY,0) - IFNULL(TMPADVA.ADVANCEMONEY,0) - IFNULL(BBC.BACKCONTRACTMONEY,0)) > 0
+			<isNotEmpty prepend="AND" property="companyContractCode">
+				BC.COMPANY_CONTRACT_CODE like '%$companyContractCode$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="productContractCode">
+				BC.PRODUCT_CONTRACT_CODE like '%$productContractCode$%'	
+			</isNotEmpty>
+	) as bc
+	</select>
+	
+	<!--  付款查看产品信息   -->
+	<select id="viewBuyPaymentBuyProduct" parameterClass="java.lang.String" resultClass="buyPaymentBuyContractDto">
+				SELECT
+		  BC.ID                    AS buyContractId,	
+		  insd.product_id          AS productId,
+		  ins.id                   AS inStockId,
+	      ins.request_account_date AS requestAccountDate, 
+		  bc.product_contract_code AS productContractCode,
+		  bc.company_contract_code AS companyContractCode,
+		  pt.code                  AS productCode,
+		  pt.name                  AS productName,
+		  pt.type                  AS productType,
+		  pt.unit                  AS productUnit,
+		  insd.price               AS buyContractPrice,
+		  IFNULL(insd.count,0)               			AS inStockCount,
+		  IFNULL(insd.price*insd.count,0) 				AS inStockMoney,
+		  (CASE 
+			WHEN p.status in (2,4,6,8,10,11,12,13) THEN IFNULL(am.appointMoney,0)-IFNULL(pd.money,0)
+			ELSE IFNULL(am.appointMoney,0)
+			END) AS yzdMoney,
+		  IFNULL(ri.spMoney,0)     						AS spMoney,
+		  IFNULL(backG.backNum*insd.price,0) 			AS fcMoney,
+		  IFNULL(pd.money,0)		   					AS zdMoney
+		FROM in_stock ins,
+		  product pt,
+		  buy_contract bc,
+		  payment p,
+		  payment_detail pd,
+		  in_stock_detail insd
+		  LEFT JOIN (SELECT
+			       pd.product_id             AS productId,
+			       isd.in_stock_id           AS inStockId,
+			       IFNULL(SUM(pd.money),0)   AS appointMoney
+			     FROM payment,
+			       payment_detail pd,
+			       in_stock_detail isd
+			     WHERE payment.id = pd.payment_id
+				 AND pd.in_stock_id = isd.in_stock_id
+				 AND pd.product_id = isd.product_id
+				 AND payment.status in (2,4,6,8,10,11,12,13) 
+				 AND pd.appoint_type = 1
+			     GROUP BY inStockId,productId) AS am
+		    ON am.productId = insd.product_id
+		      AND am.inStockId = insd.in_stock_id
+		  LEFT JOIN (SELECT
+			       SUM(rid.money)            AS spMoney,
+			       insd.in_stock_id          AS inStockId,
+			       insd.product_id           AS productId
+			     FROM 
+			       in_stock_detail insd,
+			       receive_invoice ri,
+			       receive_invoice_detail rid
+			     WHERE rid.receive_invoice_id = ri.id
+				 AND insd.in_stock_id = rid.in_stock_id
+				 AND insd.product_id = rid.product_id
+				 AND ri.status = 1
+			     GROUP BY inStockId,productId) AS ri
+		    ON ri.productId = insd.product_id
+		      AND ri.inStockId = insd.in_stock_id
+		  LEFT JOIN (SELECT
+			       IFNULL(SUM(bbgd.count),0) AS backNum,
+			       insd.in_stock_id          AS inStockId,
+			       insd.product_id           AS productId
+			     FROM 
+			       in_stock_detail insd,
+			       buy_back_goods bbg,
+			       buy_back_goods_detail bbgd
+			     WHERE bbgd.buy_back_goods_id = bbg.id
+				 AND insd.in_stock_id = bbg.in_stock_id
+				 AND insd.product_id = bbgd.product_id
+				 AND bbg.status = 11
+			     GROUP BY inStockId,productId) backG
+		    ON backG.productId = insd.product_id
+		      AND backG.inStockId = insd.in_stock_id
+		WHERE ins.id = insd.in_stock_id
+		    AND insd.product_id = pt.id
+		    AND ins.buy_contract_id = bc.id
+		    AND p.id = pd.payment_id
+		    AND pd.in_stock_id = ins.id
+		    AND pd.product_id = insd.product_id
+		    AND p.id =#id#
+		GROUP BY inStockId,productId
+		ORDER BY inStockId,productId
+	</select>
+	<!--	入库明细同选择  -->
+	<select id="getBuyPaymentInStockDetail.search" parameterClass="java.util.Map" resultClass="buyPaymentBuyContractDto">
+		SELECT
+		  insd.product_id          AS productId,
+		  ins.id                   AS inStockId,
+		  ins.request_account_date AS requestAccountDate, 
+		  bc.id					   AS buyContractId,
+		  bc.product_contract_code AS productContractCode,
+		  bc.company_contract_code AS companyContractCode,
+		  pt.code                  AS productCode,
+		  pt.name                  AS productName,
+		  pt.type                  AS productType,
+		  pt.unit                  AS productUnit,
+		  insd.price               AS buyContractPrice,
+		  insd.count               AS inStockCount,
+		  IFNULL(insd.price*insd.count,0) AS inStockMoney,
+		  IFNULL(am.appointMoney,0) AS yzdMoney,
+		  IFNULL(ri.spMoney,0)     AS spMoney,
+		  IFNULL(backG.backNum*insd.price,0) AS fcMoney
+		FROM in_stock ins,
+		  product pt,
+		  buy_contract bc,
+		  in_stock_detail insd
+		  LEFT JOIN (SELECT
+			       pd.product_id             AS productId,
+			       isd.in_stock_id           AS inStockId,
+			       IFNULL(SUM(pd.money),0)   AS appointMoney
+			     FROM payment,
+			       payment_detail pd,
+			       in_stock_detail isd
+			     WHERE payment.id = pd.payment_id
+				 AND pd.in_stock_id = isd.in_stock_id
+				 AND pd.product_id = isd.product_id
+				 AND payment.status in (2,4,6,8,10,11,12,13)
+				 AND pd.appoint_type = 1
+			     GROUP BY inStockId,productId) AS am
+		    ON am.productId = insd.product_id
+		      AND am.inStockId = insd.in_stock_id
+		  LEFT JOIN (SELECT
+			       SUM(rid.money)            AS spMoney,
+			       insd.in_stock_id          AS inStockId,
+			       insd.product_id           AS productId
+			     FROM 
+			       in_stock_detail insd,
+			       receive_invoice ri,
+			       receive_invoice_detail rid
+			     WHERE rid.receive_invoice_id = ri.id
+				 AND insd.in_stock_id = rid.in_stock_id
+				 AND insd.product_id = rid.product_id
+				 AND ri.status = 1
+			     GROUP BY inStockId,productId) AS ri
+		    ON ri.productId = insd.product_id
+		      AND ri.inStockId = insd.in_stock_id
+		  LEFT JOIN (SELECT
+			       IFNULL(SUM(bbgd.count),0) AS backNum,
+			       insd.in_stock_id          AS inStockId,
+			       insd.product_id           AS productId
+			     FROM 
+			       in_stock_detail insd,
+			       buy_back_goods bbg,
+			       buy_back_goods_detail bbgd
+			     WHERE bbgd.buy_back_goods_id = bbg.id
+				 AND insd.in_stock_id = bbg.in_stock_id
+				 AND insd.product_id = bbgd.product_id
+				 AND bbg.status = 11
+			     GROUP BY inStockId,productId) backG
+		    ON backG.productId = insd.product_id
+		      AND backG.inStockId = insd.in_stock_id
+		WHERE ins.id = insd.in_stock_id
+		    AND insd.product_id = pt.id
+		    AND ins.buy_contract_id = bc.id
+		    AND ins.supplier_id = #supplierId#
+		    AND ins.product_type_id = #productTypeId#
+			AND ins.status = 6
+		    AND (IFNULL(insd.price*insd.count,0)-IFNULL(am.appointMoney,0)-IFNULL(backG.backNum*insd.price,0)) >0
+		<isNotEmpty prepend="AND" property="inStockId">
+				ins.id like '%$inStockId$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="productContractCode">
+				bc.product_contract_code like '%$productContractCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="companyContractCode">
+				bc.company_contract_code like '%$companyContractCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="productNo">
+				pt.code like '%$productNo$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="productName">
+				pt.name like '%$productName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="productType">
+				pt.type like '%$productType$%'
+		</isNotEmpty>
+		<!-- 入库要求起始日期 -->
+			<isNotEmpty prepend="AND" property="startRequestAccountDate">
+				<![CDATA[ ins.request_account_date >= #startRequestAccountDate# ]]>
+			</isNotEmpty>
+		<!-- 入库要求终止日期 -->
+			<isNotEmpty prepend="AND" property="endRequestAccountDate">
+				<![CDATA[ ins.request_account_date <= #endRequestAccountDate# ]]>
+			</isNotEmpty> 
+		GROUP BY inStockId,productId	
+		ORDER BY ins.request_account_date,inStockId,productId
+	</select>
+	<!--	入库明细选择分页  -->
+	<select id="getBuyPaymentInStockDetail.recordCount" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+	select count(*) from(	
+	SELECT
+		  insd.product_id          AS productId,
+		  ins.id                   AS inStockId,
+		  bc.product_contract_code AS productContractCode,
+		  bc.company_contract_code AS companyContractCode,
+		  pt.code                  AS productCode,
+		  pt.name                  AS productName,
+		  pt.type                  AS productType,
+		  pt.unit                  AS productUnit,
+		  insd.price               AS buyContractPrice,
+		  insd.count               AS inStockCount,
+		  IFNULL(insd.price*insd.count,0) AS inStockMoney,
+		  IFNULL(am.appointMoney,0) AS yzdMoney,
+		  IFNULL(ri.spMoney,0)     AS spMoney,
+		  IFNULL(backG.backNum*insd.price,0) AS fcMoney
+		FROM in_stock ins,
+		  product pt,
+		  buy_contract bc,
+		  in_stock_detail insd
+		  LEFT JOIN (SELECT
+			       pd.product_id             AS productId,
+			       isd.in_stock_id           AS inStockId,
+			       IFNULL(SUM(pd.money),0)   AS appointMoney
+			     FROM payment,
+			       payment_detail pd,
+			       in_stock_detail isd
+			     WHERE payment.id = pd.payment_id
+				 AND pd.in_stock_id = isd.in_stock_id
+				 AND pd.product_id = isd.product_id
+				 AND payment.status = 13
+				 AND pd.appoint_type = 1
+			     GROUP BY inStockId,productId) AS am
+		    ON am.productId = insd.product_id
+		      AND am.inStockId = insd.in_stock_id
+		  LEFT JOIN (SELECT
+			       SUM(rid.money)            AS spMoney,
+			       insd.in_stock_id          AS inStockId,
+			       insd.product_id           AS productId
+			     FROM 
+			       in_stock_detail insd,
+			       receive_invoice ri,
+			       receive_invoice_detail rid
+			     WHERE rid.receive_invoice_id = ri.id
+				 AND insd.in_stock_id = rid.in_stock_id
+				 AND insd.product_id = rid.product_id
+				 AND ri.status = 1
+			     GROUP BY inStockId,productId) AS ri
+		    ON ri.productId = insd.product_id
+		      AND ri.inStockId = insd.in_stock_id
+		  LEFT JOIN (SELECT
+			       IFNULL(SUM(bbgd.count),0) AS backNum,
+			       insd.in_stock_id          AS inStockId,
+			       insd.product_id           AS productId
+			     FROM 
+			       in_stock_detail insd,
+			       buy_back_goods bbg,
+			       buy_back_goods_detail bbgd
+			     WHERE bbgd.buy_back_goods_id = bbg.id
+				 AND insd.in_stock_id = bbg.in_stock_id
+				 AND insd.product_id = bbgd.product_id
+				 AND bbg.status = 11
+			     GROUP BY inStockId,productId) backG
+		    ON backG.productId = insd.product_id
+		      AND backG.inStockId = insd.in_stock_id
+		WHERE ins.id = insd.in_stock_id
+		    AND insd.product_id = pt.id
+		    AND ins.buy_contract_id = bc.id
+		    AND ins.supplier_id = #supplierId#
+		    AND ins.product_type_id = #productTypeId#
+			AND ins.status = 6
+		    AND (IFNULL(insd.price*insd.count,0)-IFNULL(am.appointMoney,0)-IFNULL(backG.backNum*insd.price,0)) >0
+		<isNotEmpty prepend="AND" property="inStockId">
+				ins.id like '%$inStockId$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="productContractCode">
+				bc.product_contract_code like '%$productContractCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="companyContractCode">
+				bc.company_contract_code like '%$companyContractCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="productNo">
+				pt.code like '%$productNo$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="productName">
+				pt.name like '%$productName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="productType">
+				pt.type like '%$productType$%'
+		</isNotEmpty>
+		<!-- 入库要求起始日期 -->
+			<isNotEmpty prepend="AND" property="startRequestAccountDate">
+				<![CDATA[ ins.request_account_date >= #startRequestAccountDate# ]]>
+			</isNotEmpty>
+		<!-- 入库要求终止日期 -->
+			<isNotEmpty prepend="AND" property="endRequestAccountDate">
+				<![CDATA[ ins.request_account_date <= #endRequestAccountDate# ]]>
+			</isNotEmpty> 
+		GROUP BY inStockId,productId
+		ORDER BY inStockId,productId	
+	) as bc
+	</select>
+	
+	<!--   付款评审      -->
+	<update id="updateBuyPaymentReviewComments" parameterClass="paymentEntity" >
+		UPDATE payment SET 
+		<isNotEmpty property="proMajId">
+			pro_maj_id = #proMajId# , 
+			pro_maj_name = #proMajName# ,
+			pro_maj_idea = #proMajIdea# ,
+			pro_maj_date = #proMajDate# ,
+			pro_maj_text = #proMajText# ,
+		</isNotEmpty>
+		<isNotEmpty property="buyManId">
+			buy_man_id = #buyManId# ,
+			buy_man_name = #buyManName# , 
+			buy_man_idea = #buyManIdea# , 
+			buy_man_date = #buyManDate# , 
+			buy_man_text = #buyManText# ,
+		</isNotEmpty>
+		<isNotEmpty property="opeMajId">
+			ope_maj_id = #opeMajId# , 
+			ope_maj_name = #opeMajName# , 
+			ope_maj_idea = #opeMajIdea# , 
+			ope_maj_date = #opeMajDate# , 
+			ope_maj_text = #opeMajText# ,
+		</isNotEmpty>
+			status = #status#
+		WHERE 
+			id = #id# 
+	</update>
+<!--	付款申请 付款单创建   -->
+	<insert id="addBuyPayment" parameterClass="buyPaymentAddDto">
+		INSERT INTO `payment`
+			    (`id`,
+			     `product_type_id`,
+			     `supplier_id`,
+			     `supplier_name`,
+			     `supplier_linkman_id`,
+			     `date`,
+			     `payment_way`,
+			     `arterm`,
+			     `money`,
+			     `status`,
+			     `user_id`,
+			     `user_name`,
+			     `text`,
+				 `datetime`)
+		VALUES (#paymentId#,
+			#productTypeId#,
+			#supplierId#,
+			#supplierName#,
+			#supplierLinkmanId#,
+			#date#,
+			#paymentWay#,
+			#arterm#,
+			#money#,
+			#status#,
+			#userId#,
+			#userName#,
+			#text#,
+			#date#);
+	</insert>
+	
+	<!--	付款申请 明细创建   -->
+	<insert id="addBuyPaymentDetail" parameterClass="buyPaymentEntityD">
+		INSERT INTO `payment_detail`
+		    (`payment_id`,
+		     `appoint_type`,
+		     `buy_contract_id`,
+		     `in_stock_id`,
+		     `product_id`,
+		     `money`)
+		VALUES (#paymentId#,
+			#appointType#,
+			#buyContractId#,
+			#inStockId#,
+			#productId#,
+			#money#);
+	</insert>
+	
+	<!--   付款确认      -->
+	<update id="updateConfirmBuyPayment" parameterClass="paymentEntity" >
+			UPDATE payment
+			SET payment.status =#status#
+			<isNotEmpty property="acceptDate">
+				,payment.accept_date =#acceptDate#
+			</isNotEmpty>
+			<isNotEmpty property="acceptNumber">
+				,payment.accept_number =#acceptNumber#
+			</isNotEmpty>
+			<isNotEmpty property="arterm">
+				,payment.arterm =#arterm#
+			</isNotEmpty>
+			<isNotEmpty property="paymentDate">
+				,payment.payment_date =#paymentDate#
+			</isNotEmpty>
+			<isNotEmpty property="number">
+				,payment.number =#number#
+			</isNotEmpty>
+			<isNotEmpty property="money">
+				,payment.money =#money#
+			</isNotEmpty>
+			WHERE payment.id = #id#
+	</update>
+	
+	<!--   付款修改  付款单      -->
+	<update id="modifyBuyPayment" parameterClass="buyPaymentAddDto" >
+		UPDATE payment
+		SET 
+		  product_type_id = #productTypeId#,
+		  supplier_id = #supplierId#,
+		  supplier_name = #supplierName#,
+		  supplier_linkman_id = #supplierLinkmanId#,
+		  `date` = #date#,
+		  payment_way = #paymentWay#,
+		  arterm = #arterm#,
+		  money = #money#,
+		  `status` = #status#,
+		  user_id = #userId#,
+		  user_name = #userName#,
+		  `text` = #text# 
+		<!--		判断提交保存  -->
+		<isEqual compareValue="2" property="status"> 
+		,
+		  pro_maj_id = '',
+		  pro_maj_name = '',
+		  pro_maj_date = '',
+		  pro_maj_idea = '',
+		  pro_maj_text = '',
+		  buy_man_id = '',
+		  buy_man_name = '',
+		  buy_man_date = '',
+		  buy_man_idea = '',
+		  buy_man_text = '',
+		  ope_maj_id = '',
+		  ope_maj_name = '',
+		  ope_maj_date = '',
+		  ope_maj_idea = '',
+		  ope_maj_text = ''
+		</isEqual>  
+		WHERE id = #paymentId#
+	</update>
+<!--	删除付款明细  -->
+	<delete id="deleltBuyPaymentDetail" parameterClass="java.lang.String" >
+		DELETE
+		FROM payment_detail
+		WHERE payment_id = #paymentId#
+	</delete>
+	<!--	指定更新付款明细  -->
+	<update id="appointBuyPaymentDetail" parameterClass="buyPaymentEntityD">
+		UPDATE payment_detail
+		SET money = #money#
+		WHERE payment_id = #paymentId#
+		    AND in_stock_id = #inStockId#
+		    AND product_id = #productId#
+	</update>
+	<!--	指定更新付款  -->
+	<update id="appointBuyPayment" parameterClass="buyPaymentAddDto" >
+		UPDATE payment
+		SET 
+		  money = #money#,
+		  text = #text# 
+		WHERE id = #paymentId#
+	</update>
+	<!--   付款再指定付款表      -->
+	<update id="againAppointBuyPayment" parameterClass="buyPaymentAddDto" >
+		UPDATE payment
+		SET 
+		  product_type_id = #productTypeId#,
+		  money = #money#,
+		  `text` = #text# 
+		WHERE id = #paymentId#
+	</update>
+	<delete id="deleteBuyPayment" parameterClass="java.lang.String" >
+		DELETE
+		FROM payment
+		WHERE id =#id# 		
+	</delete>
+	<select id="selectBuyPaymentRemindFlag" parameterClass="java.lang.String" resultClass="java.lang.Integer">
+		select remind_flag from payment where id =#id#
+	</select>
+	<!-- 更新付款明细金额  -->
+	<update id="updateConfirmBuyPaymentDetail" parameterClass="buyPaymentEntityD" >
+		UPDATE payment_detail
+		SET payment_detail.money = #money#
+		WHERE payment_detail.in_stock_id =#inStockId#
+		    AND payment_detail.product_id = #productId#
+			AND payment_detail.payment_id = #paymentId#
+	</update>
+	<!-- 查询公司税率  -->
+	<select id="buyPaymentSelectTaxRate" resultClass="java.math.BigDecimal" >
+		select
+		  buy_contract.tax_rate
+		from buy_contract,
+		  in_stock
+		where buy_contract.id = in_stock.buy_contract_id
+		    and in_stock.id = #id#
+	</select>
+	<!--  更新产品表库存金额   -->
+	<update id="idUpdateProductMoney" parameterClass="buyPaymentProductTypeE" >
+		UPDATE product SET product.money = #money# where id=#id#
+	</update>
+	<!--  查询产品库存金额      -->
+	<select id="pIdSelectProductMoney" parameterClass="java.lang.String" resultClass="java.math.BigDecimal">
+		SELECT product.money AS money FROM product WHERE id = #productId#
+	</select>
+	<!--  查询该产品入库单下的入库数和入库金额      -->
+	<select id="inStockDetailCountOrPrice" parameterClass="inStockDetailEntity" resultClass="inStockDetailEntity">
+		SELECT
+		  in_stock_detail.count AS count,
+		  in_stock_detail.price AS price
+		FROM in_stock_detail
+		WHERE in_stock_detail.in_stock_id = #inStockId#
+		    AND in_stock_detail.product_id = #productId#
+	</select>
+	<delete id="deleteBuyPaymentDetail" >
+		DELETE FROM payment_detail WHERE payment_detail.money = 0
+	</delete>
+	<!--   外单查询        -->
+	<select id="buyPaymentzhiding" parameterClass="java.lang.String" resultClass="java.lang.Integer">
+		select
+		  buy_contract.contract_type
+		from payment
+		  left join buy_contract
+		    on buy_contract.supplier_id = payment.supplier_id
+		where payment.id = #id#  group by payment.id
+	</select>
+	
+	<!--   未指定查询        -->
+	<select id="productTypeIdSelectwzdMoney" parameterClass="java.util.Map" resultClass="java.math.BigDecimal">
+		SELECT
+		IFNULL(SUM(payment.money),0)- IFNULL(SUM(pdetail.detailMoney),0) - IFNULL(SUM(buyback.buyBackMoney),0) AS wzdMoney
+		FROM payment 
+		LEFT JOIN (SELECT
+			  payment.id AS paymentId,
+			  SUM(payment_detail.money) AS detailMoney
+			FROM payment,
+			  payment_detail
+			WHERE payment.id = payment_detail.payment_id
+			    AND payment.supplier_id = #supplierId#
+			    AND payment.product_type_id = #productTypeId#
+			GROUP BY payment.id) AS pdetail 
+		ON pdetail.paymentId = payment.id
+		LEFT JOIN (
+			SELECT
+			  payment.id          AS paymentId,
+			  SUM(buy_back.money) AS buyBackMoney
+			FROM payment,
+			  buy_back
+			WHERE payment.id = buy_back.payment_id
+			    AND payment.supplier_id = #supplierId#
+			    AND payment.product_type_id = #productTypeId#
+			GROUP BY payment.id) AS buyback 
+		ON buyback.paymentId = payment.id
+			
+		WHERE payment.supplier_id = #supplierId#
+		    AND payment.product_type_id = #productTypeId#
+	</select>
+	<select id="getBuyPaymentSelectBuyContractsMoney" parameterClass="java.lang.String" resultClass="cn.com.thtf.egov.cms.dto.BuyContractDto">
+		SELECT
+				BC.ID,							/*合同流水号*/ 
+				IFNULL(BC.MONEY,0) AS CONTRACTMONEY,			/*合同金额*/ 
+				IFNULL(TMPAPP.APPOINTMONEY,0) AS APPOINTMONEY,		/*指定金额*/ 
+				IFNULL(TMPADVA.ADVANCEMONEY,0) AS ADVANCEMONEY,		/*已预付预付金额*/ 
+				IFNULL(BBC.BACKCONTRACTMONEY,0) AS BACKCONTRACTMONEY	/*退货合同金额*/
+			FROM BUY_CONTRACT BC
+			  LEFT JOIN (SELECT
+				       ISTK.BUY_CONTRACT_ID,
+				       SUM(PD.MONEY)        AS APPOINTMONEY
+				     FROM IN_STOCK ISTK,
+				       PAYMENT P,
+				       PAYMENT_DETAIL PD
+				     WHERE P.STATUS = 13
+					 AND P.ID = PD.PAYMENT_ID
+					 AND PD.APPOINT_TYPE = 1
+					 AND PD.IN_STOCK_ID = ISTK.ID
+				     GROUP BY ISTK.BUY_CONTRACT_ID) TMPAPP
+			    ON BC.ID = TMPAPP.BUY_CONTRACT_ID
+			  LEFT JOIN (SELECT
+				       PD.BUY_CONTRACT_ID,
+				       SUM(PD.MONEY)      AS ADVANCEMONEY
+				     FROM PAYMENT P,
+				       PAYMENT_DETAIL PD
+				     WHERE P.STATUS IN(2,4,6,8,10,11,12,13)
+					 AND P.ID = PD.PAYMENT_ID
+					 AND PD.APPOINT_TYPE = 0
+				     GROUP BY PD.BUY_CONTRACT_ID) TMPADVA
+			    ON BC.ID = TMPADVA.BUY_CONTRACT_ID
+			  LEFT JOIN (SELECT
+				       BUY_CONTRACT_ID,
+				       SUM(MONEY)      AS BACKCONTRACTMONEY
+				     FROM BUY_BACK_CONTRACT
+				     WHERE STATUS = 11
+				     GROUP BY BUY_CONTRACT_ID) BBC
+			    ON BC.ID = BBC.BUY_CONTRACT_ID
+			WHERE BC.STATUS = 13
+			    AND bc.id IN ($buyContractPar$)
+	</select>
+	<!-- -->
+	<select id="buyPaymentMySelfBuyCon" parameterClass="cn.com.thtf.egov.cms.dto.BuyContractDto" resultClass="java.lang.String">
+		select  
+		    ifnull(sum(payment_detail.money),0) as money
+		from 
+			payment_detail
+		where
+			payment_detail.buy_contract_id = #id#
+		and payment_detail.payment_id = #paymentId#  
+		 
+	</select>
+	<select id="buyPaymentMySelfInstock" parameterClass="cn.com.thtf.egov.cms.dto.BuyContractDto" resultClass="java.lang.String">
+		select  
+		    ifnull(sum(payment_detail.money),0) as money
+		from 
+			payment_detail,in_stock
+		where
+			in_stock.buy_contract_id = #id#
+		and in_stock.id = payment_detail.in_stock_id 
+		and payment_detail.payment_id = #paymentId#
+	</select>
+</sqlMap>

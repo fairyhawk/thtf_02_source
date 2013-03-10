@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="demand_sqlMap">
+    <!-- 需求单列表 By Chenhj @2010-6-7 -->
+    <typeAlias alias="demandProductDto" type="cn.com.thtf.egov.cms.dto.DemandProductDto"/>
+	<!--区域总监、销售经理 使用 By Chenhj @2010-8-10 -->
+	<typeAlias alias="areaProdEntity"
+		       type="cn.com.thtf.egov.cms.entity.UserAreaProductEntity" />	
+		           
+	<!-- 需求单列表 -->	
+	<select id="demand.selectAllProducts" resultClass="demandProductDto" parameterClass="java.util.HashMap">
+		SELECT D.PRODID,
+		       D.CODE AS PRODCODE,
+		       D.NAME AS PRODNAME,
+		       D.TYPE AS PRODTYPE,
+		       D.UNIT AS PRODUNIT,
+		       D.PRODUCT_TYPE_ID,
+		       IFNULL(D.UNCONFIRMEDCOUNT,0) AS UNCONFIRMEDCOUNT,
+		       UA.NAME AS USERAREANAME,
+		       IFNULL(VRPF.FREECOUNT,0) AS FREECOUNT,
+		       IFNULL(VPSTC.NUM,0) AS STOCKTOTALCOUNT,
+		       IFNULL(VBCC.BUYCOUNT,0) AS BUYCOUNT,
+		       IFNULL(VSCC.SELLCOUNT,0) AS SELLCOUNT
+		FROM   (SELECT   
+		                 D.PRODUCT_ID AS PRODID,
+		                 D.USER_AREA_ID AS USERAREAID,
+		                 P.CODE,
+		                 P.NAME,
+		                 P.TYPE,
+		                 P.UNIT,
+		                 D.PRODUCT_TYPE_ID,
+		                 D.UNCONFIRMEDCOUNT
+		        FROM     (SELECT * FROM (
+		        				select 
+									d.product_type_id AS product_type_id,
+									d.product_id AS PRODUCT_ID,
+									d.user_area_id AS USER_AREA_ID,
+									d.status AS STATUS,
+									sum(d.count) AS UNCONFIRMEDCOUNT 
+								from demand d
+									 where (d.status = 0) 
+									 <!-- 大区经理、区域经理 -->
+     							<isEqual prepend="and" property="roleId" compareValue="1920">
+     								d.user_area_id in (select user_area_id from user_area_mapping where user_id=#userId#)
+     							</isEqual>
+									group by d.product_id 
+								union 
+								select 
+									d.product_type_id AS product_type_id,
+									d.product_id AS PRODUCT_ID,
+									d.user_area_id AS USER_AREA_ID,
+									d.status AS STATUS,
+									0 AS TOTALCOUNT 
+								from demand d 
+							where (d.status = 1) 
+							 <!-- 大区经理、区域经理 -->
+     							<isEqual prepend="and" property="roleId" compareValue="1920">
+     								d.user_area_id in (select user_area_id from user_area_mapping where user_id=#userId#)
+     							</isEqual>
+							group by d.product_id
+		        			)reand GROUP BY PRODUCT_ID ) D,
+                         PRODUCT P
+		        WHERE    D.PRODUCT_ID = P.ID
+						<!--产品总监、采购主管 -->
+						<isEqual prepend="and" property="roleId" compareValue="51011">	
+							 D.PRODUCT_TYPE_ID IN (
+								 SELECT  PRODUCT_TYPE_ID 
+								 FROM    USER_PRODUCT
+								 WHERE   USER_ID = #userId#
+							 )
+                        </isEqual>
+
+						<!--区域总监-->
+						<isEqual prepend="and" property="roleId" compareValue="9">
+							<iterate property="arrList" open="(" close=")" conjunction="or" >  
+								(D.USER_AREA_ID=$arrList[].userAreaId$ 
+								    AND D.PRODUCT_TYPE_ID=$arrList[].productTypeId$)
+							</iterate>			
+						</isEqual>	
+		        GROUP BY D.PRODUCT_ID) D
+		       INNER JOIN USER_AREA UA
+		         ON D.USERAREAID = UA.ID
+		       LEFT JOIN VIEW_RESULT_PROD_FREECOUNT VRPF
+		         ON D.PRODID = VRPF.PRODID
+		       LEFT JOIN VIEW_PROD_STOCK_TOTAL_COUNT VPSTC
+		         ON D.PRODID = VPSTC.PRODID
+		       LEFT JOIN VIEW_BUY_CONTRACT_COUNT VBCC
+		         ON D.PRODID = VBCC.PRODUCT_ID
+		       LEFT JOIN VIEW_SELL_CONTRACT_COUNT VSCC
+		         ON D.PRODID = VSCC.PRODUCT_ID
+		WHERE  1 = 1
+			<!-- 检索条件 -->
+			<isNotEmpty prepend="and" property="prodCode">
+				D.CODE LIKE CONCAT('%', #prodCode#, '%')
+			</isNotEmpty> 
+			
+			<isNotEmpty prepend="and" property="prodName">
+				D.NAME LIKE CONCAT('%', #prodName#, '%')
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="prodType">
+				D.TYPE LIKE CONCAT('%', #prodType#, '%')
+			</isNotEmpty>
+
+		ORDER BY D.PRODUCT_TYPE_ID,D.CODE ASC						           
+	</select>
+	<!-- 需求单列表分页 -->	
+	<select id="demand.recordCount" resultClass="java.lang.Integer" parameterClass="java.util.HashMap">
+		SELECT   COUNT(*)
+		FROM   (SELECT   
+		                 D.PRODUCT_ID AS PRODID,
+		                 D.USER_AREA_ID AS USERAREAID,
+		                 P.CODE,
+		                 P.NAME,
+		                 P.TYPE,
+		                 P.UNIT,
+		                 D.PRODUCT_TYPE_ID,
+		                 D.UNCONFIRMEDCOUNT
+		        FROM     (SELECT * FROM (
+		        				select 
+									d.product_type_id AS product_type_id,
+									d.product_id AS PRODUCT_ID,
+									d.user_area_id AS USER_AREA_ID,
+									d.status AS STATUS,
+									sum(d.count) AS UNCONFIRMEDCOUNT 
+								from demand d
+									 where (d.status = 0) 
+									 <!-- 大区经理、区域经理 -->
+     							<isEqual prepend="and" property="roleId" compareValue="1920">
+     								d.user_area_id in (select user_area_id from user_area_mapping where user_id=#userId#)
+     							</isEqual>
+									group by d.product_id 
+								union 
+								select 
+									d.product_type_id AS product_type_id,
+									d.product_id AS PRODUCT_ID,
+									d.user_area_id AS USER_AREA_ID,
+									d.status AS STATUS,
+									0 AS TOTALCOUNT 
+								from demand d 
+							where (d.status = 1) 
+							 <!-- 大区经理、区域经理 -->
+     							<isEqual prepend="and" property="roleId" compareValue="1920">
+     								d.user_area_id in (select user_area_id from user_area_mapping where user_id=#userId#)
+     							</isEqual>
+							group by d.product_id
+		        			)reand GROUP BY PRODUCT_ID) D,
+                         PRODUCT P
+		        WHERE    D.PRODUCT_ID = P.ID
+						<!--产品总监、采购主管 -->
+						<isEqual prepend="and" property="roleId" compareValue="51011">	
+							 D.PRODUCT_TYPE_ID IN (
+								 SELECT  PRODUCT_TYPE_ID 
+								 FROM    USER_PRODUCT
+								 WHERE   USER_ID = #userId#
+							 )
+                        </isEqual>
+
+						<!--区域总监-->
+						<isEqual prepend="and" property="roleId" compareValue="9">
+							<iterate property="arrList" open="(" close=")" conjunction="or" >  
+								(D.USER_AREA_ID=$arrList[].userAreaId$ 
+								    AND D.PRODUCT_TYPE_ID=$arrList[].productTypeId$)
+							</iterate>			
+						</isEqual>	
+		        GROUP BY D.PRODUCT_ID) D
+		       INNER JOIN USER_AREA UA
+		         ON D.USERAREAID = UA.ID
+		       LEFT JOIN VIEW_RESULT_PROD_FREECOUNT VRPF
+		         ON D.PRODID = VRPF.PRODID
+		       LEFT JOIN VIEW_PROD_STOCK_TOTAL_COUNT VPSTC
+		         ON D.PRODID = VPSTC.PRODID
+		       LEFT JOIN VIEW_BUY_CONTRACT_COUNT VBCC
+		         ON D.PRODID = VBCC.PRODUCT_ID
+		       LEFT JOIN VIEW_SELL_CONTRACT_COUNT VSCC
+		         ON D.PRODID = VSCC.PRODUCT_ID
+		WHERE  1 = 1
+			<!-- 检索条件 -->
+			<isNotEmpty prepend="and" property="prodCode">
+				D.CODE LIKE CONCAT('%', #prodCode#, '%')
+			</isNotEmpty> 
+			
+			<isNotEmpty prepend="and" property="prodName">
+				D.NAME LIKE CONCAT('%', #prodName#, '%')
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="prodType">
+				D.TYPE LIKE CONCAT('%', #prodType#, '%')
+			</isNotEmpty>			           
+	</select>
+
+	<!-- 需求单列表 明细 -->	
+	<select id="demandDetail.selectAllProductsDetail" resultClass="demandProductDto" parameterClass="java.util.HashMap">
+		SELECT D.DEMANDID,
+		       D.PRODID,
+			   SC.PRODUCT_CONTRACT_CODE AS PRODCNTRTCODE,
+		       SC.COMPANY_CONTRACT_CODE AS COMPCNTRTCODE,
+		       D.CODE AS PRODCODE,
+		       D.NAME AS PRODNAME,
+		       D.TYPE AS PRODTYPE,
+		       D.UNIT AS PRODUNIT,
+		       D.DEMANDCOUNT,
+		       SC.REQUEST_SEND_DATE AS SENDDATE,
+		       SC.CUSTOMER_NAME AS CUSTOMERNAME,
+		       SC.USER_NAME AS USERNAME,
+		       UA.NAME AS USERAREANAME,
+		       D.CONFIRMDATE,
+		       D.DEMANDSTATUS
+		FROM   (SELECT D.ID AS DEMANDID,
+		               D.PRODUCT_ID AS PRODID,
+		               D.USER_AREA_ID AS USERAREAID,
+		               D.SELL_CONTRACT_ID AS SELLCONTRACTID,
+		               P.CODE,
+		               P.NAME,
+		               P.TYPE,
+		               P.UNIT,
+		               D.PRODUCT_TYPE_ID,
+		               D.COUNT AS DEMANDCOUNT,
+		               D.DATE AS CONFIRMDATE,
+		               D.STATUS AS DEMANDSTATUS
+		        FROM   DEMAND D,
+                       PRODUCT P
+		        WHERE  D.PRODUCT_ID = P.ID
+		               AND D.PRODUCT_ID = #prodId#
+						<!--产品总监、采购主管 -->
+						<isEqual prepend="and" property="roleId" compareValue="51011">	
+							 D.PRODUCT_TYPE_ID IN (
+								 SELECT  PRODUCT_TYPE_ID 
+								 FROM    USER_PRODUCT
+								 WHERE   USER_ID = #userId#
+							 )
+                        </isEqual>
+
+						<!--区域总监-->
+						<isEqual prepend="and" property="roleId" compareValue="9">
+							<iterate property="arrList" open="(" close=")" conjunction="or" >  
+								(D.USER_AREA_ID=$arrList[].userAreaId$ 
+								    AND D.PRODUCT_TYPE_ID=$arrList[].productTypeId$)
+							</iterate>			
+						</isEqual>	
+			) D
+		       INNER JOIN USER_AREA UA
+		         ON D.USERAREAID = UA.ID
+		       INNER JOIN SELL_CONTRACT SC
+		         ON D.SELLCONTRACTID = SC.ID
+		  where 1=1
+		  <!-- 大区经理、区域经理 -->
+     		<isEqual prepend="and" property="roleId" compareValue="1920">
+     			d.userareaid in (select user_area_id from user_area_mapping where user_id=#userId#)
+     		</isEqual>
+		 ORDER BY D.DEMANDSTATUS,
+		          SC.ID
+	</select>
+	<!-- 需求单列表 明细 分页 -->	
+	<select id="demandDetail.recordCount" resultClass="java.lang.Integer" parameterClass="java.util.HashMap">
+		SELECT COUNT(*)
+		FROM   (SELECT D.ID AS DEMANDID,
+		               D.PRODUCT_ID AS PRODID,
+		               D.USER_AREA_ID AS USERAREAID,
+		               D.SELL_CONTRACT_ID AS SELLCONTRACTID,
+		               P.CODE,
+		               P.NAME,
+		               P.TYPE,
+		               P.UNIT,
+		               D.PRODUCT_TYPE_ID,
+		               D.COUNT AS DEMANDCOUNT,
+		               D.DATE AS CONFIRMDATE,
+		               D.STATUS AS DEMANDSTATUS
+		        FROM   DEMAND D,
+                       PRODUCT P
+		        WHERE  D.PRODUCT_ID = P.ID
+		               AND D.PRODUCT_ID = #prodId#
+						<!--产品总监、采购主管 -->
+						<isEqual prepend="and" property="roleId" compareValue="51011">	
+							 D.PRODUCT_TYPE_ID IN (
+								 SELECT  PRODUCT_TYPE_ID 
+								 FROM    USER_PRODUCT
+								 WHERE   USER_ID = #userId#
+							 )
+                        </isEqual>
+
+						<!--区域总监-->
+						<isEqual prepend="and" property="roleId" compareValue="9">
+							<iterate property="arrList" open="(" close=")" conjunction="or" >  
+								(D.USER_AREA_ID=$arrList[].userAreaId$ 
+								    AND D.PRODUCT_TYPE_ID=$arrList[].productTypeId$)
+							</iterate>			
+						</isEqual>							
+			) D
+		       INNER JOIN USER_AREA UA
+		         ON D.USERAREAID = UA.ID
+		       INNER JOIN SELL_CONTRACT SC
+		         ON D.SELLCONTRACTID = SC.ID
+		      where 1=1
+		  <!-- 大区经理、区域经理 -->
+     		<isEqual prepend="and" property="roleId" compareValue="1920">
+     			d.userareaid in (select user_area_id from user_area_mapping where user_id=#userId#)
+     		</isEqual>
+	</select>
+
+	<!--需求确认 -->
+	<update id="demandUpdate.update" parameterClass="java.util.HashMap">
+		UPDATE DEMAND
+		SET    STATUS = 1,
+		       DATE = DATE_FORMAT(now(),'%Y-%m-%d'),
+		       confirm_name = #userName#,
+		       confirm_id = #userId#
+		WHERE  ID = #demandId#
+    </update>
+
+	<!-- 根据用户id（区域总监 ）获取区域、产品分类id -->
+	<select id="demand.getAreaIdAndProdTypeId" parameterClass="java.lang.String" resultClass="areaProdEntity">
+		SELECT USER_PRODUCT.PRODUCT_TYPE_ID AS PRODUCTTYPEID,
+		       USER.USER_AREA_ID AS USERAREAID
+		FROM   USER_PRODUCT,
+		       USER
+		WHERE  USER_PRODUCT.USER_ID = #userId#
+		       AND USER.ID =#userId#
+	</select>    				
+</sqlMap>

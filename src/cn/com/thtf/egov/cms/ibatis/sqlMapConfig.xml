@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMapConfig    
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map Config 2.0//EN"   
+    "http://ibatis.apache.org/dtd/sql-map-config-2.dtd">
+<sqlMapConfig>
+	
+	<properties resource="db.properties" />
+
+    <settings lazyLoadingEnabled="true" useStatementNamespaces="true" />
+
+  <transactionManager type="JDBC" >
+    <dataSource type="DBCP">
+      <property name="driverClassName" value="${jdbc.driver}"/>
+      <property name="url" value="${jdbc.url}"/>
+      <property name="username" value="${jdbc.username}"/>
+      <property name="password" value="${jdbc.password}"/>
+      <!-- OPTIONAL PROPERTIES BELOW -->
+      <property name="maxActive" value="32"/>
+      <property name="maxIdle" value="16"/>
+      <property name="maxWait" value="120000"/>
+      <property name="validationQuery" value="select 1 from dual"/>
+      <property name="logAbandoned" value="false"/>
+      <property name="removeAbandoned" value="false"/>
+      <property name="testOnBorrow" value="false"/>
+      <property name="testOnReturn" value="false"/>
+      <property name="testWhileIdle" value="true"/>
+    </dataSource>
+  </transactionManager> 
+	
+	<!-- 用户信息管理 -->
+	<sqlMap url="userManagement" resource="cn/com/thtf/egov/cms/ibatis/userManagement.xml"/>
+	
+	<!-- 基础管理 -->
+	<sqlMap url="base_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/base.xml"/>
+	
+	<!-- 信用管理 -->
+	<sqlMap url="credit_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/credit.xml"/>  
+	
+	<!-- 销售管理 列表页 -->
+	<sqlMap url="salesContract_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/salesContract.xml"/>
+
+	<!-- 发货管理  -->
+	<sqlMap url="sendGoods_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/sendGoods.xml"/>
+	
+	<!-- 库房管理  -->
+	<sqlMap url="sendGoods_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/inventtory.xml"/>
+	
+	<!-- 共通 -->
+	<sqlMap url="common_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/common.xml"/>
+	
+	<!-- 待办事项 -->
+	<sqlMap url="todowork_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/work.xml"/>
+ 	
+ 	<!-- 开票管理 -->
+	<sqlMap url="invoice_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/invoice.xml"/>
+
+	<!-- 回款 -->
+	<sqlMap url="mreturn_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/mreturn.xml"/>
+	
+	<!-- 运单管理 -->
+	<sqlMap url="wayBill_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/wayBill.xml"/>
+	
+	<!-- 销售退票 -->
+	<sqlMap url="backInvoice_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/backInvoice.xml"/> 
+	
+	<!-- 销售退货-->
+	<sqlMap url="returnGoods_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/returnGoods.xml"/> 
+	
+	<!-- 销售退货合同管理-->
+	<sqlMap url="salesBackContract_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/salesBackContract.xml"/> 
+	
+	<!-- 采购入库-->
+	<sqlMap url="instock_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/instock.xml"/>
+	
+	<!-- 销售退款管理-->
+	<sqlMap url="sellBack_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/sellBack.xml"/>
+
+	<!-- 采购合同管理-->
+	<sqlMap url="buyContract_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/buyContract.xml"/>
+
+	<!-- 采购退货合同管理-->
+	<sqlMap url="buyBackContract_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/buyBackContract.xml"/>
+		
+	<!-- Mail-->
+	<sqlMap url="mail_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/mail.xml"/>
+	
+	<!-- 采购付款-->
+	<sqlMap url="buyPayment_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/buyPayment.xml"/>
+	
+	<!-- 需求管理 -->
+	<sqlMap url="demand_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/demand.xml"/>
+
+	<!-- 装箱单 -->
+	<sqlMap url="box_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/box.xml"/>
+	
+	<!-- 采购退款 -->
+	<sqlMap url="buyBack_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/buyBack.xml"/>
+	
+	<!-- 收票管理 -->
+	<sqlMap url="receiveInvoice_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/receiveInvoice.xml"/>	
+	
+	<!-- 采购返厂  -->		
+	<sqlMap url="buyBackGoods_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/buyBackGoods.xml"/>	
+
+	<!-- 库存管理-入库管理  -->		
+	<sqlMap url="stock_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/stock.xml"/>
+	  
+	<!-- 库存管理-移库管理  -->		
+	<sqlMap url="moveStock_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/moveStock.xml"/>	
+	
+	<!-- 库存管理-样品借出  -->		
+	<sqlMap url="sampleOut_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/sampleOut.xml"/>
+	
+	<!-- 库存管理-样品归还-->  		
+	<sqlMap url="sampleIn_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/sampleIn.xml"/>	
+	
+	<sqlMap url="custwaybill_sqlMap" resource="cn/com/thtf/egov/cms/ibatis/custwaybill.xml"/>
+			
+</sqlMapConfig>

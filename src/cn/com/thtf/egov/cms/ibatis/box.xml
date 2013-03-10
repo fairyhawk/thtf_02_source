@@ -1,0 +1,1106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="box_sqlMap">
+
+	<typeAlias alias="boxEntity" type="cn.com.thtf.egov.cms.entity.BoxEntity" />
+	<typeAlias alias="stockSendGoods" type="cn.com.thtf.egov.cms.dto.StockSendGoodsDto" />
+	<typeAlias alias="stockSendGoodsDetailDto" type="cn.com.thtf.egov.cms.dto.StockSendGoodsDetailDto" />
+	<typeAlias alias="boxLogistics" type="cn.com.thtf.egov.cms.entity.LogisticsEntity" />
+	<typeAlias alias="boxDto" type="cn.com.thtf.egov.cms.dto.BoxDto" />
+	<typeAlias alias="boxQueryDto" type="cn.com.thtf.egov.cms.dto.BoxQueryDto" />
+	<typeAlias alias="boxSendGoodsEntity" type="cn.com.thtf.egov.cms.entity.SendGoodsEntity" />
+	<typeAlias alias="boxBuyBackGoodsEntity" type="cn.com.thtf.egov.cms.entity.BuyBackGoodsEntity" />
+	<typeAlias alias="boxMoveEntity" type="cn.com.thtf.egov.cms.entity.MoveEntity" />
+	<typeAlias alias="boxSampleOutEntity" type="cn.com.thtf.egov.cms.entity.SampleOutEntity" />
+	<typeAlias alias="boxStockEntity" type="cn.com.thtf.egov.cms.entity.StockEntity" />
+	<typeAlias alias="boxStockDto" type="cn.com.thtf.egov.cms.dto.StockDto" />
+	<typeAlias alias="productDto" type="cn.com.thtf.egov.cms.dto.ProductDto" />
+	<typeAlias alias="boxSendGoodsDetail" type="cn.com.thtf.egov.cms.entity.SendGoodsDetailEntity" />
+	 
+	<!-- 修改返厂单状态  --> 
+	<update id="updateBuyBackGoodsStatus" parameterClass="boxDto">
+		update buy_back_goods set status = #status# where id = #orderId#  
+	</update>
+	<!-- 修改借出单状态  --> 
+	<update id="updateMoveStatus" parameterClass="boxDto">
+		update move set status = #status# where id = #orderId#  
+	</update>
+	<!-- 修改移库单状态  --> 
+	<update id="updateSampleOutStatus" parameterClass="boxDto">
+		update sample_out set status = #status# where id = #orderId#  
+	</update>
+
+	<!-- 修改库存金额 -->
+	<update id="updateProductMoney" parameterClass="productDto">
+		update product set 
+			 money = money * (1-#count#/#num#)
+		where
+			id = #productId# 
+	</update> 
+	<!-- 修改库存金额 -->
+	<update id="updateProductMoneySimp" parameterClass="productDto">
+		update product set 
+			 money = money - #money# * #num#
+		where
+			id = #productId# 
+	</update>
+	<!-- 修改库存金额 -->
+	<update id="updateProductMoneyComplex" parameterClass="productDto">
+		update 
+			buy_back_goods,buy_back_goods_detail,in_stock,buy_contract,buy_contract_detail,product
+		set 
+			product.money = product.money - (buy_contract_detail.price/(1+buy_contract.tax_rate/100))*buy_back_goods_detail.count
+		where
+			buy_back_goods_detail.product_id = #productId#
+		and	buy_back_goods_detail.buy_back_goods_id = #orderId#
+		and	buy_back_goods.id = buy_back_goods_detail.buy_back_goods_id
+		and	in_stock.id = buy_back_goods.in_stock_id
+		and	buy_contract.id  = in_stock.buy_contract_id
+		and	buy_contract_detail.buy_contract_id = buy_contract.id
+		and	product.id = buy_back_goods_detail.product_id 
+		and buy_back_goods_detail.product_id = buy_contract_detail.product_id
+	</update>
+	<!-- 修改发货单明细库存单价 -->
+	<update id="updateSendGoodsDetilePrice" parameterClass="boxSendGoodsDetail">
+		update
+			send_goods_detail,product 
+		set 
+			send_goods_detail.price = product.money/#count#
+		where 
+			send_goods_detail.send_goods_id =#sendGoodsId#
+		and	send_goods_detail.product_id = #productId#
+		and	send_goods_detail.product_id = product.id 
+	</update> 
+	
+	<!-- 检索装箱单信息 -->
+	<select id="selectBoxList.data" parameterClass="boxQueryDto" resultClass="boxDto">
+		select 
+			box.id as id,
+			box.no as no,
+			stockroom.name as stockroomName,
+			product_type.name as productTypeName,
+			logis.name as logisticsName,
+
+			box.customer_name as customerName,
+			box.company_name as customerAddressName,
+			box.address as customerAddress,
+			box.count as count,
+			box.request_way as customerTransportWay,
+
+			box.reality_way	as transportWay,
+			box.send_date as date,
+			box.estimate_date as estimateDate,
+			box.arrival_date as arrivalDate,
+			box.signoff_date as signoffDate,
+
+			box.confirm_date as confirmDate,
+			box.user_name as userName,
+			box.status as status,
+
+			box.stockroom_id as stockroomId,
+			box.product_type_id as productTypeId,
+			
+			box.tbc_flag as tbcFlag,
+			box.tbc_date as tbcdate
+		from 
+			product_type,stockroom,box_detail,box
+
+			left join (
+				select id as id,name as name from logistics 
+			) as logis on logis.id = box.logistics_id
+		where
+			box.product_type_id = product_type.id 
+		and	box.stockroom_id = stockroom.id 
+		and box.id = box_detail.box_id
+		<isNotEmpty prepend="and" property="orderId">
+			box_detail.send_goods_id = #orderId#
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="userStockroomList">
+			<iterate property="userStockroomList" open="(" close=")" conjunction="or" >  
+					(box.product_type_id = $userStockroomList[].productTypeId$ 
+				and box.stockroom_id = $userStockroomList[].stockroomId$)
+			</iterate>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="userAreaProductList">
+			<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+					box.product_type_id = $userAreaProductList[].productTypeId$ 
+			</iterate>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productTypeIdArr">
+			box.product_type_id in ($productTypeIdArr$)
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="status">
+			box.status = #status#
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="id">
+			box.id like '%$id$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="no">
+			box.no like '%$no$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="logisticsName">
+			logis.name like '%$logisticsName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="customerName">
+			box.customer_name like '%$customerName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="userName">
+			box.user_name like '%$userName$%'
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="sendDateStarttime">
+			<![CDATA[ box.send_date >= #sendDateStarttime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="sendDateEndtime">
+			<![CDATA[ box.send_date <= #sendDateEndtime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="estimateDateStarttime">
+			<![CDATA[ box.estimate_date >= #estimateDateStarttime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="estimateDateEndtime">
+			<![CDATA[ box.estimate_date <= #estimateDateEndtime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="arrivalDateStarttime">
+			<![CDATA[ box.arrival_date >= #arrivalDateStarttime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="arrivalDateEndtime">
+			<![CDATA[ box.arrival_date <= #arrivalDateEndtime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="signoffDateStarttime">
+			<![CDATA[ box.signoff_date >= #signoffDateStarttime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="signoffDateEndtime">
+			<![CDATA[ box.signoff_date <= #signoffDateEndtime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="confirmDateStarttime">
+			<![CDATA[ box.confirm_date >= #confirmDateStarttime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="confirmDateEndtime">
+			<![CDATA[ box.confirm_date <= #confirmDateEndtime# ]]>
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="stockroomId">
+			box.stockroom_id = #stockroomId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productTypeId">
+			box.product_type_id = #productTypeId#
+		</isNotEmpty>
+		group by box.id
+		ORDER BY box.id desc
+	</select>
+	<!-- 检索装箱单信息 -->
+	<select id="selectBoxList.recordCount" parameterClass="boxQueryDto" resultClass="java.lang.Integer">
+		select 
+			count(*) 
+		from (
+			select
+				box.id
+			from 
+				product_type,stockroom,box_detail,box
+				left join (
+					select id as id,name as name from logistics 
+				) as logis on logis.id = box.logistics_id
+			where
+				box.product_type_id = product_type.id 
+			and	box.stockroom_id = stockroom.id
+			and box.id = box_detail.box_id
+			<isNotEmpty prepend="and" property="orderId">
+				box_detail.send_goods_id = #orderId#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userStockroomList">
+				<iterate property="userStockroomList" open="(" close=")" conjunction="or" >  
+						(box.product_type_id = $userStockroomList[].productTypeId$ 
+					and box.stockroom_id = $userStockroomList[].stockroomId$)
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userAreaProductList">
+				<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						box.product_type_id = $userAreaProductList[].productTypeId$ 
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="productTypeIdArr">
+				box.product_type_id in ($productTypeIdArr$)
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="status">
+				box.status = #status#
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="id">
+				box.id like '%$id$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="no">
+				box.no like '%$no$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="logisticsName">
+				logis.name like '%$logisticsName$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="customerName">
+				box.customer_name like '%$customerName$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userName">
+				box.user_name like '%$userName$%'
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="sendDateStarttime">
+				<![CDATA[ box.send_date >= #sendDateStarttime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="sendDateEndtime">
+				<![CDATA[ box.send_date <= #sendDateEndtime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="estimateDateStarttime">
+				<![CDATA[ box.estimate_date >= #estimateDateStarttime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="estimateDateEndtime">
+				<![CDATA[ box.estimate_date <= #estimateDateEndtime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="arrivalDateStarttime">
+				<![CDATA[ box.arrival_date >= #arrivalDateStarttime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="arrivalDateEndtime">
+				<![CDATA[ box.arrival_date <= #arrivalDateEndtime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="signoffDateStarttime">
+				<![CDATA[ box.signoff_date >= #signoffDateStarttime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="signoffDateEndtime">
+				<![CDATA[ box.signoff_date <= #signoffDateEndtime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="confirmDateStarttime">
+				<![CDATA[ box.confirm_date >= #confirmDateStarttime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="confirmDateEndtime">
+				<![CDATA[ box.confirm_date <= #confirmDateEndtime# ]]>
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="stockroomId">
+				box.stockroom_id = #stockroomId#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="productTypeId">
+				box.product_type_id = #productTypeId#
+			</isNotEmpty>
+			group by box.id
+		) as data
+	</select>
+
+	<!-- 检索装箱单信息 -->
+	<select id="selectBoxDetail" parameterClass="java.lang.String" resultClass="boxDto">
+		select 
+			box_id as id,
+			send_goods_id as orderId 
+		from 
+			box_detail
+		where
+			box_detail.box_id = #id# 
+	</select>
+	
+	<!-- 检索装箱单信息 -->
+	<select id="selectBoxPrint" parameterClass="java.lang.String" resultClass="boxDto">
+		select  
+		 	box.customer_name as customerName,
+		 	box.stockroom_id as stockroomId,
+		 	box.send_date as date,
+		 	box.id as id,
+		 	left(stockroom.short_name, 2) as stockroomName,
+		 	box.request_way as transportWay,
+		 	logistics.name as logisticsName,
+		 	box.take_name as takeName,
+		 	box.linkman as linkman,
+		 	box.linkman_tel as tel,
+		 	box.address as customerAddress,
+		 	box.user_name as userName,
+		 	box.count as count,
+		 	box.mobile as mobile,
+		 	box.take_name as takeName,
+		 	box.take_number as takeNumber
+		from 
+			box
+			left join logistics on logistics.id = box.logistics_id
+			left join stockroom on stockroom.id = box.stockroom_id
+		where
+			box.id = #id# 
+	</select>
+	
+	<!-- 检索库房收货地址信息 -->
+	<select id="selectStockroomAddress" parameterClass="java.lang.String" resultClass="boxDto">
+		select  
+		 	tel as stockroomTel 
+		from 
+			stockroom_address 
+		where
+			id = #id# 
+	</select>
+	
+
+	<!-- 检索装箱单信息 -->
+	<select id="selectBox" parameterClass="java.lang.String" resultClass="boxDto">
+		select 
+			box.id as id,
+			box.stockroom_id as stockroomId,
+			box.product_type_id as productTypeId,
+			product_type.name as productTypeName,
+			box.status as status,
+			box.send_date as date,
+			box.customer_name as customerName,
+			box.transport_way as customerTransportWay,
+			box.take_name as takeName,
+			box.take_number as takeNumber,
+			box.company_name as customerAddressName,
+			box.address as customerAddress,
+			box.linkman as linkman,
+			box.postcode as postcode,
+			box.linkman_tel as tel,
+			box.mobile as mobile,
+			box.logistics_id as logisticsId,
+			box.request_way as transportWay,
+			box.count as count,
+			box.money as money,
+			box.user_id as userId,
+			box.user_name as userName,
+			box.datetime  as datetime,
+			logis.name as logisticsName,
+			box.no as no,
+			box.reality_way as realityWay,
+			box.estimate_date as estimateDate,
+			box.tel as noTel,
+			box.info as info,
+			box.arrival_date as arrivalDate,
+			box.signoff_date as signoffDate,
+			box.signoff_name as signoffName,
+			box.confirm_date as confirmDate,
+			box.log_adm_name as logAdmName,
+			stockroom.name as stockroomName
+		from 
+			product_type,stockroom,box
+			left join (
+				select id as id,name as name from logistics 
+			) as logis on logis.id = box.logistics_id
+		where
+			box.id = #id# 
+		and box.stockroom_id = stockroom.id
+		and	box.product_type_id = product_type.id 
+	</select>
+
+	<!-- 检索发货单的库房ID和产品 -->
+	<select id="selectSendGoodsStock" parameterClass="java.lang.String" resultClass="boxStockDto">
+		select 
+			send_goods.stockroom_id as stockroomId,  
+			send_goods_detail.product_id as productId,
+			send_goods_detail.count as num
+		from 
+			send_goods,send_goods_detail
+		where
+			send_goods.id = #id#
+		and send_goods.id = send_goods_detail.send_goods_id
+	</select>
+	<!-- 检索返场单的库房ID和产品 -->
+	<select id="selectBuyBackGoodsStock" parameterClass="java.lang.String" resultClass="boxStockDto">
+		select 
+			buy_back_goods.stockroom_id as stockroomId,  
+			buy_back_goods_detail.product_id as productId,
+			buy_back_goods_detail.count as num
+		from 
+			buy_back_goods,buy_back_goods_detail
+		where
+			buy_back_goods.id = #id#
+		and buy_back_goods.id = buy_back_goods_detail.buy_back_goods_id
+	</select>
+	<!-- 检索移库单的库房ID和产品 -->
+	<select id="selectMoveStock" parameterClass="java.lang.String" resultClass="boxStockDto">
+		select 
+			move.out_stockroom_id as stockroomId,  
+			move_detail.product_id as productId,
+			move_detail.count as num,
+			move_detail.price as price
+		from 
+			move,move_detail
+		where
+			move.id = #id#
+		and move.id = move_detail.move_id
+	</select>
+	<!-- 检索借出单的库房ID和产品 -->
+	<select id="selectSampleOutStock" parameterClass="java.lang.String" resultClass="boxStockDto">
+		select 
+			sample_out.out_stockroom_id as stockroomId,  
+			sample_out_detail.product_id as productId,
+			sample_out_detail.count as num,
+			sample_out_detail.price as price
+		from 
+			sample_out,sample_out_detail
+		where
+			sample_out.id = #id#
+		and sample_out.id = sample_out_detail.sample_out_id
+	</select>
+
+	<!-- 修改发货单 发货  --> 
+	<update id="updateSendGoodsComplete" parameterClass="boxSendGoodsEntity">
+		update send_goods set
+			 status = #status#
+			 <isNotEmpty prepend="," property="sendDate">
+				 send_date = #sendDate#
+			 </isNotEmpty> 
+			 <isNotEmpty prepend="," property="stkAdmId">
+				 stk_adm_id = #stkAdmId#
+			 </isNotEmpty> 
+			 <isNotEmpty prepend="," property="stkAdmName">
+				 stk_adm_name = #stkAdmName#
+			 </isNotEmpty> 
+			 <isNotEmpty prepend="," property="stkAdmDate">
+				 stk_adm_date = #stkAdmDate#
+			 </isNotEmpty> 
+			 <isNotEmpty prepend="," property="stkAdmIdea">
+				 stk_adm_idea = #stkAdmIdea# 
+			 </isNotEmpty> 
+		where
+			id = #id# 
+	</update> 
+	<!-- 修改返场单 发货  --> 
+	<update id="updateBuyBackGoodsComplete" parameterClass="boxBuyBackGoodsEntity">
+		update buy_back_goods set
+			 status = #status#
+			 <isNotEmpty prepend="," property="sendDate">
+				 send_date = #sendDate#
+			 </isNotEmpty>
+			 <isNotEmpty prepend="," property="stkAdmId">
+				 stk_adm_id = #stkAdmId#
+			 </isNotEmpty> 
+			 <isNotEmpty prepend="," property="stkAdmName">
+				 stk_adm_name = #stkAdmName#
+			 </isNotEmpty> 
+			 <isNotEmpty prepend="," property="stkAdmDate">
+				 stk_adm_date = #stkAdmDate#
+			 </isNotEmpty> 
+			 <isNotEmpty prepend="," property="stkAdmIdea">
+				 stk_adm_idea = #stkAdmIdea# 
+			 </isNotEmpty> 
+		where
+			id = #id# 
+	</update>
+	<!-- 修改移库单 发货  --> 
+	<update id="updateMoveComplete" parameterClass="boxMoveEntity">
+		update move set
+			 status = #status#
+			 <isNotEmpty prepend="," property="sendDate">
+				 send_date = #sendDate#
+			 </isNotEmpty>
+			 <isNotEmpty prepend="," property="stkAdmId">
+				 stk_adm_id = #stkAdmId#
+			 </isNotEmpty> 
+			 <isNotEmpty prepend="," property="stkAdmName">
+				 stk_adm_name = #stkAdmName#
+			 </isNotEmpty> 
+			 <isNotEmpty prepend="," property="stkAdmDate">
+				 stk_adm_date = #stkAdmDate#
+			 </isNotEmpty> 
+			 <isNotEmpty prepend="," property="stkAdmIdea">
+				 stk_adm_idea = #stkAdmIdea# 
+			 </isNotEmpty> 
+		where
+			id = #id# 
+	</update>
+	<!-- 修改借出单 发货  --> 
+	<update id="updateSampleOutComplete" parameterClass="boxSampleOutEntity">
+		update sample_out set
+			 status = #status#
+			 <isNotEmpty prepend="," property="sendDate">
+				 send_date = #sendDate#
+			 </isNotEmpty> 
+			 <isNotEmpty prepend="," property="stkAdmId">
+				 stk_adm_id = #stkAdmId#
+			 </isNotEmpty> 
+			 <isNotEmpty prepend="," property="stkAdmName">
+				 stk_adm_name = #stkAdmName#
+			 </isNotEmpty> 
+			 <isNotEmpty prepend="," property="stkAdmDate">
+				 stk_adm_date = #stkAdmDate#
+			 </isNotEmpty> 
+			 <isNotEmpty prepend="," property="stkAdmIdea">
+				 stk_adm_idea = #stkAdmIdea# 
+			 </isNotEmpty> 
+		where
+			id = #id# 
+	</update>
+
+	<!-- 新建装箱单  --> 
+	<insert id="insertBox" parameterClass="boxDto">
+		insert into
+			 box(id,stockroom_id,product_type_id,status,send_date,
+						logistics_id,request_way,count,money,user_id,
+						user_name,datetime,
+						customer_name,transport_way,take_name,take_number,company_name,
+						address,linkman,postcode,linkman_tel,mobile)
+		values 
+			(#id#,#stockroomId#,#productTypeId#,#status#,#date#,
+			 #logisticsId#,#transportWay#,#count#,#money#,#userId#,
+			 #userName#,#datetime#,
+			 #customerName#,#customerTransportWay#,#takeName#,#takeNumber#,#customerAddressName#,
+			 #customerAddress#,#linkman#,#postcode#,#tel#,#mobile#) 
+	</insert>
+	<!-- 修改装箱单  --> 
+	<update id="updateBox" parameterClass="boxDto">
+		update box set 
+				stockroom_id=#stockroomId#,product_type_id=#productTypeId#,
+				status=#status#,send_date=#date#,logistics_id=#logisticsId#,
+				request_way=#transportWay#,count=#count#,money=#money#,
+				user_id=#userId#,user_name=#userName#,customer_name=#customerName#,
+				transport_way=#customerTransportWay#,take_name=#takeName#,
+				take_number=#takeNumber#,company_name=#customerAddressName#,
+				address=#customerAddress#,linkman=#linkman#,postcode=#postcode#,
+				linkman_tel=#tel#,mobile=#mobile# 
+		where
+			id = #id#
+	</update>
+	<!-- 新建装箱单明细  --> 
+	<insert id="insertBoxDetail" parameterClass="boxDto">
+		insert into
+			 box_detail(box_id,send_goods_id)
+		values 
+			(#id#,#orderId#) 
+	</insert>
+
+	<!-- 检索所有物流公司 -->
+	<select id="selectAllLogistics" resultClass="boxLogistics">
+		select 
+			logistics.id as id,  
+			logistics.name as name
+		from 
+			logistics 
+	</select> 
+	
+	<!-- 检索发货单明细 --> 
+	<select id="selectOrderText" parameterClass="stockSendGoods" resultClass="stockSendGoods">
+		select
+			1 as orderType,
+			send_goods.id as orderId,
+			send_goods.text as text
+		from   
+			send_goods 
+		where
+			text != ""
+		<isNotEmpty prepend="and" property="orderIdArr">
+			<iterate property="orderIdArr" open="(" close=")" conjunction="or" >  
+				send_goods.id = '$orderIdArr[]$'
+			</iterate>
+		</isNotEmpty>
+		 
+		union all 
+
+		select
+			2 as orderType,
+			buy_back_goods.id as orderId,
+			buy_back_goods.text as text
+		from  
+			buy_back_goods
+		where
+			text != ""
+		<isNotEmpty prepend="and" property="orderIdArr">
+			<iterate property="orderIdArr" open="(" close=")" conjunction="or" >  
+				buy_back_goods.id = '$orderIdArr[]$'
+			</iterate>
+		</isNotEmpty> 
+		
+		union all 
+
+		select
+			3 as orderType,
+			move.id as orderId,
+			move.text as text
+		from  
+			move 
+		where
+			text != ""
+		<isNotEmpty prepend="and" property="orderIdArr">
+			<iterate property="orderIdArr" open="(" close=")" conjunction="or" >  
+				move.id = '$orderIdArr[]$'
+			</iterate>
+		</isNotEmpty>
+
+		union all 
+
+		select
+			4 as orderType,
+			sample_out.id as orderId,
+			sample_out.text as text
+		from  
+			sample_out
+		where
+			text != ""
+		<isNotEmpty prepend="and" property="orderIdArr">
+			<iterate property="orderIdArr" open="(" close=")" conjunction="or" >  
+				sample_out.id = '$orderIdArr[]$'
+			</iterate>
+		</isNotEmpty>
+	</select>
+
+	<!-- 检索发货单明细 --> 
+	<select id="selectOrderDetail" parameterClass="stockSendGoods" resultClass="stockSendGoodsDetailDto">
+		select
+			1 as orderType,
+			send_goods.id as orderId,
+			product.code as productCode,product.name as productName,product.type as productType,product.unit as productUnit,
+			send_goods_detail.count as count,
+			stock.num as num,
+			stockroom.name as stockroomName,
+			send_goods.transport_way as transportWay
+			<!-- ,CONCAT(send_goods.id,",",product.code,",",product.name,",",product.type,",",product.unit,",",send_goods_detail.count,",",stock.num) as str -->
+		from   
+			product,send_goods,send_goods_detail,stock,stockroom
+
+		where 
+			send_goods.id = send_goods_detail.send_goods_id
+		<isNotEmpty prepend="and" property="orderIdArr">
+			<iterate property="orderIdArr" open="(" close=")" conjunction="or" >  
+				send_goods.id = '$orderIdArr[]$'
+			</iterate>
+		</isNotEmpty>
+		and	send_goods_detail.product_id = product.id
+		and	send_goods.stockroom_id = stock.stockroom_id
+		and	send_goods_detail.product_id = stock.product_id
+		and send_goods.stockroom_id = stockroom.id
+
+		union all 
+
+		select
+			2 as orderType,
+			buy_back_goods.id as orderId,
+			product.code as productCode,product.name as productName,product.type as productType,product.unit as productUnit,
+			buy_back_goods_detail.count as count,
+			stock.num as num,
+			stockroom.name as stockroomName,
+			buy_back_goods.transport_way as transportWay
+		from  
+			product,buy_back_goods,buy_back_goods_detail,stock,stockroom
+
+		where
+			buy_back_goods.id = buy_back_goods_detail.buy_back_goods_id
+		<isNotEmpty prepend="and" property="orderIdArr">
+			<iterate property="orderIdArr" open="(" close=")" conjunction="or" >  
+				buy_back_goods.id = '$orderIdArr[]$'
+			</iterate>
+		</isNotEmpty>
+		and	buy_back_goods_detail.product_id = product.id
+		and	buy_back_goods.stockroom_id = stock.stockroom_id
+		and	buy_back_goods_detail.product_id = stock.product_id
+		and buy_back_goods.stockroom_id = stockroom.id
+
+		union all 
+
+		select
+			3 as orderType,
+			move.id as orderId,
+			product.code as productCode,product.name as productName,product.type as productType,product.unit as productUnit,
+			move_detail.count as count,
+			stock.num as num,
+			stockroom.name as stockroomName,
+			move.transport_way as transportWay
+		from  
+			product,move,move_detail,stock,stockroom
+	
+		where
+			move.id = move_detail.move_id
+		<isNotEmpty prepend="and" property="orderIdArr">
+			<iterate property="orderIdArr" open="(" close=")" conjunction="or" >  
+				move.id = '$orderIdArr[]$'
+			</iterate>
+		</isNotEmpty>
+		and	move_detail.product_id = product.id
+		and	move.out_stockroom_id = stock.stockroom_id
+		and	move_detail.product_id = stock.product_id
+		and move.out_stockroom_id = stockroom.id
+
+		union all 
+
+		select
+			4 as orderType,
+			sample_out.id as orderId,
+			product.code as productCode,product.name as productName,product.type as productType,product.unit as productUnit,
+			sample_out_detail.count as count,
+			stock.num as num,
+			stockroom.name as stockroomName,
+			sample_out.transport_way as transportWay
+		from  
+			product,sample_out,sample_out_detail,stock,stockroom
+
+		where
+			sample_out.id = sample_out_detail.sample_out_id
+		<isNotEmpty prepend="and" property="orderIdArr">
+			<iterate property="orderIdArr" open="(" close=")" conjunction="or" >  
+				sample_out.id = '$orderIdArr[]$'
+			</iterate>
+		</isNotEmpty>
+		and	sample_out_detail.product_id = product.id
+		and	sample_out.out_stockroom_id = stock.stockroom_id
+		and	sample_out_detail.product_id = stock.product_id
+		and sample_out.out_stockroom_id = stockroom.id
+	</select>
+
+	<!-- 检索装箱单状态 -->
+	<select id="selectBoxStatus" parameterClass="java.lang.String" resultClass="boxDto">
+		select status as status,tbc_flag as tbcFlag from box where id = #id#
+	</select>
+	<!-- 更新装箱数量和金额 -->
+	<update id="updateBoxMoneyAndCount" parameterClass="boxDto">
+		update box set money = #money#,count = #count# where id = #id#
+	</update>
+	<!-- 更新装箱单确认状态 -->
+	<update id="updateBoxBtcStatus" parameterClass="boxDto">
+		update box set tbc_flag = #tbcFlag#,tbc_date = #tbcdate# where id = #id#
+	</update>
+	<!-- 更新装箱单状态 -->
+	<update id="updateBoxStatus" parameterClass="boxEntity">
+		update box set status = #status# where id = #id#
+	</update>
+	<!-- 更新装箱单状态和回执时间 -->
+	<update id="updateBoxStatusAndConfirmDate" parameterClass="boxDto">
+		update box set status = #status#,confirm_date=#confirmDate# where id = #id#
+	</update>
+
+	<!-- 删除装箱单明细 -->
+	<delete id="deleteBoxDetail" parameterClass="java.lang.String">
+		delete from box_detail where send_goods_id = #id#
+	</delete>
+	<!-- 删除装箱单明细 -->
+	<delete id="deleteBoxDetailById" parameterClass="java.lang.String">
+		delete from box_detail where box_id = #id#
+	</delete>
+	<!-- 删除装箱单明细 -->
+	<delete id="deleteBoxById" parameterClass="java.lang.String">
+		delete from box where id = #id#
+	</delete>
+
+	<!-- 检索发货单 --> 
+	<select id="selectOrder" parameterClass="stockSendGoods" resultClass="stockSendGoods">
+		 select 
+			orderType,
+			orderId,
+			stockroomId,
+			stockroomName,
+			productTypeId,
+			productType,
+			customerName,
+
+			customerAddressName, 
+			customerAddress,
+			transportWay,
+			date,
+			requestDate,
+
+			sendDate, 
+			userName,
+			status, 
+			changeStatus,
+			
+			takeName,
+			takeNumber,
+			postcode,
+			linkman,
+			tel,
+			mobile
+		from  
+
+		(select 
+			1 as orderType,
+			send_goods.id as orderId,
+			stockroom.id as stockroomId,
+			stockroom.name as stockroomName,
+			product_type.id as productTypeId,
+			product_type.name as productType,
+			customer.name as customerName, 
+			
+			send_goods.ca_name as customerAddressName, 
+			send_goods.ca_address as customerAddress,
+			send_goods.transport_way as transportWay,
+			send_goods.date as date,
+			send_goods.request_date as requestDate,
+
+			send_goods.send_date as sendDate, 
+			send_goods.user_name as userName,
+			send_goods.status as status,
+
+			(case 
+			when send_goods.status = 2 then 0
+			when send_goods.status = 3 then 1
+			when send_goods.status = 4 then 2
+			when send_goods.status = 5 then 3  
+			else 99 end) as changeStatus,
+
+			send_goods.take_name as takeName,
+			send_goods.take_number as takeNumber,
+			send_goods.ca_postcode as postcode,
+			send_goods.ca_linkman as linkman,
+			send_goods.ca_tel as tel,
+			send_goods.ca_mobile as mobile
+		from 
+
+			stockroom,customer,product_type,send_goods
+
+			left join(
+				select
+					customer_address.id as id,
+					customer_address.name as name,
+					customer_address.address as address,
+					customer_address.postcode as postcode,
+					customer_address.linkman as linkman,
+					customer_address.tel as tel,
+					customer_address.mobile as mobile
+				from
+					customer_address
+			) as customerAddress on customerAddress.id = send_goods.customer_address_id
+
+		where
+			stockroom.id = send_goods.stockroom_id
+		and	customer.id = send_goods.customer_id 
+		and	product_type.id = send_goods.product_type_id
+		and send_goods.status = 2
+		
+		union all
+
+		select 
+			2 as orderType,
+			buy_back_goods.id as orderId,
+			stockroom.id as stockroomId,
+			stockroom.name as stockroomName,
+			product_type.id as productTypeId,
+			product_type.name as productType,
+			supplier.name as customerName,
+
+			supplierAddress.name as customerAddressName, 
+			supplierAddress.address as customerAddress,
+			buy_back_goods.transport_way as transportWay,
+			buy_back_goods.date as date,
+			buy_back_goods.request_date as requestDate,
+
+			buy_back_goods.send_date as sendDate, 
+			buy_back_goods.user_name as userName,
+			buy_back_goods.status as status,
+
+			(case 
+			when buy_back_goods.status = 8 then 0
+			when buy_back_goods.status = 9 then 1
+			when buy_back_goods.status = 10 then 2
+			when buy_back_goods.status = 11 then 3
+			else 99 end) as changeStatus,
+
+			buy_back_goods.take_name as takeName,
+			buy_back_goods.take_number as takeNumber,
+			supplierAddress.postcode as postcode,
+			supplierAddress.linkman as linkman,
+			supplierAddress.tel as tel,
+			supplierAddress.mobile as mobile
+		from 
+
+			stockroom,supplier,product_type,buy_back_goods
+
+			left join(
+				select
+					supplier_address.id as id,
+					supplier_address.name as name,
+					supplier_address.address as address,
+					supplier_address.postcode as postcode,
+					supplier_address.linkman as linkman,
+					supplier_address.tel as tel,
+					supplier_address.mobile as mobile 
+				from
+					supplier_address
+			) as supplierAddress on supplierAddress.id = buy_back_goods.supplier_address_id
+
+		where
+			stockroom.id = buy_back_goods.stockroom_id
+		and	supplier.id = buy_back_goods.supplier_id 
+		and	product_type.id = buy_back_goods.product_type_id
+		and buy_back_goods.status = 8
+		
+		union all
+
+		select 
+			3 as orderType,
+			move.id as orderId,
+			stockroom.id as stockroomId,
+			stockroom.name as stockroomName,
+			product_type.id as productTypeId,
+			product_type.name as productType,
+			stockroomAddress.stockroomName as customerName,
+
+			stockroomAddress.name as customerAddressName, 
+			stockroomAddress.address as customerAddress,
+			move.transport_way as transportWay,
+			move.date as date,
+			move.request_date as requestDate,
+
+			move.send_date as sendDate, 
+			move.user_name as userName,
+			move.status as status,
+
+			(case 
+			when move.status = 4 then 0
+			when move.status = 5 then 1
+			when move.status = 6 then 2
+			when move.status = 7 then 3
+			when move.status = 8 then 3
+
+			else 99 end) as changeStatus,
+
+			"" as takeName,
+			"" as takeNumber,
+			stockroomAddress.postcode as postcode,
+			stockroomAddress.linkman as linkman,
+			stockroomAddress.tel as tel,
+			stockroomAddress.mobile as mobile
+		from 
+
+		stockroom,product_type,move
+
+		left join(
+			select 
+				stockroom_address.id as id,
+				stockroom.name as stockroomName,
+				stockroom_address.name as name,
+				stockroom_address.address as address,
+				stockroom_address.postcode as postcode,
+				stockroom_address.linkman as linkman,
+				stockroom_address.tel as tel,
+				stockroom_address.mobile as mobile
+			from 
+				stockroom,stockroom_address
+			where
+				stockroom_address.stockroom_id = stockroom.id
+		) as stockroomAddress on stockroomAddress.id = move.stockroom_address_id
+
+		where
+			stockroom.id = move.out_stockroom_id  
+		and	product_type.id = move.product_type_id
+		and move.status = 4
+		
+		union all
+
+		select 
+			4 as orderType,
+			sample_out.id as orderId,
+			stockroom.id as stockroomId,
+			stockroom.name as stockroomName,
+			product_type.id as productTypeId,
+			product_type.name as productType,
+
+			 (case 
+				when sample_out.company_type = 1 then companyAddress.companyName
+				when sample_out.company_type = 2 then customerAddress.customerName
+				when sample_out.company_type = 3 then supplierAddress.supplierName end) as customerName,
+			 (case 
+				when sample_out.company_type = 1 then companyAddress.name
+				when sample_out.company_type = 2 then customerAddress.name
+				when sample_out.company_type = 3 then supplierAddress.name end) as customerAddressName,
+			 (case                                    
+				when sample_out.company_type = 1 then companyAddress.address
+				when sample_out.company_type = 2 then customerAddress.address
+				when sample_out.company_type = 3 then supplierAddress.address end) as customerAddress,
+														
+			sample_out.transport_way as transportWay,
+			sample_out.date as date,
+			sample_out.request_date as requestDate,
+
+			sample_out.send_date as sendDate, 
+			sample_out.user_name as userName,
+			sample_out.status as status,
+
+			(case 
+			when sample_out.status = 6 then 0
+			when sample_out.status = 7 then 1
+			when sample_out.status = 8 then 2
+			when sample_out.status = 9 then 3  
+			else 99 end) as changeStatus,
+
+			sample_out.take_name as takeName,
+			sample_out.take_number as takeNumber,
+
+			 (case 
+				when sample_out.company_type = 1 then companyAddress.postcode
+				when sample_out.company_type = 2 then customerAddress.postcode
+				when sample_out.company_type = 3 then supplierAddress.postcode end) as postcode,
+			 (case 
+				when sample_out.company_type = 1 then companyAddress.linkman
+				when sample_out.company_type = 2 then customerAddress.linkman
+				when sample_out.company_type = 3 then supplierAddress.linkman end) as linkman,
+			 (case                                    
+				when sample_out.company_type = 1 then companyAddress.tel
+				when sample_out.company_type = 2 then customerAddress.tel
+				when sample_out.company_type = 3 then supplierAddress.tel end) as tel,
+			 (case                                    
+				when sample_out.company_type = 1 then companyAddress.mobile
+				when sample_out.company_type = 2 then customerAddress.mobile
+				when sample_out.company_type = 3 then supplierAddress.mobile end) as mobile
+		from
+
+		stockroom,product_type,sample_out
+
+		left join(
+			select 
+				company_address.id as id,
+				company.name as companyName,
+				company_address.name as name,
+				company_address.address as address,
+				company_address.postcode as postcode,
+				company_address.linkman as linkman,
+				company_address.tel as tel,
+				company_address.mobile as mobile
+			from 
+				company_address,company
+		) as companyAddress 
+		on companyAddress.id = sample_out.address_id and sample_out.company_type = 1
+
+		left join(
+			select 
+				customer_address.id as id,
+				customer.name as customerName,
+				customer_address.name as name,
+				customer_address.address as address,
+				customer_address.postcode as postcode,
+				customer_address.linkman as linkman,
+				customer_address.tel as tel,
+				customer_address.mobile as mobile
+			from 
+				customer_address,customer
+			where
+				customer_address.customer_id=customer.id
+		) as customerAddress 
+		on customerAddress.id = sample_out.address_id and sample_out.company_type = 2
+
+		left join(
+			select 
+				supplier_address.id as id,
+				supplier.name as supplierName,
+				supplier_address.name as name,
+				supplier_address.address as address,
+				supplier_address.postcode as postcode,
+				supplier_address.linkman as linkman,
+				supplier_address.tel as tel,
+				supplier_address.mobile as mobile
+			from 
+				supplier_address,supplier
+			where
+				supplier_address.supplier_id=supplier.id
+		) as supplierAddress 
+		on supplierAddress.id = sample_out.address_id and sample_out.company_type = 3
+
+		where
+			stockroom.id = sample_out.out_stockroom_id 
+		and	product_type.id = sample_out.product_type_id
+		and sample_out.status = 6) as orderData
+
+		where
+			productTypeId = #productType# 
+			<isNotEmpty prepend="and" property="userStockroomList">
+				<iterate property="userStockroomList" open="(" close=")" conjunction="or" >  
+						(productTypeId = $userStockroomList[].productTypeId$ 
+					and stockroomId = $userStockroomList[].stockroomId$)
+				</iterate>
+			</isNotEmpty>
+	</select>
+
+
+</sqlMap>

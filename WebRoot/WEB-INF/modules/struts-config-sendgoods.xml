@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="sendGoodsForm" type="cn.com.thtf.egov.cms.form.SendGoodsListForm">
+		</form-bean>
+		<form-bean name="createSendGoodsForm"
+			type="cn.com.thtf.egov.cms.form.CreateSendGoodsForm">
+		</form-bean>
+		<form-bean name="reserveGoods" type="cn.com.thtf.egov.cms.form.CreateReserveGoodsForm"
+			/>
+	</form-beans>
+	<global-exceptions />
+
+	<global-forwards>
+		<forward name="sendGoodsList" path="/sendgoods.do" redirect="true" />
+	</global-forwards>
+
+
+	<action-mappings>
+		<!--  进入发货管理主列表页 -->
+		<action path="/getSendGoodsList"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsListAction"
+			name="sendGoodsForm"
+			parameter="getSendGoodsList"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/sendgoodslist.jsp"/>
+		</action>
+		<!--  发货单查看  -->
+		<action path="/getSendGoodsView"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsListAction"
+			parameter="getSendGoodsView"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/sendgoodview.jsp"/>
+			<forward name="fail" 
+				path="/getSendGoodsList.do" />
+		</action>
+		<!--  发货单删除  -->
+		<action path="/removeSendGoods"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsListAction"
+			parameter="removeSendGoods"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/getSendGoodsList.do" ></forward>
+			<forward name="fail" 
+				path="/getSendGoodsList.do" />
+		</action>
+
+
+		<!--  新建发货单  -->
+		<action path="/addCreateSendGoodsInit"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsCreateAction"
+			parameter="addCreateSendGoodsInit"
+			name="createSendGoodsForm"
+			scope="request"
+			validate="false">
+			<forward name="createSendGoods"
+				path="/jsp/salescontract/createSendGoods.jsp"
+				/>
+			<forward name="createSendGoodsFail"
+				path="/getSendGoodsList.do"
+				/>
+		</action>
+		<action path="/addCreateSendGoods"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsCreateAction"
+			parameter="addCreateSendGoods"
+			name="createSendGoodsForm"
+			scope="request"
+			validate="false">
+			<forward name="createSuccess"
+				path="/getSendGoodsList.do"
+				/>
+			<forward name="createFail"
+				path="/modifySendGoods.do"
+				/>
+			<forward name="submitRepeat"
+				path="/getSendGoodsList.do"
+				/>
+		</action>
+		<!--  新建备货单  -->
+		<action path="/addCreateReserveGoodsInit"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsCreateAction"
+			parameter="addCreateReserveGoodsInit"
+			name="createSendGoodsForm"
+			scope="request"
+			validate="false">
+			<forward name="createReserveGoods"
+				path="/jsp/salescontract/createReserveGoods.jsp"
+				/>
+		</action>
+		<!--  修改和新建备货单共用 -->
+		<action path="/addCreateReserveGoods"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsCreateAction"
+			parameter="addCreateReserveGoods"
+			name="reserveGoods"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/getSendGoodsList.do"></forward>
+			<forward name="addfail"
+				path="/modifyReserveGoods.do"></forward>
+			<forward name="updatefail"
+				path="/modifyReserveGoods.do"></forward>
+			<forward name="addsavefail"
+				path="/addCreateReserveGoodsInit.do"></forward>
+			<forward name="updatesavefail"
+				path="/modifyReserveGoods.do"></forward>
+		</action>
+		
+		<!--  备货单修改初始化  -->
+		<action path="/modifyReserveGoods"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsCreateAction"
+			parameter="modifyReserveGoods"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/modifyReserveGoods.jsp"/>
+			<forward name="fail"
+				path="/getSendGoodsList.do" />
+		</action> 
+		
+		<!--  发货单修改初始化  -->
+		<action path="/modifySendGoods"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsCreateAction"
+			parameter="modifySendGoods"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/createSendGoods.jsp"/>
+			<forward name="fail"
+				path="/getSendGoodsList.do" />
+		</action> 
+		
+		<!--  选择产品小页面  -->
+		<action path="/getProductByStockroomId"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsCreateAction"
+			parameter="getProductByStockroomId"
+			scope="request"
+			validate="false">
+			<forward name="productListView"
+				path="/jsp/salescontract/productList.jsp"/>
+		</action>
+
+		<!--  选择产品小页面(备货)  -->
+		<action path="/getReserveProductByStockroomId"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsCreateAction"
+			parameter="getReserveProductByStockroomId"
+			scope="request"
+			validate="false">
+			<forward name="productListView"
+				path="/jsp/salescontract/reserveProductList.jsp"/>
+		</action>
+
+		<!--  备货单评审  -->
+		<action path="/sendStockingAssessment"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsListAction"
+			parameter="stockingAssessment"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/sendgoodsauditprepare.jsp"/>
+		</action>
+		<!--  保存备货单评审  -->
+		<action path="/stockingAssessment"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsListAction"
+			parameter="modifySendStockingAssessment"
+			scope="request"
+			validate="false">
+		</action>
+		
+		<!--  备货单查看  -->
+		<action path="/getSendgoosViewPrepare"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsListAction"
+			parameter="sendgoosViewPrepareView"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/salescontract/sendgoosviewprepare.jsp"/>
+			<forward name="fail"
+				path="/getSendGoodsList.do" />
+		</action>
+		<!--  备货单查看  -->
+		<action path="/getBoxIdBySendGoodId"
+			type="cn.com.thtf.egov.cms.action.sell.SendGoodsListAction"
+			parameter="getBoxIdBySendGoodId"
+			scope="request"
+			validate="false">
+		</action>
+	</action-mappings>
+</struts-config>

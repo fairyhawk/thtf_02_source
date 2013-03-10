@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="invoiceForm" type="cn.com.thtf.egov.cms.form.ReceiveInvoiceForm"/>	
+		<form-bean name="inStockForm" type="cn.com.thtf.egov.cms.form.InStockSearchForm"/>	
+	</form-beans>
+	<global-exceptions />
+	<global-forwards>
+		<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+	</global-forwards>
+	<action-mappings>
+		<!-- 需求管理列表 -->
+		<action path="/getReceiveInvoiceList"
+			type="cn.com.thtf.egov.cms.action.invoice.ReceiveInvoiceAction"
+			parameter="getReceiveInvoiceList"
+			name="invoiceForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/invoice/receiveInvoiceManage.jsp" />
+		</action>
+
+		<!-- 采购发票录入 -->
+		<action path="/addReceiveInvoice"
+			type="cn.com.thtf.egov.cms.action.invoice.ReceiveInvoiceAction"
+			parameter="addReceiveInvoice"
+			name="invoiceForm"
+			scope="request"
+			validate="false">
+			<forward redirect="true" name="success" path="/getReceiveInvoiceList.do" />	
+			<forward name="fail" path="/goReceiveInvoicePage.do" />			
+		</action>
+
+		<!-- 采购发票录入页面 -->
+		<action path="/goReceiveInvoicePage"
+			type="cn.com.thtf.egov.cms.action.invoice.ReceiveInvoiceAction"
+			parameter="goReceiveInvoicePage"
+			name="invoiceForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/invoice/receiveInvoiceAdd.jsp" />			
+		</action>
+			<!-- 采购发票指定 @Hanhaiyun 2010-6-18-->
+		<action path="/addReceiveInvoiceAppoint"
+			type="cn.com.thtf.egov.cms.action.invoice.ReceiveInvoiceAction"
+			parameter="addReceiveInvoiceAppoint"
+			name="invoiceForm"
+			scope="request"
+			validate="false">
+			<forward  name="success" redirect="true" path="/getReceiveInvoiceList.do" />	
+		</action>			
+		<!-- 供应商选择 -->
+		<action path="/getSuppliersList"
+			type="cn.com.thtf.egov.cms.action.invoice.ReceiveInvoiceAction"
+			parameter="getSuppliersList"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/invoice/supplierSelectSub.jsp" />
+		</action>
+		
+		<!-- 采购发票信息 -->
+		<action path="/getInvoiceInfo"
+			type="cn.com.thtf.egov.cms.action.invoice.ReceiveInvoiceAction"
+			parameter="getInvoiceInfo"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/invoice/receiveInvoiceAppoint.jsp" />
+			<forward name="view" path="/jsp/invoice/receiveInvoiceView.jsp" />
+		</action>
+
+		<!-- 产品选择 -->
+		<action path="/getInStockProdList"
+			type="cn.com.thtf.egov.cms.action.invoice.ReceiveInvoiceAction"
+			parameter="getInStockProdList"
+			name="inStockForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/invoice/receiveInvoiceInStockDtailSelectSub.jsp" />
+		</action>
+		
+		<!-- 删除采购发票 -->
+		<action path="/removeRecordById"
+			type="cn.com.thtf.egov.cms.action.invoice.ReceiveInvoiceAction"
+			parameter="removeRecordById"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/getReceiveInvoiceList.do" />	
+		</action>
+		
+		<!-- 更新(退票)采购发票 -->
+		<action path="/modifyRecordById"
+			type="cn.com.thtf.egov.cms.action.invoice.ReceiveInvoiceAction"
+			parameter="modifyRecordById"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/getReceiveInvoiceList.do" />	
+		</action>
+	</action-mappings>
+</struts-config>

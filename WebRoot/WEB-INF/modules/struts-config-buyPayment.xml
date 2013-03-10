@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+<!--		列表检索 -->
+		<form-bean name="buyPaymentListForm" type="cn.com.thtf.egov.cms.form.BuyPaymentListQueryForm"></form-bean>
+		<form-bean name="buyPaymentSelectBuyContract" type="cn.com.thtf.egov.cms.form.BuyPaymentSelectBuyContractForm"></form-bean>
+		<form-bean name="buyPaymentSelectInStockDetail" type="cn.com.thtf.egov.cms.form.BuyPaymentSelectInStockDetailForm"></form-bean>
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>
+<!--		采购付款列表  -->
+		<action path="/buyPayment"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="getBuyPaymentList"
+			scope="request"
+			name="buyPaymentListForm"
+			validate="false">
+			<forward name="success"
+				path="/jsp/purchase/buyPaymentList.jsp" />
+		</action>
+		<!--   付款查看    -->
+		<action path="/viewBuyPayment"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="viewBuyPayment"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/purchase/buyPaymentView.jsp" />
+		</action>
+<!--		采购付款申请初始化  -->
+		<action path="/buyPaymentAddInit"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="addBuyPaymentInit"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/purchase/buyPaymentAdd.jsp" />
+		</action>
+<!--		采购付款申请  -->
+		<action path="/buyPaymentAdd"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="addBuyPayment"
+			scope="request"
+			validate="false">
+		</action>
+<!--		供货商选择 -->
+		<action path="/buyPaymentSelectSupplier"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="selectSupplierInit"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/purchase/buyPaymentSelectSupplier.jsp" />
+		</action>
+<!--		供货商联系人  -->
+		<action path="/getSupplierLinkMan"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="getSupplierLinkMan"
+			scope="request"
+			validate="false">
+		</action>
+<!--		采购合同选择  -->
+		<action path="/buyPaymentSelectBuyContract"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="getBuyPaymentSelectBuyContract"
+			scope="request"
+			name="buyPaymentSelectBuyContract"
+			validate="false">
+			<forward name="success"
+				path="/jsp/purchase/buyPaymentSelectBuyContract.jsp" />
+		</action>
+		
+		<!--  付款评审初始化    -->
+		<action path="/auditBuyPaymentInit"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="auditBuyPaymentInit"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/purchase/buyPaymentAudit.jsp" />
+		</action>
+		
+		<!--  付款评审    -->
+		<action path="/auditBuyPayment"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="auditBuyPayment"
+			scope="request"
+			validate="false">
+		</action>
+		
+		<!--  入库明细选择    -->
+		<action path="/buyPaymentSelectInStockDetail"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="getBuyPaymentInStockDetail"
+			scope="request"
+			name="buyPaymentSelectInStockDetail"
+			validate="false">
+			<forward name="success"
+				path="/jsp/purchase/buyPaymentSelectInStockDetail.jsp" />
+		</action>
+		
+		<!--   付款预览    -->
+		<action path="/buyPaymentPreview"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="viewBuyPayment"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/purchase/buyPaymentPreview.jsp" />
+		</action>
+		
+		<!--   付款打印    -->
+		<action path="/buyPaymentPrint"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="buyPaymentPrint"
+			scope="request"
+			validate="false">
+		</action>
+		
+		<!--   付款承兑    -->
+		<action path="/acceptBuyPayment"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="acceptBuyPayment"
+			scope="request"
+			validate="false">
+		</action>
+		<!--   付款确认   
+		<action path="/confirmBuyPayment"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="confirmBuyPayment"
+			scope="request"
+			validate="false">
+		</action> -->
+		<!--  付款修改初始化    -->
+		<action path="/modifyBuyPaymentInit"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="modifyBuyPaymentInit"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/purchase/buyPaymentModify.jsp" />
+		</action>
+		<!--  付款指定初始化    -->
+		<action path="/appointBuyPaymentInit"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="appointBuyPaymentInit"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/purchase/buyPaymentAppointPrepay.jsp" />
+		</action>
+		
+		<!--  付款指定   -->
+		<action path="/appointBuyPayment"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="appointBuyPayment"
+			scope="request"
+			validate="false">
+		</action>
+		
+		<!--  付款再指定初始化    -->
+		<action path="/againAppointBuyPaymentInit"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="againAppointBuyPaymentInit"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/purchase/buyPaymentReappoint.jsp" />
+		</action>
+		
+		<!--  付款再指定   -->
+		<action path="/againAppointBuyPayment"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="againAppointBuyPayment"
+			scope="request"
+			validate="false">
+		</action>
+		
+		<!--  付款修改    -->
+		<action path="/modifyBuyPayment"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="modifyBuyPayment"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/purchase/buyPaymentModify.jsp" />
+		</action>
+		<!--  付款修改    -->
+		<action path="/deleteBuyPayment"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="deleteBuyPayment"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/buyPayment.do" />
+		</action>
+		
+		<!--  付款确认    -->
+		<action path="/confirmBuyPaymentModifyInfo"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="confirmBuyPaymentModifyInfo"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/purchase/buyPaymentAppoint1.jsp"/>
+		</action>
+		
+		<!--  付款确认    -->
+		<action path="/confirmBuyPaymentModify"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="confirmBuyPaymentModify"
+			scope="request"
+			validate="false">
+		</action>
+		<!--  外单判断    -->
+		<action path="/buyPaymentzd"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyPaymentAction"
+			parameter="buyPaymentzd"
+			scope="request"
+			validate="false">
+		</action>
+	</action-mappings>
+</struts-config>

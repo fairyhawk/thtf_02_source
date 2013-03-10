@@ -1,0 +1,1032 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="sampleOut_sqlMap">
+	<!--产品分类-->
+	<typeAlias alias="productTypeEntity" type="cn.com.thtf.egov.cms.entity.ProductTypeEntity" />
+	<!--库房-->
+	<typeAlias alias="stockroomEntity" type="cn.com.thtf.egov.cms.entity.StockroomEntity"/> 
+	<!--用户-->	
+	<typeAlias alias="userEntity" type="cn.com.thtf.egov.cms.entity.UserEntity"/>
+	<!--管理页面列表-->
+	<typeAlias alias="sampleOutListDto" type="cn.com.thtf.egov.cms.dto.SampleOutListDto"/>
+	<!--管理页面检索-->
+	<typeAlias alias="sampleOutSearchDto" type="cn.com.thtf.egov.cms.dto.SampleOutSearchDto"/>
+	<!--借出表实体-->
+	<typeAlias alias="sampleOutEntity" type="cn.com.thtf.egov.cms.entity.SampleOutEntity"/>
+	<!--公司、客户、供货商发货地址-->
+	<typeAlias alias="addressDto" type="cn.com.thtf.egov.cms.dto.CompanyCustomerSupplierAddressDto"/>
+      <!-- 样品借出Dto -->
+    <typeAlias alias="sampleOutAssessDto" type="cn.com.thtf.egov.cms.dto.SampleOutAssessDto"/>
+     <!-- 产品信息 Dto-->
+    <typeAlias alias="productInfoDto" type="cn.com.thtf.egov.cms.dto.SampleOutProductInfoDto"/>
+	 <!-- 库存 -->
+   <typeAlias alias="stockEntity" type="cn.com.thtf.egov.cms.entity.StockEntity" />	
+   <!-- 样品借出单明细 -->
+   <typeAlias alias="sampleOutDetailEntity" type="cn.com.thtf.egov.cms.entity.SampleOutDetailEntity" />
+   
+   		<!-- 客户 By LiuQingGang -->
+	  <typeAlias alias="customerEntity"
+		type="cn.com.thtf.egov.cms.entity.CustomerEntity" />
+		
+	<!-- 公司名称 -->
+   <typeAlias alias="companyEntity" type="cn.com.thtf.egov.cms.entity.CompanyEntity" />
+   	<!-- 客户收获地址  -->
+    <typeAlias alias="customerAddressDto" type="cn.com.thtf.egov.cms.dto.CustomerAndAddressDto"/>
+    
+    	
+		
+
+	<!--获得所有的产品分类 By zzx--> 
+	<select id="selectProductTypeList" resultClass="productTypeEntity">
+			SELECT   PRODUCT_TYPE.ID,
+			         PRODUCT_TYPE.NO,
+			         PRODUCT_TYPE.NAME,
+			         PRODUCT_TYPE.PRODUCT_DEPT_ID,
+			         PRODUCT_TYPE.CLIMIT
+			FROM     PRODUCT_TYPE
+			ORDER BY PRODUCT_TYPE.PRODUCT_DEPT_ID
+	</select>
+	
+	<!-- 获取库房  By zzx -->
+	<select id="selectStockroom" resultClass="stockroomEntity">
+		SELECT   STOCKROOM.ID              AS ID,
+		         STOCKROOM.NAME            AS NAME,
+		         STOCKROOM.TYPE            AS TYPE,
+		         STOCKROOM.SHORT_NAME      AS SHORTNAME,
+		         STOCKROOM.PRODUCT_DEPT_ID AS PRODUCTDEPTID
+		FROM     STOCKROOM
+		WHERE    STOCKROOM.TYPE = 1 
+		ORDER BY STOCKROOM.ID
+	</select>
+	
+	 <!-- 根据用户ID和权限获取样品借出一览  by zzx-->
+	<select id="selectSampleOutList.selectSampleOutList" parameterClass="userEntity" resultClass="sampleOutListDto">
+	SELECT   SAMPLE_OUT.ID,
+	         SAMPLE_OUT.PRODUCT_TYPE_ID       AS PRODUCTTYPEID,
+	         PRODUCT_TYPE.NAME     AS PRODUCTTYPENAME,
+	         SAMPLE_OUT.TYPE,
+	         SAMPLE_OUT.DATE,
+	         IN_DATE               AS INDATE,
+	         COMPANY_TYPE          AS COMPANYTYPE,
+	         COMPANY_ID            AS COMPANYID,
+	         CUSTOS_NAME           AS CUSTOSNAME,
+	         OUT_STOCKROOM_ID      AS OUTSTOCKROOMID,
+	         STOCKROOM.NAME        AS OUTSTOCKROOMNAME,
+	         ADDRESS_ID            AS ADDRESSID,
+	         REQUEST_DATE          AS REQUESTDATE,
+	         SEND_DATE             AS SENDDATE,
+	         TRANSPORT_WAY         AS TRANSPORTWAY,
+	         TAKE_NAME             AS TAKENAME,
+	         TAKE_NUMBER           AS TAKENUMBER,
+	         SAMPLE_OUT.MONEY      AS SAMPLEOUTMONEY,
+			 SAMPLE_OUT.MONEY*(1+company.tax_rate/100) as SAMPLEOUTMONEYTAX,
+	         SAMPLE_OUT.USER_ID    AS USERID,
+	         SAMPLE_OUT.USER_NAME  AS USERNAME,
+	         SAMPLE_OUT.TEXT,
+	         SAMPLE_OUT.STATUS     AS SAMPLEOUTSTATUS,
+	         SAMPLE_OUT.DATETIME,
+	         ifnull(SAMPLE_IN_T.sampleInSumMoney ,0)AS sampleInSumMoney,
+			ifnull(SAMPLE_IN_T.sampleInSumMoney*(1+company.tax_rate/100) ,0)AS sampleInSumMoneyTax,
+	         (CASE 
+	            WHEN SAMPLE_OUT.COMPANY_TYPE = 1 THEN COMPANY.NAME
+	            WHEN SAMPLE_OUT.COMPANY_TYPE = 2 THEN CUSTOMER.NAME
+	            WHEN SAMPLE_OUT.COMPANY_TYPE = 3 THEN SUPPLIER.NAME
+	          END) AS COMPANYNAME,
+	          SAMPLE_OUT.MONEY-ifnull(SAMPLE_IN_T.sampleInSumMoney ,0) as recount
+	FROM     SAMPLE_OUT
+	         LEFT JOIN STOCKROOM
+	           ON SAMPLE_OUT.OUT_STOCKROOM_ID = STOCKROOM.ID
+	         LEFT JOIN PRODUCT_TYPE
+	           ON SAMPLE_OUT.PRODUCT_TYPE_ID = PRODUCT_TYPE.ID
+			 left join user u1
+		       on u1.id = SAMPLE_OUT.user_id
+	         LEFT JOIN 
+			(  select SAMPLE_IN.SAMPLE_OUT_ID as SAMPLE_OUT_ID,SUM(SAMPLE_IN.MONEY)  AS sampleInSumMoney from 
+			SAMPLE_IN	where  SAMPLE_IN.STATUS = 6
+			 GROUP BY SAMPLE_IN.SAMPLE_OUT_ID
+			) SAMPLE_IN_T
+	           ON SAMPLE_IN_T.SAMPLE_OUT_ID = SAMPLE_OUT.ID
+	         LEFT JOIN CUSTOMER
+	           ON CUSTOMER.ID = SAMPLE_OUT.COMPANY_ID
+	              AND SAMPLE_OUT.COMPANY_TYPE = 2
+	         LEFT JOIN SUPPLIER
+	           ON SUPPLIER.ID = SAMPLE_OUT.COMPANY_ID
+	              AND SAMPLE_OUT.COMPANY_TYPE = 3
+			
+		,company
+		<!-- 采购主管 -->
+		<isEqual prepend="," property="roleId" compareValue="11">
+				user_product
+		</isEqual>
+		<!-- 销售总监-->
+		<isEqual prepend="," property="roleId" compareValue="5">
+				user_product
+		</isEqual>
+		<!-- 区域总监-->
+		<isEqual prepend="," property="roleId" compareValue="9">
+				user_product,user
+		</isEqual>
+		
+		<!-- 区域经理
+		<isEqual prepend="," property="roleId" compareValue="19">
+				user_area_mapping
+		</isEqual>
+		 大区经理
+		<isEqual prepend="," property="roleId" compareValue="20">
+				user_area_mapping
+		</isEqual>
+		-->
+		<dynamic prepend="WHERE">			
+
+			<!-- 采购专员 (自己新建)-->
+			<isEqual prepend="" property="roleId" compareValue="8">
+				SAMPLE_OUT.user_id = #id#					
+			</isEqual>
+
+			<!-- 销售经理(自己新建) -->
+			<isEqual prepend="" property="roleId" compareValue="4">
+				SAMPLE_OUT.user_id = #id#	
+			</isEqual>
+
+			<!-- 采购主管(负责产品分类，样品归还单状态采购主管待评审)-->
+			<isEqual prepend="" property="roleId" compareValue="11">
+				user_product.user_id=#id# and user_product.product_type_id = SAMPLE_OUT.product_type_id
+					and SAMPLE_OUT.status=4			
+			</isEqual>	
+			<!-- 销售总监(负责产品分类，样品归还单状态采购主管待评审)-->
+			<isEqual prepend="" property="roleId" compareValue="5">
+				user_product.user_id=#id# and user_product.product_type_id = SAMPLE_OUT.product_type_id
+					and SAMPLE_OUT.status=2			
+			</isEqual>	
+			<!-- 区域总监(负责产品分类)-->
+			<isEqual prepend="" property="roleId" compareValue="9">
+				user_product.user_id=#id# and user_product.product_type_id = SAMPLE_OUT.product_type_id
+			</isEqual>		
+			<!-- 
+			区域经理(负责区域)
+			<isEqual prepend="" property="roleId" compareValue="19">
+				 user_area_mapping.user_id=#id# AND  
+				 user_area_mapping.user_area_id=u1.user_area_id 
+			</isEqual>	
+			 大区经理(负责区域)
+			<isEqual prepend="" property="roleId" compareValue="20">
+				user_area_mapping.user_id=#id# AND  
+				 user_area_mapping.user_area_id=u1.user_area_id 
+			</isEqual>
+			-->	
+		</dynamic>
+		
+		order by 
+ 			 SAMPLE_OUT.id desc
+ 			 
+	</select>
+	
+	 <!-- 根据用户ID和权限获取样品借出一览(分页)  by zzx-->
+	<select id="selectSampleOutList.recordCount" parameterClass="userEntity" resultClass="java.lang.Integer">	
+	select count(*) from(
+	SELECT   SAMPLE_OUT.ID	         
+	FROM     SAMPLE_OUT
+	         LEFT JOIN STOCKROOM
+	           ON SAMPLE_OUT.OUT_STOCKROOM_ID = STOCKROOM.ID
+	         LEFT JOIN PRODUCT_TYPE
+	           ON SAMPLE_OUT.PRODUCT_TYPE_ID = PRODUCT_TYPE.ID
+			 left join user u1
+		       on u1.id = SAMPLE_OUT.user_id
+	         LEFT JOIN 
+			(  select SAMPLE_IN.SAMPLE_OUT_ID as SAMPLE_OUT_ID,SUM(SAMPLE_IN.MONEY)  AS sampleInSumMoney from 
+			SAMPLE_IN	where  SAMPLE_IN.STATUS = 6
+			 GROUP BY SAMPLE_IN.SAMPLE_OUT_ID
+			) SAMPLE_IN_T
+	           ON SAMPLE_IN_T.SAMPLE_OUT_ID = SAMPLE_OUT.ID
+	         LEFT JOIN CUSTOMER
+	           ON CUSTOMER.ID = SAMPLE_OUT.COMPANY_ID
+	              AND SAMPLE_OUT.COMPANY_TYPE = 2
+	         LEFT JOIN SUPPLIER
+	           ON SUPPLIER.ID = SAMPLE_OUT.COMPANY_ID
+	              AND SAMPLE_OUT.COMPANY_TYPE = 3 
+	    ,company
+		<!-- 采购主管 -->
+		<isEqual prepend="," property="roleId" compareValue="11">
+				user_product
+		</isEqual>
+		<!-- 销售总监-->
+		<isEqual prepend="," property="roleId" compareValue="5">
+				user_product
+		</isEqual>
+		<!-- 区域总监-->
+		<isEqual prepend="," property="roleId" compareValue="9">
+				user_product,user
+		</isEqual>
+		<!-- 区域经理
+		<isEqual prepend="," property="roleId" compareValue="19">
+				user_area_mapping
+		</isEqual>
+		 大区经理
+		<isEqual prepend="," property="roleId" compareValue="20">
+				user_area_mapping
+		</isEqual>
+		-->
+		<dynamic prepend="WHERE">			
+
+			<!-- 采购专员 (自己新建)-->
+			<isEqual prepend="" property="roleId" compareValue="8">
+				SAMPLE_OUT.user_id = #id#					
+			</isEqual>
+
+			<!-- 销售经理(自己新建) -->
+			<isEqual prepend="" property="roleId" compareValue="4">
+				SAMPLE_OUT.user_id = #id#	
+			</isEqual>
+
+			<!-- 采购主管(负责产品分类，样品归还单状态采购主管待评审)-->
+			<isEqual prepend="" property="roleId" compareValue="11">
+				user_product.user_id=#id# and user_product.product_type_id = SAMPLE_OUT.product_type_id
+					and SAMPLE_OUT.status=4			
+			</isEqual>	
+			<!-- 销售总监(负责产品分类，样品归还单状态采购主管待评审)-->
+			<isEqual prepend="" property="roleId" compareValue="5">
+				user_product.user_id=#id# and user_product.product_type_id = SAMPLE_OUT.product_type_id
+					and SAMPLE_OUT.status=2			
+			</isEqual>
+			<!-- 区域总监(负责产品分类)-->
+			<isEqual prepend="" property="roleId" compareValue="9">
+				user_product.user_id=#id# and user_product.product_type_id = SAMPLE_OUT.product_type_id
+			</isEqual>	
+			<!-- 
+			区域经理(负责产品分类，负责区域)
+			<isEqual prepend="" property="roleId" compareValue="19">
+				 user_area_mapping.user_id=#id# AND  
+				 user_area_mapping.user_area_id=u1.user_area_id 
+			</isEqual>	
+			 大区经理(负责产品分类，负责区域)
+			<isEqual prepend="" property="roleId" compareValue="20">
+				 user_area_mapping.user_id=#id# AND  
+				 user_area_mapping.user_area_id=u1.user_area_id 
+			</isEqual>	
+			-->	
+		</dynamic>
+		
+		order by 
+ 			 SAMPLE_OUT.id  desc) as t1
+	</select>
+	
+	
+	<!--根据条件查询样品借出单 by zzx-->
+	<select id="selectSampleOutListByCondition.selectSampleOutListByCondition" parameterClass="sampleOutSearchDto" resultClass="sampleOutListDto">
+	SELECT   SAMPLE_OUT.ID,
+	         SAMPLE_OUT.PRODUCT_TYPE_ID       AS PRODUCTTYPEID,
+	         PRODUCT_TYPE.NAME     AS PRODUCTTYPENAME,
+	         SAMPLE_OUT.TYPE,
+	         SAMPLE_OUT.DATE,
+	         IN_DATE               AS INDATE,
+	         COMPANY_TYPE          AS COMPANYTYPE,
+	         COMPANY_ID            AS COMPANYID,
+	         CUSTOS_NAME           AS CUSTOSNAME,
+	         OUT_STOCKROOM_ID      AS OUTSTOCKROOMID,
+	         STOCKROOM.NAME        AS OUTSTOCKROOMNAME,
+	         ADDRESS_ID            AS ADDRESSID,
+	         REQUEST_DATE          AS REQUESTDATE,
+	         SEND_DATE             AS SENDDATE,
+	         TRANSPORT_WAY         AS TRANSPORTWAY,
+	         TAKE_NAME             AS TAKENAME,
+	         TAKE_NUMBER           AS TAKENUMBER,
+	         SAMPLE_OUT.MONEY      AS SAMPLEOUTMONEY,
+			SAMPLE_OUT.MONEY*(1+company.tax_rate/100) as SAMPLEOUTMONEYTAX,
+	         SAMPLE_OUT.USER_ID    AS USERID,
+	         SAMPLE_OUT.USER_NAME  AS USERNAME,
+	         SAMPLE_OUT.TEXT,
+	         SAMPLE_OUT.STATUS     AS SAMPLEOUTSTATUS,
+	         SAMPLE_OUT.DATETIME,
+	         ifnull(SAMPLE_IN_T.sampleInSumMoney ,0)AS sampleInSumMoney,
+			ifnull(SAMPLE_IN_T.sampleInSumMoney*(1+company.tax_rate/100) ,0)AS sampleInSumMoneyTax,
+	         (CASE 
+	            WHEN SAMPLE_OUT.COMPANY_TYPE = 1 THEN COMPANY.NAME
+	            WHEN SAMPLE_OUT.COMPANY_TYPE = 2 THEN CUSTOMER.NAME
+	            WHEN SAMPLE_OUT.COMPANY_TYPE = 3 THEN SUPPLIER.NAME
+	          END) AS COMPANYNAME,
+	          SAMPLE_OUT.MONEY-ifnull(SAMPLE_IN_T.sampleInSumMoney ,0) as recount
+	FROM     SAMPLE_OUT
+	         LEFT JOIN STOCKROOM
+	           ON SAMPLE_OUT.OUT_STOCKROOM_ID = STOCKROOM.ID
+	         LEFT JOIN PRODUCT_TYPE
+	           ON SAMPLE_OUT.PRODUCT_TYPE_ID = PRODUCT_TYPE.ID
+		   	 left join user u1
+		       on u1.id = SAMPLE_OUT.user_id
+	         LEFT JOIN (  select SAMPLE_IN.SAMPLE_OUT_ID as SAMPLE_OUT_ID,SUM(SAMPLE_IN.MONEY)  AS sampleInSumMoney from 
+			SAMPLE_IN	where  SAMPLE_IN.STATUS = 6
+			 GROUP BY SAMPLE_IN.SAMPLE_OUT_ID
+			) SAMPLE_IN_T
+				ON SAMPLE_IN_T.SAMPLE_OUT_ID = SAMPLE_OUT.ID
+			LEFT JOIN COMPANY c1
+	           ON SAMPLE_OUT.COMPANY_TYPE = 1
+	         LEFT JOIN CUSTOMER
+	           ON CUSTOMER.ID = SAMPLE_OUT.COMPANY_ID
+	              AND SAMPLE_OUT.COMPANY_TYPE = 2
+	         LEFT JOIN SUPPLIER
+	           ON SUPPLIER.ID = SAMPLE_OUT.COMPANY_ID
+	              AND SAMPLE_OUT.COMPANY_TYPE = 3
+		,company
+		<!-- 采购主管 -->
+		<isEqual prepend="," property="roleId" compareValue="11">
+				user_product
+		</isEqual>
+		<!-- 销售总监-->
+		<isEqual prepend="," property="roleId" compareValue="5">
+				user_product
+		</isEqual>
+		<!-- 区域总监-->
+		<isEqual prepend="," property="roleId" compareValue="9">
+				user_product,user
+		</isEqual>
+		<!-- 区域经理
+		<isEqual prepend="," property="roleId" compareValue="19">
+				user_area_mapping
+		</isEqual>
+		大区经理
+		<isEqual prepend="," property="roleId" compareValue="20">
+				user_area_mapping
+		</isEqual>
+		-->
+		<dynamic prepend="WHERE">			
+
+			<!-- 采购专员 (自己新建)-->
+			<isEqual prepend="and" property="roleId" compareValue="8">
+				SAMPLE_OUT.user_id = #loginId#					
+			</isEqual>
+
+			<!-- 销售经理(自己新建) -->
+			<isEqual prepend="and" property="roleId" compareValue="4">
+				SAMPLE_OUT.user_id = #loginId#	
+			</isEqual>
+
+			<!-- 采购主管(负责产品分类)-->
+			<isEqual prepend="and" property="roleId" compareValue="11">
+				user_product.user_id=#loginId# and user_product.product_type_id = SAMPLE_OUT.product_type_id
+			</isEqual>	
+			<!-- 销售总监(负责产品分类)-->
+			<isEqual prepend="and" property="roleId" compareValue="5">
+				user_product.user_id=#loginId# and user_product.product_type_id = SAMPLE_OUT.product_type_id
+			</isEqual>	
+			<!-- 区域总监(负责产品分类)-->
+			<isEqual prepend="and" property="roleId" compareValue="9">
+				user_product.user_id=#loginId# and user_product.product_type_id = SAMPLE_OUT.product_type_id
+			</isEqual>
+			<!-- 区域经理(负责产品分类，负责区域)
+			<isEqual prepend="and" property="roleId" compareValue="19">
+				user_area_mapping.user_id=#loginId# AND  
+				user_area_mapping.user_area_id=u1.user_area_id 
+			</isEqual>
+			 大区经理(负责产品分类，负责区域)
+			<isEqual prepend="and" property="roleId" compareValue="20">
+				user_area_mapping.user_id=#loginId# AND  
+				user_area_mapping.user_area_id=u1.user_area_id 
+			</isEqual>		
+			-->
+			
+			<!-- 画面条件 -->		
+			<isNotEmpty prepend="and" property="id">
+				SAMPLE_OUT.id = #id#
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="outStockroomId">
+				SAMPLE_OUT.out_stockroom_id=#outStockroomId# 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="productTypeId">
+				SAMPLE_OUT.product_type_id=#productTypeId#	 
+			</isNotEmpty>	
+			<isNotEmpty prepend="and" property="companyType">
+				SAMPLE_OUT.company_type=#companyType#	 
+			</isNotEmpty>	
+			<isNotEmpty prepend="and" property="companyName">						
+			 (c1.NAME like '%$companyName$%' or 
+      		  CUSTOMER.NAME  like '%$companyName$%' or
+       		  SUPPLIER.NAME like '%$companyName$%'  ) 			
+			</isNotEmpty>			
+		    <isNotEmpty prepend="and" property="dateStart">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.date,'%Y%m%d')>=  DATE_FORMAT(#dateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="dateEnd">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.date,'%Y%m%d')<=  DATE_FORMAT(#dateEnd#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>			
+			<isNotEmpty prepend="and" property="requestDateStart">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.request_date,'%Y%m%d')>=  DATE_FORMAT(#requestDateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="requestDateEnd">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.request_date,'%Y%m%d')<=  DATE_FORMAT(#requestDateEnd#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="inDateStart">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.in_date,'%Y%m%d')>=  DATE_FORMAT(#inDateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="inDateEnd">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.in_date,'%Y%m%d')<=  DATE_FORMAT(#inDateEnd#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>			
+			<isNotEmpty prepend="and" property="sendDateStart">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.SEND_DATE,'%Y%m%d')>=  DATE_FORMAT(#sendDateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="sendDateEnd">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.SEND_DATE,'%Y%m%d')<=  DATE_FORMAT(#sendDateEnd#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userName">
+				SAMPLE_OUT.user_name like  '%$userName$%'		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="custosName">
+				SAMPLE_OUT.custos_name like  '%$custosName$%'		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="type">
+				SAMPLE_OUT.type=#type#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="sampleOutStatus">
+				SAMPLE_OUT.status=#sampleOutStatus#	 
+			</isNotEmpty>							
+		</dynamic>
+		
+		order by 
+ 			 SAMPLE_OUT.id desc
+	</select>	
+	<!--根据条件查询样品借出单（分页用） by zzx-->
+	<select id="selectSampleOutListByCondition.recordCount" parameterClass="sampleOutSearchDto" resultClass="java.lang.Integer">
+		select count(*) from(
+	SELECT   SAMPLE_OUT.ID
+	FROM     SAMPLE_OUT
+	         LEFT JOIN STOCKROOM
+	           ON SAMPLE_OUT.OUT_STOCKROOM_ID = STOCKROOM.ID
+	         LEFT JOIN PRODUCT_TYPE
+	           ON SAMPLE_OUT.PRODUCT_TYPE_ID = PRODUCT_TYPE.ID
+			 left join user u1
+		       on u1.id = SAMPLE_OUT.user_id
+	        LEFT JOIN (  select SAMPLE_IN.SAMPLE_OUT_ID as SAMPLE_OUT_ID,SUM(SAMPLE_IN.MONEY)  AS sampleInSumMoney from 
+			SAMPLE_IN	where  SAMPLE_IN.STATUS = 6
+			 GROUP BY SAMPLE_IN.SAMPLE_OUT_ID
+			) SAMPLE_IN_T
+				ON SAMPLE_IN_T.SAMPLE_OUT_ID = SAMPLE_OUT.ID
+			LEFT JOIN COMPANY c1
+	           ON SAMPLE_OUT.COMPANY_TYPE = 1	
+	         LEFT JOIN CUSTOMER
+	           ON CUSTOMER.ID = SAMPLE_OUT.COMPANY_ID
+	              AND SAMPLE_OUT.COMPANY_TYPE = 2
+	         LEFT JOIN SUPPLIER
+	           ON SUPPLIER.ID = SAMPLE_OUT.COMPANY_ID
+	              AND SAMPLE_OUT.COMPANY_TYPE = 3
+		,company
+		<!-- 采购主管 -->
+		<isEqual prepend="," property="roleId" compareValue="11">
+				user_product
+		</isEqual>
+		<!-- 销售总监-->
+		<isEqual prepend="," property="roleId" compareValue="5">
+				user_product
+		</isEqual>
+		<!-- 区域总监-->
+		<isEqual prepend="," property="roleId" compareValue="9">
+				user_product,user
+		</isEqual>
+		<!-- 区域经理
+		<isEqual prepend="," property="roleId" compareValue="19">
+				user_area_mapping
+		</isEqual>
+		大区经理
+		<isEqual prepend="," property="roleId" compareValue="20">
+				user_area_mapping
+		</isEqual>		
+		-->
+		<dynamic prepend="WHERE">			
+
+			<!-- 采购专员 (自己新建)-->
+			<isEqual prepend="and" property="roleId" compareValue="8">
+				SAMPLE_OUT.user_id = #loginId#					
+			</isEqual>
+
+			<!-- 销售经理(自己新建) -->
+			<isEqual prepend="and" property="roleId" compareValue="4">
+				SAMPLE_OUT.user_id = #loginId#	
+			</isEqual>
+
+			<!-- 采购主管(负责产品分类)-->
+			<isEqual prepend="and" property="roleId" compareValue="11">
+				user_product.user_id=#loginId# and user_product.product_type_id = SAMPLE_OUT.product_type_id
+			</isEqual>	
+			<!-- 销售总监(负责产品分类)-->
+			<isEqual prepend="and" property="roleId" compareValue="5">
+				user_product.user_id=#loginId# and user_product.product_type_id = SAMPLE_OUT.product_type_id
+			</isEqual>		
+			<!-- 区域总监(负责产品分类)-->
+			<isEqual prepend="and" property="roleId" compareValue="9">
+				user_product.user_id=#loginId# and user_product.product_type_id = SAMPLE_OUT.product_type_id
+			</isEqual>
+			<!-- 区域经理(负责区域)
+			<isEqual prepend="and" property="roleId" compareValue="19">
+				user_area_mapping.user_id=#loginId# AND  
+				user_area_mapping.user_area_id=u1.user_area_id 
+			</isEqual>
+			 大区经理(负责区域)
+			<isEqual prepend="and" property="roleId" compareValue="20">
+				user_area_mapping.user_id=#loginId# AND  
+				user_area_mapping.user_area_id=u1.user_area_id 
+			</isEqual>
+			-->
+			
+			<!-- 画面条件 -->		
+			<isNotEmpty prepend="and" property="id">
+				SAMPLE_OUT.id = #id#
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="outStockroomId">
+				SAMPLE_OUT.out_stockroom_id=#outStockroomId# 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="productTypeId">
+				SAMPLE_OUT.product_type_id=#productTypeId#	 
+			</isNotEmpty>	
+			<isNotEmpty prepend="and" property="companyType">
+				SAMPLE_OUT.company_type=#companyType#	 
+			</isNotEmpty>	
+			<isNotEmpty prepend="and" property="companyName">						
+			 (c1.NAME like '%$companyName$%' or 
+      		  CUSTOMER.NAME  like '%$companyName$%' or
+       		  SUPPLIER.NAME like '%$companyName$%'  ) 			
+			</isNotEmpty>			
+		    <isNotEmpty prepend="and" property="dateStart">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.date,'%Y%m%d')>=  DATE_FORMAT(#dateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="dateEnd">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.date,'%Y%m%d')<=  DATE_FORMAT(#dateEnd#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>			
+			<isNotEmpty prepend="and" property="requestDateStart">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.request_date,'%Y%m%d')>=  DATE_FORMAT(#requestDateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="requestDateEnd">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.request_date,'%Y%m%d')<=  DATE_FORMAT(#requestDateEnd#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="inDateStart">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.in_date,'%Y%m%d')>=  DATE_FORMAT(#inDateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="inDateEnd">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.in_date,'%Y%m%d')<=  DATE_FORMAT(#inDateEnd#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>			
+			<isNotEmpty prepend="and" property="sendDateStart">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.SEND_DATE,'%Y%m%d')>=  DATE_FORMAT(#sendDateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="sendDateEnd">
+				<![CDATA[  DATE_FORMAT(SAMPLE_OUT.SEND_DATE,'%Y%m%d')<=  DATE_FORMAT(#sendDateEnd#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userName">
+				SAMPLE_OUT.user_name like  '%$userName$%'		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="custosName">
+				SAMPLE_OUT.custos_name like  '%$custosName$%'		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="type">
+				SAMPLE_OUT.type=#type#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="sampleOutStatus">
+				SAMPLE_OUT.status=#sampleOutStatus#	 
+			</isNotEmpty>							
+		</dynamic>
+		order by 
+ 			 SAMPLE_OUT.id desc) as t1
+	</select>	
+
+	 <!-- 显示修改页面产品信息 By zhangzx -->
+	   <select id="selectProductInfoModify" parameterClass="sampleOutAssessDto" resultClass="productInfoDto">
+	   	        SELECT PRODUCT.ID                                                                 AS ID,
+				       PRODUCT.CODE                                                               AS CODE,
+				       PRODUCT.NAME                                                               AS PRODUCTNAME,
+				       PRODUCT.TYPE                                                               AS TYPE,
+				       PRODUCT.UNIT                                                               AS UNIT,
+				       IFNULL(Round(stockMoney.averageprice,2),0) as price,
+					   IFNULL(Round(stockMoney.averageprice*(1+company.tax_rate/100),2),0) as priceTax,
+				       SAMPLE_OUT_DETAIL.COUNT                                                    AS COUNT,
+				       IFNULL(SAMPLE_OUT_DETAIL.COUNT,0) * IFNULL(Round(stockMoney.averageprice*(1+company.tax_rate/100),2),0)      AS MONEY,
+				       IFNULL(STOCK.NUM,0) - IFNULL(STOCK.SEND_LOCK,0) - IFNULL(STOCK.PREPARED,0) AS OUTUSECOUNT,
+				       STOCK.TIME_STAMP                                                           AS TIMESTAMP
+				FROM   SAMPLE_OUT_DETAIL
+				       LEFT JOIN PRODUCT
+				         ON SAMPLE_OUT_DETAIL.PRODUCT_ID = PRODUCT.ID
+				       LEFT JOIN VIEW_RESULT_STOCK_AVEPRICE as stockMoney 
+				         ON PRODUCT.ID = STOCKMONEY.prodid
+				       LEFT JOIN STOCK
+				         ON SAMPLE_OUT_DETAIL.PRODUCT_ID = STOCK.PRODUCT_ID
+				            AND STOCK.STOCKROOM_ID = #outStockroomId#
+	   					,company
+				WHERE  SAMPLE_OUT_DETAIL.SAMPLE_OUT_ID = #id#
+	      
+	   </select>
+	   
+	   <!-- 显示修改页面产品信息 By zhangzx -->
+	   <select id="selectProductPriceModify" parameterClass="java.lang.String" resultClass="java.lang.String">
+	   	        SELECT ROUND(PRODUCT.MONEY / STOCKMONEY.NUM,2)    AS PRICE
+				FROM   (SELECT   STOCK.PRODUCT_ID           AS PRODUCT_ID,
+				                 SUM(IFNULL(STOCK.NUM,0))   AS NUM
+				        FROM     STOCK
+				        WHERE    PRODUCT_ID = #productId#
+				        GROUP BY STOCK.PRODUCT_ID) AS STOCKMONEY,
+				       PRODUCT
+				WHERE  PRODUCT.ID = STOCKMONEY.PRODUCT_ID	      
+	   </select>
+	   
+	<!-- 修改-保存 By zhangzx-->
+	<update id="updateSampleOutSave" parameterClass="sampleOutEntity">		
+		update  sample_out 
+		set		product_type_id = #productTypeId# , 
+				type = #type# , 
+				date = date_format(now(),'%Y-%m-%d'), 
+				in_date = #inDate# , 
+				company_type = #companyType# , 
+				company_id = #companyId# , 
+				custos_name = #custosName# , 
+				out_stockroom_id = #outStockroomId# , 
+				address_id = #addressId# , 
+				request_date = #requestDate# , 				
+				transport_way = #transportWay# , 
+				take_name = #takeName# , 
+				take_number = #takeNumber# ,		 
+				money = #money# , 				
+				text = #text# , 
+				status = #status# , 
+				sell_maj_id = #sellMajId#,				 
+				buy_man_id = #buyManId#,			
+				stk_adm_id = #stkAdmId#
+		where	id = #id# 
+	</update>
+	
+	<!-- 修改-提交 By zhangzx-->
+	<update id="updateSampleOut" parameterClass="sampleOutEntity">		
+		update  sample_out 
+		set		product_type_id = #productTypeId# , 
+				type = #type# , 
+				date = date_format(now(),'%Y-%m-%d'), 
+				in_date = #inDate# , 
+				company_type = #companyType# , 
+				company_id = #companyId# , 
+				custos_name = #custosName# , 
+				out_stockroom_id = #outStockroomId# , 
+				address_id = #addressId# , 
+				request_date = #requestDate# , 				
+				transport_way = #transportWay# , 
+				take_name = #takeName# , 
+				take_number = #takeNumber# ,		 
+				money = #money# , 				
+				text = #text# , 
+				status = #status# , 
+				sell_maj_id = #sellMajId#,				 
+				sell_maj_name = '' , 
+				sell_maj_date = '' , 
+				sell_maj_idea = '' , 
+				sell_maj_text = '' , 
+				buy_man_id = #buyManId#,			
+				buy_man_name = '' , 
+				buy_man_date = '' , 
+				buy_man_idea = '' , 
+				buy_man_text = '' , 
+				stk_adm_id = #stkAdmId#,
+				stk_adm_name = '' , 
+				stk_adm_date = '' , 
+				stk_adm_idea = '' , 
+				stk_adm_text = '' 	
+		where	id = #id# 
+	</update>
+	
+	<!-- 更新冻结数(修改)  By zhangzx -->
+    <update id="updateStockLockNum" parameterClass="stockEntity">
+		update stock
+		set  stock.send_lock = stock.send_lock +#sendLock#
+		where stock.stockroom_id=#stockroomId# and stock.product_id=#productId# and 
+		stock.time_stamp=#timeStamp#
+		    
+    </update>    
+    
+     <!-- 查询收货地址信息(客户)  by zhangzx-->
+     <select id="selectAddressInfo" parameterClass="java.util.Map" resultClass="addressDto">
+       select 	id as addressId, 
+				name as goodsReceiveUnitName, 
+				address , 
+				postcode , 
+				linkman , 
+				tel, 
+				mobile 
+		from 
+     		<isEqual compareValue="1" property="companyType">
+	          company_address 	 
+	  		</isEqual>
+     		<isEqual compareValue="2" property="companyType">
+	          customer_address 	   
+	  		</isEqual>
+	  		<isEqual compareValue="3" property="companyType">
+	          supplier_address 	
+	  		</isEqual>	
+	  		where id =#addressId# 		
+     </select>     
+	  
+	 <!-- 查询样品借出表信息  by jiangmx-->
+     <select id="selectSampleOutInfo" parameterClass="java.lang.String" resultClass="sampleOutAssessDto">
+        select 	sample_out.id as id,
+				product_type_id	 as productTypeId,
+                product_type.name as productTypeName,
+				sample_out.type as type,
+				sample_out.date as date,
+				in_date as inDate,
+				company_type as companyType,
+				company_id as companyId,
+				(CASE 
+	            WHEN SAMPLE_OUT.COMPANY_TYPE = 1 THEN COMPANY.NAME
+	            WHEN SAMPLE_OUT.COMPANY_TYPE = 2 THEN CUSTOMER.NAME
+	            WHEN SAMPLE_OUT.COMPANY_TYPE = 3 THEN SUPPLIER.NAME
+	          END) AS COMPANYNAME,
+				custos_name    as custosName,
+				out_stockroom_id as outStockroomId,
+				stockroom.name as stockRoomName,
+				address_id as addressId,
+                stockroom_address.name as goodsReceiveUnitName,
+                stockroom_address.address as address,
+                stockroom_address.postcode as  postcode,
+                stockroom_address.linkman as   linkman,
+                stockroom_address.tel as  tel,
+                stockroom_address.mobile as  mobile,
+				request_date as requestDate,
+				send_date as sendDate,
+				transport_way as transportWay,
+				take_name as takeName,
+				take_number as takeNumber,
+                sample_out.money as moneyTotal,
+				user_id	 as userId,
+				user_name as userName,
+				text	 as text,
+				status	 as status,
+				sell_maj_id as sellMajId,
+				sell_maj_name as sellMajName,
+				sell_maj_date as sellMajDate,
+				sell_maj_idea as sellMajIdea,
+				sell_maj_text as sellMajText,
+				buy_man_id as buyManId,
+				buy_man_name as buyManName,
+				buy_man_date as buyManDate,
+				buy_man_idea as buyManIdea,
+				buy_man_text as buyManText,
+				stk_adm_id as stkAdmId,
+				stk_adm_name as stkAdmName,
+				stk_adm_date as stkAdmDate,
+				stk_adm_idea as stkAdmIdea,
+				stk_adm_text as stkAdmText,
+     			round(company.tax_rate/100,2)+1 as taxRate
+          from  sample_out
+	         LEFT JOIN CUSTOMER
+	           ON CUSTOMER.ID = SAMPLE_OUT.COMPANY_ID
+	              AND SAMPLE_OUT.COMPANY_TYPE = 2
+	         LEFT JOIN SUPPLIER
+	           ON SUPPLIER.ID = SAMPLE_OUT.COMPANY_ID
+	              AND SAMPLE_OUT.COMPANY_TYPE = 3
+          left join product_type
+          on sample_out.product_type_id = product_type.id
+          left join stockroom
+          on sample_out.out_stockroom_id = stockroom.id
+          left join stockroom_address
+          on sample_out.address_id = stockroom_address.id
+     		,company
+          where sample_out.id = #outId#
+     </select>
+     
+     <!--样品借出评审  jiangmx-->
+	 <update id="updateSampleOutAssess"  parameterClass="sampleOutAssessDto">
+		  update sample_out
+	       set  status=#status#	   
+	    <!--采购主管-->
+	   <isEqual compareValue="11" property="roleId">
+	          ,buy_man_date = date_format(now(),'%Y-%m-%d'),
+	           buy_man_name = #buyManName#,
+	           buy_man_idea = #buyManIdea#,  
+			   buy_man_text = #buyManText#
+	   
+	   </isEqual>
+	   
+	   <!--销售总监-->
+	   <isEqual compareValue="5" property="roleId">
+	          ,sell_maj_date = date_format(now(),'%Y-%m-%d'),
+	           sell_maj_name = #sellMajName#,
+	           sell_maj_idea = #sellMajIdea#,  
+			   sell_maj_text = #sellMajText#
+	   
+	   </isEqual>
+	   
+	      where sample_out.id = #id#
+	   
+    </update>
+    
+      <!--查询用户权限  By jiangmx-->
+	<select id="selectUserRoleId" parameterClass="java.lang.String" resultClass="java.lang.String">
+		SELECT user.role_id from user
+		WHERE  user.id = #userId#     
+	</select>	
+    
+     
+      <!-- 显示产品信息 By jiangmx -->
+	   <select id="selectProductInfo" parameterClass="sampleOutAssessDto" resultClass="productInfoDto">
+	   	      select product.id as id,
+	                 product.code as code,
+	                 product.name as productName,
+	                 product.type as type,
+	                 product.unit as unit,
+                     sample_out_detail.price  as price,
+	   				 IFNULL(Round(sample_out_detail.price*(1+company.tax_rate/100),2),0) as priceTax,
+                     IFNULL(sample_out_detail.count,0) as count,
+	                 IFNULL(sample_out_detail.count,0)*
+	                 IFNULL(Round(sample_out_detail.price*(1+company.tax_rate/100),2),0) as money,
+                     IFNULL(stock.num,0) -
+                     IFNULL(stock.send_lock,0)-
+                     IFNULL(stock.prepared,0) as outUseCount,
+	                 stock.time_stamp as timeStamp
+ 
+	           from  sample_out_detail
+                   
+               left join product
+                   on sample_out_detail.product_id = product.id 
+
+               left join stock
+                   on sample_out_detail.product_id = stock.product_id  
+                   and stock.stockroom_id = #outStockroomId#
+	   				,company
+                
+                  where sample_out_detail.sample_out_id= #id#
+	      
+	   </select>
+	   
+	    <!-- 更新冻结数  By jiangmx -->
+    <update id="updateLockNum" parameterClass="stockEntity">
+		update stock
+		set  stock.send_lock = stock.send_lock -#sendLock#
+		where stock.stockroom_id=#stockroomId# and stock.product_id=#productId# and 
+		stock.time_stamp=#timeStamp#
+		    
+    </update>
+    
+     <!--  样品借出单插入 By jiangmx -->
+    <insert id="insertSampleOut" parameterClass="sampleOutAssessDto" >
+		insert into sample_out(
+	    		id,
+				product_type_id,
+				type,
+				date,
+				in_date,
+				company_type,
+				company_id,
+				custos_name,
+				out_stockroom_id,
+				address_id,
+				request_date,
+				send_date,
+				transport_way,
+				take_name,
+				take_number,
+				money,
+				user_id,
+				user_name,
+				text,
+				status,
+				sell_maj_id,
+				buy_man_id,
+				stk_adm_id,
+				datetime)values(
+                #id#,
+				#productTypeId#,
+				#type#,
+				DATE_FORMAT(NOW(),'%Y-%m-%d'),
+				#inDate#,
+				#companyType#,
+				#companyId#,
+				#custosName#,
+				#outStockroomId#,
+				#addressId#,
+				#requestDate#,
+				#sendDate#,
+				#transportWay#,
+				#takeName#,
+				#takeNumber#,
+				#moneyTotal#,
+				#userId#,
+				#userName#,
+				#text#,
+				#status#,
+				#sellMajId#,
+				#buyManId#,
+				#stkAdmId#,
+				DATE_FORMAT(NOW(),'%Y-%m-%d')	
+		           )    
+    </insert>
+    
+    <!--  样品借出单明细插入 By jiangmx -->
+    <insert id="insertSampleOutDetail" parameterClass="sampleOutDetailEntity">
+    	insert into sample_out_detail (id,sample_out_id,product_id,count,price
+    	)values(#id#,#sampleOutId#,#productId#,#count#,#price#)
+     
+    </insert>
+    
+ 
+    
+ 	  
+ 	<!-- 客户列表   By LiuQingGang-->
+	<select id="selectSampleOutCustomer.getData"  parameterClass="userEntity" 
+		resultClass="customerEntity">
+		SELECT  CUSTOMER.ID AS ID,
+		        CUSTOMER.NAME AS NAME 
+		<!-- 销售经理为自己负责的客户-->        
+		<isEqual compareValue="4" property="roleId">
+	          FROM   CUSTOMER , user_customer  
+		where CUSTOMER.id = user_customer.customer_id and
+		user_customer.user_id=#id#
+		order by  CUSTOMER.id 
+	   </isEqual>
+	   
+		<isNotEqual compareValue="4" property="roleId">
+			FROM   CUSTOMER order by  CUSTOMER.id
+		</isNotEqual>
+		
+	</select>
+	 
+	<!--  客户分页  By LiuQingGang-->
+	<select id="selectSampleOutCustomer.recordCount" parameterClass="userEntity"
+		 resultClass="java.lang.Integer">
+		SELECT COUNT(*)   
+		<!-- 销售经理为自己负责的客户-->        
+		<isEqual compareValue="4" property="roleId">
+	          FROM   CUSTOMER , user_customer  
+		where CUSTOMER.id = user_customer.customer_id and
+		user_customer.user_id=#id#
+		order by  CUSTOMER.id 
+	   </isEqual>
+	   
+		<isNotEqual compareValue="4" property="roleId">
+			FROM   CUSTOMER order by  CUSTOMER.id
+		</isNotEqual>
+	</select>
+ 
+	<!-- 查找客户  By LiuQingGang -->
+	<select id="selectSampleOutCustomerObj.getData"
+		parameterClass="customerEntity" resultClass="customerEntity">
+		SELECT   ID,
+		        NAME 
+		FROM   CUSTOMER  
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="and"  property="name">
+				 NAME like   '%$name$%'
+			</isNotEmpty>
+		</dynamic>
+		order by  id
+	</select>
+	 
+	<!-- 查找客户分页  By LiuQingGang-->
+	<select id="selectSampleOutCustomerObj.recordCount"
+		parameterClass="customerEntity" resultClass="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM   CUSTOMER 
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="and" property="name">
+				 NAME like '%$name$%'
+			</isNotEmpty>
+		</dynamic>
+		order by  id
+	</select> 
+	
+	<!-- 删除借出单 -->
+	<delete id="deleteSampleOut" parameterClass="java.lang.String">
+		delete   from sample_out   where sample_out.id=#id#  
+	</delete>
+	<!-- 删除借出明细 -->
+	<delete id="deleteSampleOutDetail" parameterClass="java.lang.String">
+		delete   from sample_out_detail  where sample_out_detail.sample_out_id=#id#  
+	</delete>	
+	<!-- 获得公司名称 -->
+	<select id="selectcompany" resultClass="companyEntity">
+		SELECT id,name,tax_rate as taxRate from company
+	
+	</select>
+	
+	<!-- 客户收货地址选择 -->	
+	<select id="customerAddressSampleOut.selectCustomers" resultClass="customerAddressDto" parameterClass="java.util.HashMap">
+		SELECT   C.ID AS CUSTOMERID,
+		         C.NAME AS CUSTOMERNAME,
+		         CA.ID AS ADDRESSID,
+		         CA.NAME AS ADDRESSNAME,
+		         CA.ADDRESS,
+		         CA.POSTCODE,
+		         CA.LINKMAN,
+		         CA.TEL,
+		         CA.MOBILE
+		FROM     CUSTOMER C,
+		         CUSTOMER_ADDRESS CA
+		WHERE    C.ID = CA.CUSTOMER_ID  and C.ID=#customerId#
+		<isNotEmpty prepend="and" property="customerName">
+			C.NAME LIKE CONCAT('%', #customerName#, '%')
+		</isNotEmpty>			
+		ORDER BY C.NAME,
+		         CA.NAME
+	</select>
+	
+		<!-- 客户收货地址选择 -->	
+	<select id="customerAddressSampleOut.recordCount" resultClass="java.lang.Integer" parameterClass="java.util.HashMap">
+		SELECT   count(*)
+		FROM     CUSTOMER C,
+		         CUSTOMER_ADDRESS CA
+		WHERE    C.ID = CA.CUSTOMER_ID  and C.ID=#customerId#
+		<isNotEmpty prepend="and" property="customerName">
+			C.NAME LIKE CONCAT('%', #customerName#, '%')
+		</isNotEmpty>			
+		ORDER BY C.NAME,
+		         CA.NAME
+	</select>
+</sqlMap>

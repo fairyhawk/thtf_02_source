@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources/>
+	<form-beans>
+		<form-bean name="searchBuyBackGoodsForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="searchBuyBackGoods" type="cn.com.thtf.egov.cms.dto.BuyBackGoodsSearchDto"/>
+		</form-bean>
+
+	    <!-- 返厂评审和查看    by jiangmx   -->
+		<form-bean name="buyBackGoodsAssessForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="buyBackAssess" type="cn.com.thtf.egov.cms.dto.BuyBackGoodsAssessDto"/>
+		</form-bean>
+
+		<!-- 新建返厂 By LiuQingGang -->
+		<form-bean name="addBuyBackGoogsForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="addBuyBackGoogsDto" type="cn.com.thtf.egov.cms.entity.BuyBackGoodsEntity"></form-property>
+		</form-bean>
+
+		<!-- 修改返厂form by zhangzx-->
+		<form-bean name="modifyBuyBackGoodsForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="modifyBuyBackGoodsDto" type="cn.com.thtf.egov.cms.entity.BuyBackGoodsEntity"/>
+		</form-bean>
+
+	</form-beans>
+	<global-exceptions/>
+	<global-forwards>
+	</global-forwards>
+
+	<action-mappings>
+
+		<!-- 显示返厂评审、查看    by jiangmx   -->
+		<action path="/getShowBuyBackAssess" type="cn.com.thtf.egov.cms.action.purchase.BuyBackGoodsAction"
+			parameter="getShowBuyBackAssess"  scope="request"  validate="false">
+			<forward name="showAssess" path="/jsp/buyBackGoods/buyBackGoodsAudit.jsp"/>
+			<forward name="view" path="/jsp/buyBackGoods/buyBackGoodsView.jsp"/>
+			<forward name="failure" path="/getBuyBackGoodsList.do"/>
+		</action>
+		
+			
+		<!-- 返厂评审    by jiangmx   -->
+		<action path="/getBuyBackAssess" type="cn.com.thtf.egov.cms.action.purchase.BuyBackGoodsAction"
+			parameter="getBuyBackAssess"  scope="request"  validate="false" name="buyBackGoodsAssessForm">
+			<forward name="success" path="/getBuyBackGoodsList.do"/>
+			<forward name="failure" path="/getShowBuyBackAssess.do?type=showAssess"/>
+			<forward name="failureToList" path="/getBuyBackGoodsList.do"/>
+		</action>
+
+		<!--返厂单一览  by zzx-->
+		<action path="/getBuyBackGoodsList" type="cn.com.thtf.egov.cms.action.purchase.BuyBackGoodsAction"
+			parameter="getBuyBackGoodsList"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/buyBackGoods/buyBackGoodsManager.jsp"/>
+		</action>
+
+		<!--销售退款检索  by zzx-->
+		<action path="/searchBuyBackGoods" type="cn.com.thtf.egov.cms.action.purchase.BuyBackGoodsAction"
+			parameter="searchBuyBackGoods"
+			scope="request"
+			name="searchBuyBackGoodsForm" validate="false">
+			<forward name="success" path="/jsp/buyBackGoods/buyBackGoodsManager.jsp"/>
+		</action>
+
+		<!-- 修改返厂信息显示 By zzx -->
+		<action path="/getBuyBackGoodsModify" type="cn.com.thtf.egov.cms.action.purchase.BuyBackGoodsAction"
+			scope="request"
+			parameter="getBuyBackGoodsModify">
+			<forward name="success" path="/jsp/buyBackGoods/buyBackGoodsModify.jsp"></forward>
+			<forward name="failure" path="/jsp/buyBackGoods/buyBackGoodsManager.jsp"></forward>
+		</action>
+
+		<!-- 修改返厂 保存提交 By zhangzx-->
+		<action path="/modifyBuyBackGoods"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyBackGoodsAction"
+			parameter="modifyBuyBackGoods"
+			name="modifyBuyBackGoodsForm" scope="request" validate="false">
+			<forward name="failure" path="/getBuyBackGoodsModify.do"/>
+			<forward name="success" path="/getBuyBackGoodsList.do"/>
+		</action>
+
+
+		<!-- 新建返厂入库单信息显示 By LiuQingGang -->
+		<action path="/getBuyBackGoogsCreate" type="cn.com.thtf.egov.cms.action.purchase.BuyBackGoodsAction"
+			scope="request"
+			parameter="getBuyBackGoogsCreate" >
+			<forward name="success" path="/jsp/buyBackGoods/buyBackGoodsAdd.jsp"></forward>
+			<forward name="failure" path="/jsp/buyBackGoods/buyBackGoodsAdd.jsp"></forward>
+		</action>
+
+		<!-- 新建返厂 By LiuQingGang -->
+		<action path="/addBuyBackGoogs" type="cn.com.thtf.egov.cms.action.purchase.BuyBackGoodsAction"
+			scope="request"
+			parameter="addBuyBackGoogs" name="addBuyBackGoogsForm"
+			>
+			<forward name="success" path="/instockList.do?queryPara.init=true"></forward>
+			<forward name="failure" path="/instockList.do?queryPara.init=true"></forward>
+			<forward name="failure2" path="/jsp/buyBackGoods/buyBackGoodsAdd.jsp"></forward>
+		</action>
+
+		<!-- 发货地址选择 By LiuQingGang  -->
+		<action path="/getSendAddressSelect" type="cn.com.thtf.egov.cms.action.purchase.BuyBackGoodsAction"
+			scope="request"
+			parameter="getSendAddressSelect" >
+			<forward name="success" path="/jsp/buyBackGoods/send_address_select.jsp"></forward>
+			<forward name="failure" path="/jsp/buyBackGoods/buyBackGoodsAdd.jsp"></forward>
+		</action>
+
+		<!-- 入库明细选择  By LiuQingGang  -->
+		<action path="/getStockroomSelect" type="cn.com.thtf.egov.cms.action.purchase.BuyBackGoodsAction"
+			scope="request"
+			parameter="getStockroomSelect" >
+			<forward name="success" path="/jsp/buyBackGoods/stockroom_select.jsp"></forward>
+			<forward name="failure" path="/jsp/buyBackGoods/buyBackGoodsAdd.jsp"></forward>
+		</action>
+		
+		<!-- 删除返厂  By LiuQingGang  -->
+		<action path="/deleteBuyBackGoods" type="cn.com.thtf.egov.cms.action.purchase.BuyBackGoodsAction"
+			scope="request"
+			parameter="deleteBuyBackGoods" >
+			<forward name="success" path="/getBuyBackGoodsList.do"></forward>
+			<forward name="failure" path="/getBuyBackGoodsList.do"></forward>
+		</action>
+
+
+	</action-mappings>
+
+	<message-resources parameter="com.tsinghua.mp.web.conf.i18n.ApplicationResources"/>
+</struts-config>

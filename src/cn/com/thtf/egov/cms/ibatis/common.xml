@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="common_sqlMap">
+
+	<typeAlias alias="customerCreditCommonDto" type="cn.com.thtf.egov.cms.dto.CustomerCreditCommonDto" /> 
+	<typeAlias alias="customerFundsDto" type="cn.com.thtf.egov.cms.dto.CustomerFundsDto" /> 
+	<typeAlias alias="creditLogicQueryDto" type="cn.com.thtf.egov.cms.dto.CreditLogicQueryDto" /> 
+
+	<typeAlias alias="userEntity" type="cn.com.thtf.egov.cms.entity.UserEntity" />
+	<typeAlias alias="userAreaProductEntity" type="cn.com.thtf.egov.cms.entity.UserAreaProductEntity" /> 
+	<typeAlias alias="userProductEntity" type="cn.com.thtf.egov.cms.entity.UserProductEntity" />
+	<typeAlias alias="userStockroomProductEntity" type="cn.com.thtf.egov.cms.entity.UserStockroomProductEntity" />
+	<typeAlias alias="productTypeEntity" type="cn.com.thtf.egov.cms.entity.ProductTypeEntity" />
+
+	<typeAlias alias="userAreaProductEntity" type="cn.com.thtf.egov.cms.entity.UserAreaProductEntity" /> 
+	<typeAlias alias="userProductEntity" type="cn.com.thtf.egov.cms.entity.UserProductEntity" />
+	<typeAlias alias="userStockroomProductEntity" type="cn.com.thtf.egov.cms.entity.UserStockroomProductEntity" />
+
+	<typeAlias alias="dateMaxIdDto" type="cn.com.thtf.egov.cms.dto.DateMaxIdDto" />
+			
+	<typeAlias alias="busiLogEntity" type="cn.com.thtf.egov.cms.entity.BusiLogEntity" />
+	
+	<!-- 检索客户信用编号 --> 
+	<select id="getCustomerCreditId" parameterClass="creditLogicQueryDto" resultClass="java.lang.String">
+		select
+			customer_credit.id as id 
+		from
+			customer_credit
+		where
+			customer_credit.customer_id = #customerId#
+		and customer_credit.product_type_id = #productTypeId# 
+		and customer_credit.credit_type_id != 5
+	</select> 
+	  
+	<!-- 新增操作记录  --> 
+	<insert id="common.insertBusiLog" parameterClass="busiLogEntity">
+		insert into
+			 busi_log(userid,username,content,busi_type)
+		values 
+			(#userid#,#username#,#content#,#busiType#) 
+	</insert>
+			
+	<!-- 检索客户超期欠款 By LuBo @2010-4-22--> 
+	<select id="queryCustomerExpired" parameterClass="creditLogicQueryDto" resultClass="customerFundsDto">
+		SELECT   PRODUCT_TYPE.NAME AS PRODUCTTYPENAME,
+		         IFNULL(CUSTOMER_APPRAISE.EXCEED_MONEY,0) AS EXCEEDMONEY  
+		FROM     CUSTOMER_APPRAISE,
+		         PRODUCT_TYPE
+		WHERE    CUSTOMER_APPRAISE.CUSTOMER_ID = #customerId#
+		         AND CUSTOMER_APPRAISE.EXCEED_MONEY > 0
+		         AND PRODUCT_TYPE.ID = CUSTOMER_APPRAISE.PRODUCT_TYPE_ID 
+	</select> 
+
+	<!-- 检索客户回款 By LuBo @2010-4-22 --> 
+	<select id="queryCustomerReturnMoney" parameterClass="creditLogicQueryDto" resultClass="customerFundsDto">
+		SELECT IFNULL(SUM(RETURN_DETAIL.MONEY),0) AS RETURNMONEY
+		FROM   MRETURN,
+		       RETURN_DETAIL
+		WHERE  RETURN_DETAIL.APPOINT_TYPE = #appointType#
+		       AND (MRETURN.RETURN_TYPE = 0 OR MRETURN.RETURN_TYPE = 2)
+		       AND RETURN_DETAIL.SELL_CONTRACT_ID = #sellContractId#
+		       AND RETURN_DETAIL.RETURN_ID = MRETURN.ID
+	</select>  
+	
+	<!-- 检索客在途款 By LuBo @2010-4-22 --> 
+	<select id="queryCustomerInRransitMoney" parameterClass="creditLogicQueryDto" resultClass="customerFundsDto">
+		SELECT IFNULL(SUM(RETURN_DETAIL.MONEY),0) AS INRRANSITMONEY
+		FROM   MRETURN,
+		       RETURN_DETAIL
+		WHERE  RETURN_DETAIL.APPOINT_TYPE = #appointType#
+		       AND MRETURN.RETURN_TYPE = 1
+		       AND RETURN_DETAIL.SELL_CONTRACT_ID = #sellContractId#
+		       AND RETURN_DETAIL.RETURN_ID = MRETURN.ID
+	</select> 
+
+	<!-- 检索客户回款 By LuBo @2010-1-14 --> 
+	<select id="queryCustomerReturnMoneyDetail" parameterClass="creditLogicQueryDto" resultClass="customerFundsDto">
+		SELECT IFNULL(SUM(RETURN_DETAIL.MONEY),0) AS RETURNMONEY
+		FROM   MRETURN,
+		       RETURN_DETAIL,
+			   send_goods
+		WHERE  RETURN_DETAIL.APPOINT_TYPE = #appointType#
+		       AND (MRETURN.RETURN_TYPE = 0 OR MRETURN.RETURN_TYPE = 2)
+		       AND send_goods.sell_contract_id = #sellContractId#
+		       AND RETURN_DETAIL.RETURN_ID = MRETURN.ID
+			   and RETURN_DETAIL.send_goods_id = send_goods.id
+	</select>  
+	
+	<!-- 检索客在途款 By LuBo @2010-7-14 --> 
+	<select id="queryCustomerInRransitMoneyDetail" parameterClass="creditLogicQueryDto" resultClass="customerFundsDto">
+		SELECT IFNULL(SUM(RETURN_DETAIL.MONEY),0) AS INRRANSITMONEY
+		FROM   MRETURN,
+		       RETURN_DETAIL,
+			   send_goods
+		WHERE  RETURN_DETAIL.APPOINT_TYPE = #appointType#
+		       AND MRETURN.RETURN_TYPE = 1
+		       AND send_goods.sell_contract_id = #sellContractId#
+		       AND RETURN_DETAIL.RETURN_ID = MRETURN.ID
+			   and RETURN_DETAIL.send_goods_id = send_goods.id
+	</select> 
+
+	<!-- 查询客户信用可用数 By ChenHuajiang @2010-4-22-->
+	<select id="common.selectCustomerCreditById"  parameterClass="java.util.HashMap"	resultClass="customerCreditCommonDto">
+		SELECT   PRODTYPEID,
+		         CREDITTYPEID,
+		         CUSTOMERCRDID,
+		         CREDITTYPENAME,
+		         PROJECTNAME,
+		         PAYMENTTERM,
+		         ASSIGNEDLIMIT,
+		         USEDLIMIT,
+		         LOCKEDLIMIT,
+		         ONTHEWAYLIMIT,
+		         FREELIMIT,
+		         CREDITSTATUS,
+		         TIMESTAMP
+		FROM     VIEW_RESULT_CUSTOMER_CREDIT_COMMON
+		WHERE    CUSTOMERID = #customerId#
+		         AND PRODTYPEID = #prodTypeId#
+		         <isNotEmpty prepend="and" property="customerCrdId">		       	   
+		       	    CUSTOMERCRDID = #customerCrdId#	
+		         </isNotEmpty>
+		         <isEmpty prepend="and" property="customerCrdId">		       	   
+		       	    CREDITSTATUS = '1'
+		         </isEmpty>		         
+	</select>
+
+	<!-- 查询客户信用可用数 By ChenHuajiang @2010-4-22-->
+	<select id="common.recordCount"  parameterClass="java.util.HashMap"	resultClass="java.lang.Integer">
+		SELECT   COUNT(*)
+		FROM     VIEW_RESULT_CUSTOMER_CREDIT_COMMON
+		WHERE    CUSTOMERID = #customerId#
+		         AND PRODTYPEID = #prodTypeId#
+		         <isNotEmpty prepend="and" property="customerCrdId">		       	   
+		       	    CUSTOMERCRDID = #customerCrdId#	
+		         </isNotEmpty>
+		         <isEmpty prepend="and" property="customerCrdId">		       	   
+		       	    CREDITSTATUS = '1'
+		         </isEmpty>	
+	</select>
+	
+    <!-- 查询产品销售可用数 By ChenHuajiang @2010-4-22-->
+	<select id="common.selectProdFreeCount"  parameterClass="java.lang.String"	resultClass="java.lang.Integer">
+		SELECT FREECOUNT
+		FROM   VIEW_RESULT_PROD_FREECOUNT
+		WHERE  PRODID = #prodId#		
+	</select>
+	
+	<!-- 生成合同、发票编号 By ChenHuajiang @2010-4-23 -->
+	<select id="common.getMaxId"  parameterClass="java.lang.String"	resultClass="dateMaxIdDto">
+      SELECT
+        IFNULL(MAX(RIGHT(ID,3)),0) AS MAXID,
+        CURDATE() AS DATE
+      FROM $table$
+      WHERE DATETIME = DATE_FORMAT(CURDATE(), '%Y-%m-%d')
+	</select>
+
+	<!-- 生成产品合同编号 By ChenHuajiang @2010-4-25 -->
+	<select id="common.getProdContractId"  parameterClass="java.util.HashMap"	resultClass="java.lang.Integer">
+		SELECT MAX(RIGHT(PRODUCT_CONTRACT_CODE,5)) AS MAXID
+		FROM   $table$
+		WHERE LEFT(DATE,4) = LEFT(DATE_FORMAT(CURDATE(), '%Y-%m-%d'),4)
+		AND   SUBSTRING(PRODUCT_CONTRACT_CODE,3,2)= #prodNo#
+	</select>
+
+	<!-- 根据产品分类ID获取产品分类编号 By ChenHuajiang @2010-7-27 -->
+	<select id="common.getProdNoById"  parameterClass="java.lang.String"	resultClass="java.lang.String">
+		SELECT NO
+		FROM   PRODUCT_TYPE
+		WHERE ID = #id#
+	</select>
+	
+	<!-- 生成退货产品合同编号 By ChenHuajiang @2010-4-27 -->
+	<select id="common.getProdContractBackId"  parameterClass="java.util.HashMap"	resultClass="java.lang.Integer">
+		SELECT MAX(RIGHT(PRODUCT_CONTRACT_CODE,2)) AS MAXID
+		FROM   $table$
+		WHERE LEFT(PRODUCT_CONTRACT_CODE,12) = #prodContSN#
+	</select>
+		
+	<!-- 产品库存平均价 By ChenHuajiang @2010-4-26 -->
+	<select id="common.getProdAvePrice"  parameterClass="java.lang.String"	resultClass="java.lang.String">
+		SELECT AVERAGEPRICE AS AVERAGEPRICE
+		FROM   VIEW_RESULT_STOCK_AVEPRICE
+		WHERE PRODID = #prodId#
+	</select>
+		
+	<!-- 产品预计采购价 By ChenHuajiang @2010-7-7 -->
+	<select id="common.getProdExpectBuyPrice"  parameterClass="java.lang.String"	resultClass="java.lang.String">
+		SELECT AVERAGEPRICE AS AVERAGEPRICE
+		FROM   VIEW_EXPECT_BUY_PRICE
+		WHERE PRODID = #prodId#
+	</select>	
+	
+	<!--合同提交时,锁选中的产品 By ChenHuajiang-->
+	<select id="common.lockProductRecord" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		SELECT COUNT(CODE) CNT
+		FROM   PRODUCT
+		WHERE  ID
+		<dynamic prepend="in"  open="(" close=") ">
+			<iterate property="prodId" conjunction=",">     
+			 #prodId[]#  
+			</iterate>     
+		</dynamic>
+		FOR UPDATE
+	</select>
+
+	<!-- 根据产品ID更新产品库存金额 -->	
+	<update id="common.updateProdTaxRateById" parameterClass="java.util.HashMap">
+		UPDATE PRODUCT
+		SET    MONEY = #money#
+		WHERE  ID = #prodId#
+	</update>
+		
+	<!--查询所有的产品分类-->
+	<select id="common.selectAllProductTypes" parameterClass="java.util.HashMap" resultClass="productTypeEntity">
+		SELECT PT.ID,
+		       PT.NAME
+		FROM   PRODUCT_TYPE PT
+		<dynamic prepend="WHERE">
+		<isNotEmpty prepend="and" property="prodId">
+			PT.ID = #prodId# 
+		</isNotEmpty>
+		<!--销售助理-->
+		<isEqual prepend="and"  property="roleId" compareValue="3">
+			PT.ID IN (
+				SELECT PRODUCT_TYPE_ID
+				FROM
+				USER_AREA_PRODUCT 
+				WHERE
+				USER_ID = #userId#		       		
+			)
+		</isEqual>
+		
+        <!--销售助理之外角色-->
+		<isNotEqual prepend=""  property="roleId" compareValue="3">
+			<isNotEqual prepend=""  property="roleId" compareValue="9999">
+				<isNotEmpty prepend="and" property="userId">
+					PT.ID IN 
+					(
+						SELECT  PRODUCT_TYPE_ID 
+						FROM    USER_PRODUCT
+						WHERE   USER_ID = #userId#
+					)		
+				</isNotEmpty>
+			</isNotEqual>		
+		</isNotEqual>						
+		</dynamic>
+	</select> 
+	
+	<!--根据合同编号获取合同状态-->
+	<select id="common.getConstractStatusById"  resultClass="java.lang.String" parameterClass="java.util.HashMap">	
+	    SELECT STATUS FROM $table$ WHERE ID = #id# 
+	</select>
+		
+	<!-- 检索销售助理 -->
+	<select id="selectSalesAssistant" parameterClass="userAreaProductEntity" resultClass="string">
+		select 
+			user_area_product.user_id 
+		from 
+			user_area_product,user
+		where 
+			user_area_product.user_area_id=#userAreaId# 
+		and user_area_product.product_type_id=#productTypeId#
+		and user.id = user_area_product.user_id
+		and user.enable = 1
+	</select> 
+	<!-- 检索库房管理员 --> 
+	<select id="selectTreasuryManager" parameterClass="userStockroomProductEntity" resultClass="string">
+		select 
+			user_stockroom_product.user_id
+		from 
+			user_stockroom_product,user
+		where 
+			user_stockroom_product.stockroom_id = #stockroomId# 
+		and user_stockroom_product.product_type_id = #productTypeId#
+		and user.id = user_stockroom_product.user_id
+		and user.enable = 1
+	</select>
+	<!-- 检索法务专员、运营总监助理、运营总监 -->
+	<select id="selectOnlyRole" parameterClass="string" resultClass="userEntity">
+		select
+			id as id ,role_id as roleId 
+		from
+			user
+		where
+			role_id in ($roleId$)
+		and enable = 1
+	</select>
+	<!-- 检索产品总监、销售总监、采购专员、采购主管 -->
+	<select id="selectRoleByCondition" parameterClass="userProductEntity" resultClass="userEntity">
+		select
+		  user.id as id ,user.role_id as roleId 
+		from 
+			user,user_product 
+		where
+			user.id = user_product.user_id 
+		and user_product.product_type_id = #productTypeId#
+		and user.role_id in ($userId$)
+		and user.enable = 1
+	</select>
+	<!-- 检索法务专员、运营总监助理、运营总监 -->
+	<select id="selectProductAndArea" parameterClass="userAreaProductEntity" resultClass="userEntity">
+		select
+		  user.id as id ,user.role_id as roleId 
+		from 
+			user,user_product 
+		where
+			user.id = user_product.user_id 
+		and user_product.product_type_id = #productTypeId#
+		and user.role_id in ($userId$)
+		and user.user_area_id = #userAreaId#
+		and user.enable = 1
+	</select>
+	<!-- 检索区域总监 -->
+		<select id="selectJudgeRoleByRegionalId" parameterClass="userAreaProductEntity" resultClass="userEntity">
+		SELECT U.ID             AS USERID,
+			   U.ROLE_ID		AS ROLEID
+		FROM  USER U,
+				USER_PRODUCT UP
+		WHERE U.ENABLE=1
+			 AND U.ID=UP.USER_ID
+			 AND U.ROLE_ID='9'
+			 AND UP.PRODUCT_TYPE_ID=#productTypeId#
+			 AND U.USER_AREA_ID=#userAreaId#
+	</select>
+</sqlMap>

@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.4"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee 
+	http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+	<!-- context param -->
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>
+			/WEB-INF/classes/cn/com/thtf/egov/cms/spring/applicationContext.xml
+		</param-value>
+	</context-param>
+
+	<!-- 字符编码过滤器 -->
+	<filter>
+		<filter-name>CharacterEncoding</filter-name>
+		<filter-class>
+			cn.com.thtf.egov.cms.controller.CharacterEncodingFilter
+		</filter-class>
+		<init-param>
+			<param-name>encoding</param-name>
+			<param-value>utf-8</param-value>
+		</init-param>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>CharacterEncoding</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<!-- 用户验证过滤器 -->
+	<filter>
+		<filter-name>ViladataFilter</filter-name>
+		<filter-class>
+		cn.com.thtf.egov.cms.controller.ViladataFilter
+		</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>ViladataFilter</filter-name>
+		<url-pattern>*.do</url-pattern>
+	</filter-mapping>
+	<filter-mapping>
+		<filter-name>ViladataFilter</filter-name>
+		<url-pattern>*.jsp</url-pattern>
+	</filter-mapping>
+	
+
+	<!-- jmesa分页 
+		<filter> 
+		<filter-name>TableFacadeFilter</filter-name> 
+		<filter-class>org.jmesa.facade.filter.TableFacadeFilter</filter-class> 
+		</filter> 
+		<filter-mapping> 
+		<filter-name>TableFacadeFilter</filter-name>
+		<url-pattern>/*</url-pattern> 
+		</filter-mapping>
+	-->
+
+	<!-- listener -->
+	<listener>
+		<listener-class>
+			org.springframework.web.context.ContextLoaderListener
+		</listener-class>
+	</listener>
+	<listener>
+		<listener-class>
+			cn.com.thtf.egov.cms.controller.StartUp
+		</listener-class>
+	</listener>
+	<listener>
+		<listener-class>
+			cn.com.thtf.egov.cms.controller.OnLineUserListener
+		</listener-class>
+	</listener>
+	<!-- servlet -->
+	<servlet>
+		<servlet-name>action</servlet-name>
+		<servlet-class>
+			org.apache.struts.action.ActionServlet
+		</servlet-class>
+		<init-param>
+			<param-name>config</param-name>
+			<param-value>
+				/WEB-INF/struts-config.xml,
+				/WEB-INF/modules/struts-config-login.xml,
+				/WEB-INF/modules/struts-config-management.xml,
+				/WEB-INF/modules/struts-config-base.xml,
+				/WEB-INF/modules/struts-config-waitevent.xml,
+				/WEB-INF/modules/struts-config-waitevent.xml,
+				/WEB-INF/modules/struts-config-credit.xml,
+				/WEB-INF/modules/struts-config-sendgoods.xml,
+				/WEB-INF/modules/struts-config-sell.xml,
+				/WEB-INF/modules/struts-config-invoice.xml,
+				/WEB-INF/modules/struts-config-salesContract.xml,
+				/WEB-INF/modules/struts-config-wayBill.xml,
+				/WEB-INF/modules/struts-config-mreturn.xml,
+				/WEB-INF/modules/struts-config-backInvoice.xml,
+				/WEB-INF/modules/struts-config-salereturn.xml,
+				/WEB-INF/modules/struts-config-purchase.xml,
+				/WEB-INF/modules/struts-config-salesBackContract.xml,
+				/WEB-INF/modules/struts-config-sellBack.xml,
+				/WEB-INF/modules/struts-config-inventory.xml,
+			    /WEB-INF/modules/struts-config-buyPayment.xml,
+				/WEB-INF/modules/struts-config-buyContract.xml,
+				/WEB-INF/modules/struts-config-buyBackContract.xml,						
+				/WEB-INF/modules/struts-config-demand.xml,
+				/WEB-INF/modules/struts-config-buyBack.xml,
+				/WEB-INF/modules/struts-config-receiveInvoice.xml,
+				/WEB-INF/modules/struts-config-buyBackGoods.xml,	
+				/WEB-INF/modules/struts-config-incomeStoreroom.xml,		    
+				/WEB-INF/modules/struts-config-buyBackGoods.xml,
+				/WEB-INF/modules/struts-config-moveStock.xml,
+				/WEB-INF/modules/struts-config-mail.xml,
+				/WEB-INF/modules/struts-config-sampleOut.xml,
+				/WEB-INF/modules/struts-config-sampleIn.xml,
+				/WEB-INF/modules/struts-config-custwaybill.xml
+			</param-value>
+		</init-param>
+		<init-param>
+			<param-name>debug</param-name>
+			<param-value>3</param-value>
+		</init-param>
+		<init-param>
+			<param-name>detail</param-name>
+			<param-value>3</param-value>
+		</init-param>
+		<load-on-startup>0</load-on-startup>
+	</servlet>
+
+	<servlet>
+		<servlet-name>ImageServlet</servlet-name>
+		<servlet-class>
+			cn.com.thtf.egov.cms.controller.ImageServlet
+		</servlet-class>
+		<load-on-startup>5</load-on-startup>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>action</servlet-name>
+		<url-pattern>*.do</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>ImageServlet</servlet-name>
+		<url-pattern>/images/confirmimg</url-pattern>
+	</servlet-mapping>	
+
+	<!-- jsp config -->
+	<jsp-config>
+		<taglib>
+			<taglib-uri>/WEB-INF/struts-logic.tld</taglib-uri>
+			<taglib-location>
+				/WEB-INF/tlds/struts-logic.tld
+			</taglib-location>
+		</taglib>
+		<taglib>
+			<taglib-uri>/WEB-INF/struts-bean.tld</taglib-uri>
+			<taglib-location>
+				/WEB-INF/tlds/struts-bean.tld
+			</taglib-location>
+		</taglib>
+		<taglib>
+			<taglib-uri>/WEB-INF/struts-html.tld</taglib-uri>
+			<taglib-location>
+				/WEB-INF/tlds/struts-html.tld
+			</taglib-location>
+		</taglib>
+		<taglib>
+			<taglib-uri>/WEB-INF/struts-nested.tld</taglib-uri>
+			<taglib-location>
+				/WEB-INF/tlds/struts-nested.tld
+			</taglib-location>
+		</taglib>
+		<taglib>
+			<taglib-uri>/WEB-INF/struts-tiles.tld</taglib-uri>
+			<taglib-location>
+				/WEB-INF/tlds/struts-tiles.tld
+			</taglib-location>
+		</taglib>
+		<taglib>
+			<taglib-uri>/WEB-INF/c.tld</taglib-uri>
+			<taglib-location>/WEB-INF/tlds/c.tld</taglib-location>
+		</taglib>
+		<taglib>
+			<taglib-uri>/WEB-INF/fmt.tld</taglib-uri>
+			<taglib-location>/WEB-INF/tlds/fmt.tld</taglib-location>
+		</taglib>
+		<taglib>
+			<taglib-uri>/WEB-INF/pager-taglib.tld</taglib-uri>
+			<taglib-location>
+				/WEB-INF/tlds/pager-taglib.tld
+			</taglib-location>
+		</taglib>
+		<taglib>
+			<taglib-uri>/WEB-INF/fn.tld</taglib-uri>
+			<taglib-location>/WEB-INF/tlds/fn.tld</taglib-location>
+		</taglib>
+		<taglib>
+			<taglib-uri>/WEB-INF/fmt.tld</taglib-uri>
+			<taglib-location>/WEB-INF/tlds/fmt.tld</taglib-location>
+		</taglib>
+	</jsp-config>
+	<!-- -->
+	<error-page>
+	<error-code>404</error-code>
+	<location>/wrong404.jsp</location>
+	</error-page>
+	
+	<error-page>
+	<error-code>500</error-code>
+	<location>/wrong500.jsp</location>
+	</error-page>
+	<session-config>
+		<session-timeout>30</session-timeout>
+	</session-config>
+
+	<!-- welcome -->
+	<welcome-file-list>
+		<welcome-file>login.jsp</welcome-file>
+	</welcome-file-list>
+</web-app>
+

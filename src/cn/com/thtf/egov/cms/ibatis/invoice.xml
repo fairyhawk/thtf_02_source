@@ -1,0 +1,1339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="invoice_sqlMap">
+	<typeAlias alias="invoiceListDto"
+		type="cn.com.thtf.egov.cms.dto.InvoiceListDto" />
+	<typeAlias alias="productTypeInfoDto"
+		type="cn.com.thtf.egov.cms.dto.ProductTypeInfoDto" />
+	<typeAlias alias="customerInfoDto"
+		type="cn.com.thtf.egov.cms.dto.CustomerInfoDto" />
+	<typeAlias alias="SendGoodsParticularDto"
+		type="cn.com.thtf.egov.cms.dto.SendGoodsParticularListDto" />
+	<typeAlias alias="makeInvoiceDetail"
+		type="cn.com.thtf.egov.cms.form.MakeInvoiceDetail" />
+	<typeAlias alias="makeInvoiceAddDto"
+		type="cn.com.thtf.egov.cms.dto.MakeInvoiceAddDto" />	
+	<typeAlias alias="sellInvoiceDto"
+		type="cn.com.thtf.egov.cms.dto.SellInvoiceListDto" />	
+	<typeAlias alias="sellInvocleOfAddDto"
+		type="cn.com.thtf.egov.cms.dto.SellInvocleOfAddDto" />
+	<typeAlias alias="sellInvoiceDetailOfInvoiceDto"
+		type="cn.com.thtf.egov.cms.dto.SellInvoiceDetailOfInvoiceDto" />		
+	<typeAlias alias="getSellAssistantDto"
+		type="cn.com.thtf.egov.cms.dto.GetSellAssistantDto" />	
+	<typeAlias alias="mailEntity"
+		type="cn.com.thtf.egov.cms.entity.MailEntity" />
+	<typeAlias alias="mailAddresseeEntity"
+		type="cn.com.thtf.egov.cms.entity.MailAddresseeEntity" />
+	<typeAlias alias="makeInvoiceDetailEntity"
+		type="cn.com.thtf.egov.cms.entity.MakeInvoiceDetailEntity" />		
+	<!--开票信息Dto by lilewei-->
+	<typeAlias alias="invoiceInfoDto" 
+		       type="cn.com.thtf.egov.cms.dto.InvoiceInfoDto" />
+		       
+	<!--开票信息明细Dto by lilewei-->
+	<typeAlias alias="invoiceDetailDto" 
+		       type="cn.com.thtf.egov.cms.dto.InvoiceDetailDto" />	       
+		       
+	<!--根据id 查询 开票信息 by lilewei -->
+	<select id="selectInvoiceById" parameterClass="java.lang.String" resultClass="invoiceInfoDto">
+			SELECT INVOICE.ID                    AS ID,
+			       INVOICE.MONEY                 AS MONEY,
+			       INVOICE.TEXT  				 AS TEXT,
+			       INVOICE.STATUS				 AS STATUS,
+			       INVOICE.CUSTOMER_ID           AS CUSTOMERID,
+			       INVOICE.CUSTOMER_NAME         AS CUSTOMERNAME,
+			       INVOICE.PRODUCT_TYPE_ID       AS PRODUCTTYPEID,
+			       INVOICE.INVOICE_TYPE          AS INVOICETYPE,
+			       INVOICE.USER_ID               AS USERID,
+			       INVOICE.USER_NAME             AS USERNAME,
+			       INVOICE.USER_AREA_ID          AS USERAREAID,
+			       INVOICE.DATE                  AS DATE,
+			       INVOICE.NOTIFY_ID             AS NOTIFYID,
+			       INVOICE.NOTIFY_NAME           AS NOTIFYNAME,
+			       INVOICE.NOTIFY_DATE           AS NOTIFYDATE,
+			       INVOICE.confirm_date 		 As confirmDate,
+			       CUSTOMER.TAX_NUMBER           AS TAXNUMBER,
+			       CUSTOMER.INVOICE_BANK_ACCOUNT AS INVOICEBANKACCOUNT,
+			       CUSTOMER.INVOICE_BANK_ADDRESS AS INVOICEBANKADDRESS,
+			       CUSTOMER.INVOICE_BANK_NAME    AS INVOICEBANKNAME,
+			       CUSTOMER.INVOICE_BANK_TEL     AS INVOICEBANKTEL,
+			       PTYPE.NAME                    AS PRODUCTTYPENAME
+			FROM   MAKE_INVOICE AS INVOICE
+			       LEFT JOIN CUSTOMER
+			         ON INVOICE.CUSTOMER_ID = CUSTOMER.ID
+			       LEFT JOIN PRODUCT_TYPE AS PTYPE
+			         ON INVOICE.PRODUCT_TYPE_ID = PTYPE.ID
+			WHERE  INVOICE.ID = #invoiceId#
+			
+	</select>
+	
+	<!--开票通知 by lilewei-->
+	<update id="updateInvoiceForNotify" parameterClass="invoiceInfoDto">
+			UPDATE MAKE_INVOICE
+			SET    STATUS = #status#,
+				   NOTIFY_ID = #notifyId#,
+				   NOTIFY_NAME = #notifyName#,
+				   NOTIFY_DATE = #notifyDate#
+			WHERE  ID = #id#
+	</update>	
+	
+	<!--根据id 查询 开票信息明细列表 by lilewei -->
+	<select id="selectInvoiceDetailByInvoiceId" parameterClass="java.lang.String" resultClass="invoiceDetailDto">
+			SELECT DETAIL.ID,
+			       DETAIL.MAKE_INVOICE_ID AS MAKEINVOICEID,
+			       DETAIL.SEND_GOODS_ID   AS SENDGOODSID,
+			       DETAIL.PRODUCT_ID      AS PRODUCTID,			      
+			       DETAIL.COUNT           AS COUNT,
+			       DETAIL.MONEY			  AS MONEY,
+			       PRODUCT.CODE           AS PRODUCTCODE,
+			       PRODUCT.NAME           AS PRODUCTNAME,
+			       PRODUCT.TYPE           AS PRODUCTTYPE,
+			       CONTRACTDETAIL.PRICE   AS PRICE,
+			       PRODUCT.UNIT           AS PRODUCTUNIT,
+			       CONTRACT.product_contract_code as productContractCode 
+			FROM   MAKE_INVOICE_DETAIL AS DETAIL
+			       LEFT JOIN PRODUCT
+			         ON DETAIL.PRODUCT_ID = PRODUCT.ID
+			       LEFT JOIN SEND_GOODS AS GOODS
+			         ON DETAIL.SEND_GOODS_ID = GOODS.ID
+			       LEFT JOIN SELL_CONTRACT AS CONTRACT
+			         ON CONTRACT.ID = GOODS.SELL_CONTRACT_ID
+			       LEFT JOIN SELL_CONTRACT_DETAIL AS CONTRACTDETAIL
+			         ON CONTRACT.ID = CONTRACTDETAIL.SELL_CONTRACT_ID
+			            AND CONTRACTDETAIL.PRODUCT_ID = DETAIL.PRODUCT_ID
+			WHERE  DETAIL.MAKE_INVOICE_ID = #invoiceId#
+	</select>       
+	<!-- 开票列表 begin -->
+	<select id="selectInvoice.getDate" parameterClass="invoiceListDto"
+		resultClass="invoiceListDto">
+			SELECT   MI.ID AS ID,						<!--开票申请单号-->
+			         PT.NAME AS PRODUCTTYPENAME,		<!--产品分类名称-->
+			         C.NAME AS CUSTOMERNAME,			<!--客户名称-->
+			         MI.MONEY AS MONEY,					<!--申请金额-->
+			         TMPSI.INVOICEMONEY as INVOICEMONEY,<!--发票金额-->
+			         TMPSI2.BACKMONEY as RETURNMONEY,	<!--退票金额-->
+			         MI.INVOICE_TYPE AS INVOICETYPE,	<!--发票类型-->
+			         MI.DATE AS DATE,					<!--申请日期-->
+			         MI.NOTIFY_DATE AS NOTIFYDATE,		<!--通知日期-->
+			         MI.USER_NAME AS USERNAME,			<!--申请人-->
+			         MI.NOTIFY_NAME AS NOTIFYNAME,		<!--通知人-->
+			         MI.confirm_date 		 As confirmDate,<!--确认时间-->
+			         MI.STATUS AS STATUS 				<!--开票状态-->
+			FROM     MAKE_INVOICE MI
+			         LEFT JOIN PRODUCT_TYPE PT
+			           ON MI.PRODUCT_TYPE_ID = PT.ID
+			         LEFT JOIN CUSTOMER C
+			           ON MI.CUSTOMER_ID = C.ID
+			         LEFT JOIN (select 
+							sum(sell_invoice.money) as invoicemoney,
+							make_invoice.id as MAKE_INVOICE_ID,
+							sell_invoice.customer_id,
+							sell_invoice.product_type_id
+							from sell_invoice,make_invoice
+							where sell_invoice.make_invoice_id=make_invoice.id 
+							and sell_invoice.`status`!=7
+							group by make_invoice.id) TMPSI
+					ON MI.ID = TMPSI.MAKE_INVOICE_ID
+		              AND MI.CUSTOMER_ID = TMPSI.CUSTOMER_ID
+		              AND MI.PRODUCT_TYPE_ID = TMPSI.PRODUCT_TYPE_ID
+					 LEFT JOIN (select 
+							sum(sell_invoice.money) as backmoney,
+							make_invoice.id as MAKE_INVOICE_ID,
+							sell_invoice.customer_id,
+							sell_invoice.product_type_id
+							from sell_invoice,make_invoice
+							where sell_invoice.make_invoice_id=make_invoice.id 
+							and sell_invoice.`status`=7
+							group by make_invoice.id) TMPSI2
+           ON MI.ID = TMPSI2.MAKE_INVOICE_ID
+              AND MI.CUSTOMER_ID = TMPSI2.CUSTOMER_ID
+              AND MI.PRODUCT_TYPE_ID = TMPSI2.PRODUCT_TYPE_ID
+		<dynamic prepend="WHERE">
+			<isEqual prepend="and" property="type"
+				compareValue="sellManage">		<!-- 销售经理 -->
+				MI.USER_ID=#userId#
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="sellMajordomo">	<!-- 销售总监 and make_invoice.status=2-->
+				MI.PRODUCT_TYPE_ID IN(SELECT PRODUCT_TYPE_ID FROM USER_PRODUCT WHERE USER_ID=#userId#) 
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="runMajordomo">	<!-- 运营总监 make_invoice.status=4-->
+				
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="sellAssistant">	<!-- 销售助理 -->
+				<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						(MI.USER_AREA_ID=$userAreaProductList[].userAreaId$ and MI.PRODUCT_TYPE_ID=$userAreaProductList[].productTypeId$)
+				</iterate>	
+				
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="sellAssistant">
+				MI.STATUS=6 
+				</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="areaMajordomo">	<!-- 区域总监 -->
+				<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						(MI.USER_AREA_ID=$userAreaProductList[].userAreaId$ and MI.PRODUCT_TYPE_ID=$userAreaProductList[].productTypeId$)
+				</iterate>	
+			</isEqual>
+			<!-- 大区经理、区域经理 -->
+     		<isEqual prepend="and" property="type" compareValue="areaManage">
+     				MI.user_area_id in (select user_area_id from user_area_mapping where user_id=#userId#)
+     		</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="productCreditOffice"><!-- 采购主管 产品总监  信用专员 法务专员、运营总监助理、信用主管、总经理、库房主管-->
+				MI.status=7
+			</isEqual>
+		</dynamic>	
+		ORDER BY 
+		<isEqual property="type"
+				compareValue="sellAssistant">
+			TMPSI.INVOICEMONEY asc,
+		</isEqual>
+		 MI.ID DESC
+	</select>
+	<!-- 开票列表 End -->
+	<!-- 开票列表分页取和 Begin -->
+	<select id="selectInvoice.recordCount"
+		parameterClass="invoiceListDto" resultClass="java.lang.Integer">
+			SELECT  COUNT(*)
+			FROM     MAKE_INVOICE MI 
+		<dynamic prepend="WHERE">
+			<isEqual prepend="and" property="type"
+				compareValue="sellManage">		<!-- 销售经理 -->
+				MI.USER_ID=#userId#
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="sellMajordomo">	<!-- 销售总监 and make_invoice.status=2-->
+				MI.PRODUCT_TYPE_ID IN(SELECT PRODUCT_TYPE_ID FROM USER_PRODUCT WHERE USER_ID=#userId#) 
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="runMajordomo">	<!-- 运营总监 make_invoice.status=4-->
+				
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="sellAssistant">	<!-- 销售助理 -->
+				<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						(MI.USER_AREA_ID=$userAreaProductList[].userAreaId$ and MI.PRODUCT_TYPE_ID=$userAreaProductList[].productTypeId$)
+				</iterate>	
+				
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="sellAssistant">
+				MI.STATUS=6
+				</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="areaMajordomo">	<!-- 区域总监 -->
+				<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						(MI.USER_AREA_ID=$userAreaProductList[].userAreaId$ and MI.PRODUCT_TYPE_ID=$userAreaProductList[].productTypeId$)
+				</iterate>	
+			</isEqual>
+			<!-- 大区经理、区域经理 -->
+     		<isEqual prepend="and" property="type" compareValue="areaManage">
+     				MI.user_area_id in (select user_area_id from user_area_mapping where user_id=#userId#)
+     		</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="productCreditOffice"><!-- 采购主管 产品总监  信用专员 法务专员、运营总监助理、信用主管、总经理、库房主管-->
+				MI.status=7
+			</isEqual>
+			</dynamic>
+			
+		</select>
+	<!-- 开票列表分页取和 End -->
+	<!-- 产品分类 Begin-->
+	<select id="selectAllProduct" parameterClass="productTypeInfoDto"
+		resultClass="productTypeInfoDto">
+		SELECT NAME,
+       			ID,
+       			NO
+		FROM   PRODUCT_TYPE
+	</select>
+	<!-- 产品分类 End-->
+	<!-- 开票检索 Begin -->
+	<select id="selectInvoiceByObj.getData"
+		parameterClass="invoiceListDto" resultClass="invoiceListDto">
+			SELECT 
+					 MI.ID AS ID,<!--开票申请单号-->
+					 make_invoice_detail.send_goods_id as sendgoodsid,<!--发货单单号-->
+					 PT.NAME AS PRODUCTTYPENAME,<!--产品分类名称-->
+					 C.NAME AS CUSTOMERNAME,<!--客户名称-->
+					 MI.MONEY AS MONEY,<!--申请金额-->
+					 TMPSI.INVOICEMONEY as INVOICEMONEY,<!--发票金额-->
+					 TMPSI2.BACKMONEY as RETURNMONEY,<!--退票金额-->
+					 MI.INVOICE_TYPE AS INVOICETYPE,<!--发票类型-->
+					 MI.DATE AS DATE,<!--申请日期-->
+					 MI.NOTIFY_DATE AS NOTIFYDATE,<!--通知日期-->
+					 MI.USER_NAME AS USERNAME,<!--申请人-->
+					 MI.NOTIFY_NAME AS NOTIFYNAME,<!--通知人-->
+					 MI.PRODUCT_TYPE_ID as productTypeId,
+					 MI.STATUS AS STATUS ,<!--开票状态-->
+					 MI.confirm_date 		 As confirmDate,<!--确认时间-->
+					 MI.USER_ID AS USERID ,
+					 MI.USER_AREA_ID as USERAREAID
+				FROM     MAKE_INVOICE MI
+				inner join make_invoice_detail on make_invoice_detail.make_invoice_id=MI.id
+				         LEFT JOIN PRODUCT_TYPE PT
+				           ON MI.PRODUCT_TYPE_ID = PT.ID
+			         LEFT JOIN CUSTOMER C
+			           ON MI.CUSTOMER_ID = C.ID
+			           
+					LEFT JOIN (select 
+							sum(sell_invoice.money) as invoicemoney,
+							make_invoice.id as MAKE_INVOICE_ID,
+							sell_invoice.customer_id,
+							sell_invoice.product_type_id
+							from sell_invoice,make_invoice
+							where sell_invoice.make_invoice_id=make_invoice.id 
+							and sell_invoice.`status`!=7
+							group by make_invoice.id) TMPSI
+					ON MI.ID = TMPSI.MAKE_INVOICE_ID
+		              AND MI.CUSTOMER_ID = TMPSI.CUSTOMER_ID
+		              AND MI.PRODUCT_TYPE_ID = TMPSI.PRODUCT_TYPE_ID
+					 LEFT JOIN (select 
+							sum(sell_invoice.money) as backmoney,
+							make_invoice.id as MAKE_INVOICE_ID,
+							sell_invoice.customer_id,
+							sell_invoice.product_type_id
+							from sell_invoice,make_invoice
+							where sell_invoice.make_invoice_id=make_invoice.id 
+							and sell_invoice.`status`=7
+							group by make_invoice.id) TMPSI2
+          		 ON MI.ID = TMPSI2.MAKE_INVOICE_ID
+		              AND MI.CUSTOMER_ID = TMPSI2.CUSTOMER_ID
+		              AND MI.PRODUCT_TYPE_ID = TMPSI2.PRODUCT_TYPE_ID			           
+		    <dynamic prepend="WHERE">
+            <isNotEmpty prepend="and" property="id">
+				MI.ID LIKE concat('%',#id#,'%')
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="productTypeId">
+				MI.PRODUCT_TYPE_ID=#productTypeId#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="invoiceType">
+				MI.INVOICE_TYPE=#invoiceType#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="date">
+				<![CDATA[ MI.DATE>=#date# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="applyEndTime">
+				<![CDATA[ MI.DATE<=#applyEndTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="notifyDate">
+				<![CDATA[ MI.NOTIFY_DATE>=#notifyDate# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="notifyEndTime">
+				<![CDATA[ MI.NOTIFY_DATE<=#notifyEndTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userName">
+				MI.USER_NAME LIKE concat('%',#userName#,'%')
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="notifyName">
+				MI.NOTIFY_NAME LIKE concat('%',#notifyName#,'%')
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="status">
+				MI.STATUS=#status#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="customerName">
+				C.NAME LIKE concat('%',#customerName#,'%')
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="sendGoodsId">
+				make_invoice_detail.send_goods_id=#sendGoodsId#
+			</isNotEmpty>
+
+			<isEqual prepend="and" property="type"
+				compareValue="sellManage"><!-- 销售经理 -->
+				MI.USER_ID=#userId#
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="sellMajordomo"><!-- 销售总监  and make_invoice.status=2-->
+				MI.PRODUCT_TYPE_ID IN(SELECT PRODUCT_TYPE_ID FROM USER_PRODUCT WHERE USER_ID=#userId#) 
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="runMajordomo"><!-- 运营总监 make_invoice.status=4-->
+				
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="sellAssistant">	<!-- 销售助理 -->
+				<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						(MI.USER_AREA_ID=$userAreaProductList[].userAreaId$ and MI.PRODUCT_TYPE_ID=$userAreaProductList[].productTypeId$)
+				</iterate>	
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="areaMajordomo">	<!-- 区域总监 -->
+				<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						(MI.USER_AREA_ID=$userAreaProductList[].userAreaId$ and MI.PRODUCT_TYPE_ID=$userAreaProductList[].productTypeId$)
+				</iterate>	
+			</isEqual>
+			<!-- 大区经理、区域经理 -->
+     		<isEqual prepend="and" property="type" compareValue="areaManage">
+     				MI.user_area_id in (select user_area_id from user_area_mapping where user_id=#userId#)
+     		</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="productCreditOffice"><!-- 采购主管 产品总监  信用专员 法务专员、运营总监助理、信用主管、总经理、库房主管-->
+
+			</isEqual>
+			</dynamic>
+			group by  MI.ID
+			ORDER BY 
+			<isEqual property="type"
+				compareValue="sellAssistant">
+				TMPSI.INVOICEMONEY asc,
+			</isEqual>
+			MI.ID desc
+	</select>
+	<!-- 开票检索 End -->
+	<!-- 开票检索分页 Begin -->
+	<select id="selectInvoiceByObj.recordCount"
+		parameterClass="invoiceListDto" resultClass="java.lang.Integer">
+		SELECT  
+				COUNT(*)
+		FROM (SELECT 
+					 MI.ID AS ID,
+					 make_invoice_detail.send_goods_id as sendgoodsid,
+					 C.NAME AS CUSTOMERNAME,
+					 MI.MONEY AS MONEY,
+					 MI.INVOICE_TYPE AS INVOICETYPE,
+					 MI.DATE AS DATE,
+					 MI.NOTIFY_DATE AS NOTIFYDATE,
+					 MI.USER_NAME AS USERNAME,
+					 MI.NOTIFY_NAME AS NOTIFYNAME,
+					 MI.PRODUCT_TYPE_ID as productTypeId,
+					 MI.STATUS AS STATUS ,
+					 MI.USER_ID AS USERID ,
+					 MI.USER_AREA_ID as USERAREAID
+				FROM     MAKE_INVOICE MI
+				inner join make_invoice_detail on make_invoice_detail.make_invoice_id=MI.id
+			         LEFT JOIN CUSTOMER C
+			           ON MI.CUSTOMER_ID = C.ID
+		              <dynamic prepend="WHERE">
+				         	<isNotEmpty prepend="and" property="sendGoodsId">
+								make_invoice_detail.send_goods_id=#sendGoodsId#
+							</isNotEmpty>
+					</dynamic>
+					group by MI.ID
+		              ) as RETURNLIST
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="and" property="id">
+				RETURNLIST.ID LIKE concat('%',#id#,'%')
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="productTypeId">
+				RETURNLIST.PRODUCTTYPEID=#productTypeId#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="invoiceType">
+				RETURNLIST.INVOICETYPE=#invoiceType#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="date">
+				<![CDATA[ RETURNLIST.DATE>=#date# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="applyEndTime">
+				<![CDATA[ RETURNLIST.DATE<=#applyEndTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="notifyDate">
+				<![CDATA[ RETURNLIST.NOTIFYDATE>=#notifyDate# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="notifyEndTime">
+				<![CDATA[ RETURNLIST.NOTIFYDATE<=#notifyEndTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userName">
+				RETURNLIST.USERNAME LIKE concat('%',#userName#,'%')
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="notifyName">
+				RETURNLIST.NOTIFYNAME LIKE concat('%',#notifyName#,'%')
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="status">
+				RETURNLIST.STATUS=#status#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="customerName">
+				RETURNLIST.CUSTOMERNAME LIKE concat('%',#customerName#,'%')
+			</isNotEmpty>
+
+
+			<isEqual prepend="and" property="type"
+				compareValue="sellManage"><!-- 销售经理 -->
+				RETURNLIST.USERID=#userId#
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="sellMajordomo"><!-- 销售总监  and make_invoice.status=2-->
+				RETURNLIST.PRODUCTTYPEID IN(SELECT PRODUCT_TYPE_ID FROM USER_PRODUCT WHERE USER_ID=#userId#) 
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="runMajordomo"><!-- 运营总监 make_invoice.status=4-->
+				
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="sellAssistant">	<!-- 销售助理 -->
+				<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						(RETURNLIST.USERAREAID=$userAreaProductList[].userAreaId$ and RETURNLIST.PRODUCTTYPEID=$userAreaProductList[].productTypeId$)
+				</iterate>	
+			</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="areaMajordomo">	<!-- 区域总监 -->
+				<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						(RETURNLIST.USERAREAID=$userAreaProductList[].userAreaId$ and RETURNLIST.PRODUCTTYPEID=$userAreaProductList[].productTypeId$)
+				</iterate>	
+			</isEqual>
+			<!-- 大区经理、区域经理 -->
+     		<isEqual prepend="and" property="type" compareValue="areaManage">
+     				RETURNLIST.USERAREAID in (select user_area_id from user_area_mapping where user_id=#userId#)
+     		</isEqual>
+			<isEqual prepend="and" property="type"
+				compareValue="productCreditOffice"><!-- 采购主管 产品总监  信用专员 法务专员、运营总监助理、信用主管、总经理、库房主管-->
+				
+			</isEqual>
+			</dynamic>
+	</select>
+	<!-- 开票检索分页 End -->
+	<!-- 选择客户 Begin -->
+	<select id="selectCustomer.getDate" parameterClass="customerInfoDto"
+		resultClass="customerInfoDto">
+		SELECT CUST.ID AS ID,
+		       CUST.NAME AS NAME,
+		       CUST.INVOICE_BANK_NAME AS INVOICEBANKNAME,
+		       CUST.TAX_NUMBER AS TAXNUMBER,
+		       CUST.INVOICE_BANK_ADDRESS AS INVOICEBANKADDRESS,
+		       CUST.INVOICE_BANK_ACCOUNT AS INVOICEBANKACCOUNT,
+		       CUST.INVOICE_BANK_TEL AS INVOICEBANKTEL,
+		       CUST.INVOICE_TYPE AS INVOICETYPE
+		FROM   CUSTOMER AS CUST,user_customer
+		where CUST.id=user_customer.customer_id and user_customer.user_id=#userid#
+	</select>
+	<!-- 选择客户  End -->
+	<!-- 选择客户分页 Begin -->
+	<select id="selectCustomer.recordCount"
+		parameterClass="customerInfoDto" resultClass="java.lang.Integer">
+		SELECT COUNT(*) FROM CUSTOMER,user_customer where user_customer.user_id=#userid# and customer.id=user_customer.customer_id
+	</select>
+	<!-- 选择客户分页  End -->
+	<!-- 查找客户 Begin -->
+	<select id="selectCustomerByObj.getDate"
+		parameterClass="customerInfoDto" resultClass="customerInfoDto">
+		SELECT CUST.ID AS ID,
+		       CUST.NAME AS NAME,
+		       CUST.INVOICE_BANK_NAME AS INVOICEBANKNAME,
+		       CUST.TAX_NUMBER AS TAXNUMBER,
+		       CUST.INVOICE_BANK_ADDRESS AS INVOICEBANKADDRESS,
+		       CUST.INVOICE_BANK_ACCOUNT AS INVOICEBANKACCOUNT,
+		       CUST.INVOICE_BANK_TEL AS INVOICEBANKTEL,
+		       CUST.INVOICE_TYPE AS INVOICETYPE
+		FROM   CUSTOMER AS CUST,user_customer
+		where CUST.ID=user_customer.customer_id and user_customer.user_id=#userid#
+			<isNotEmpty prepend="and" property="name">
+				CUST.NAME LIKE concat('%',#name#,'%')
+			</isNotEmpty>
+	</select>
+	<!-- 查找客户  End -->
+	<!-- 查找客户分页 Begin -->
+	<select id="selectCustomerByObj.recordCount"
+		parameterClass="customerInfoDto" resultClass="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM   CUSTOMER AS CUST,user_customer
+		where CUST.ID=user_customer.customer_id and user_customer.user_id=#userid#
+			<isNotEmpty prepend="and" property="name">
+				CUST.NAME LIKE concat('%',#name#,'%')
+			</isNotEmpty>
+	</select>
+	<!-- 查找客户分页  End -->
+	<!-- 删除开票 Begin -->
+	<delete id="deleteInvoice" parameterClass="string"><!-- 删除开票 Begin in (1,3,5)-->
+		DELETE FROM MAKE_INVOICE
+		WHERE     ID=#id# AND STATUS =1
+	</delete>
+	<!-- 删除开票  End -->
+	<!-- 发货明细 Begin -->
+	<select id="selectSendGoodsList.getDate" parameterClass="SendGoodsParticularDto"
+		resultClass="SendGoodsParticularDto">
+		SELECT   SG.ID AS ID,                                    <!--发货单号-->
+		         SG.CUSTOMER_ID AS CUSTOMERID,                   <!--客户ID-->
+		         SG.PRODTYPENAME AS PRODUCTTYPENAME,             <!--产品分类名称-->
+		         SG.PRODUCT_TYPE_ID AS PRODUCTTYPEID,            <!--产品分类ID-->
+		         SG.PRODUCT_CONTRACT_CODE AS PRODUCTCONTRACTNUM, <!--产品合同号-->
+		         SG.COMPANY_CONTRACT_CODE AS COMPANYCONTRACTNUM, <!--公司合同号-->
+		         SGD.PRODUCT_ID AS PRODUCTID,                    <!--产品ID-->
+		         P.CODE AS PRODUCTCODE,                          <!--产品编码-->
+		         P.NAME AS PRODUCTNAME,                          <!--产品名称-->
+		         P.TYPE AS SPECMODEL,                            <!--规格型号-->
+		         P.UNIT AS UNIT,                                 <!--单位-->
+		         SCD.PRICE AS SELLPRICE,                         <!--销售单价-->
+		         IFNULL(SGD.COUNT,0) AS SENDCOUNT,               <!--发货数-->
+		         IFNULL(TMPAP.MONEY,0) AS MONEY,                 <!--指定金额-->
+		         TMPCT.COUNT AS APPOINTCOUNT,                    <!--申请开票数-->
+		         IFNULL(TMPSI.COUNT,0) AS INVOICECOUNT,          <!--开票数-->
+		         IFNULL(TMPSI.MONEY,0) AS INVOICEMONEY,          <!--开票金额-->
+		         IFNULL(TMPBK.COUNT,0) AS BACKCOUNT,             <!--退货数-->
+		         IFNULL(SCD.PRICE,0)
+		           * IFNULL(TMPBK.COUNT,0) AS RETURNMONEY,        <!--退货金额-->
+		         SG.getDate,
+		         ifnull(sellBackGoods.COUNT,0) as sellBackGoodsCount   <!--退货数量-->
+		FROM   (SELECT SG.ID,
+			       SG.SELL_CONTRACT_ID,
+			       SG.PRODUCT_TYPE_ID,
+			       SG.CUSTOMER_ID,
+			       PT.NAME AS PRODTYPENAME,
+			       SC.PRODUCT_CONTRACT_CODE,
+			       SC.COMPANY_CONTRACT_CODE,
+			       adddate(SG.send_Date,SG.arterm) as getDate
+			       
+			FROM   SEND_GOODS SG,
+			       SELL_CONTRACT SC,
+			       PRODUCT_TYPE PT
+			WHERE  SG.STATUS = 5
+			       AND SEND_GOODS_TYPE = 1
+			       AND SG.SELL_CONTRACT_ID = SC.ID
+			       AND SG.CUSTOMER_ID = #customerId#
+			       AND SG.PRODUCT_TYPE_ID =#productTypeId#
+			       AND SG.user_id = #userId#
+			       AND SG.PRODUCT_TYPE_ID = PT.ID) AS SG
+		       INNER JOIN SEND_GOODS_DETAIL AS SGD
+			 ON SG.ID = SGD.SEND_GOODS_ID
+		       INNER JOIN PRODUCT P
+			 ON SGD.PRODUCT_ID = P.ID
+		       INNER JOIN SELL_CONTRACT_DETAIL SCD
+			 ON SCD.SELL_CONTRACT_ID = SG.SELL_CONTRACT_ID
+			    AND SGD.PRODUCT_ID = SCD.PRODUCT_ID
+		left join (
+				select sell_back_goods_detail.product_id,sell_back_goods.send_goods_id,ifnull(sum(sell_back_goods_detail.`count`),0) AS COUNT from sell_back_goods,sell_back_goods_detail where sell_back_goods_detail.sell_back_goods_id=sell_back_goods.id and sell_back_goods.status in(2,4,6,8) group by sell_back_goods_detail.product_id,sell_back_goods.send_goods_id 
+			)as sellBackGoods  on sellBackGoods.send_goods_id=SG.id and sellBackGoods.product_id=SGD.product_id
+		       LEFT JOIN (SELECT   RD.SEND_GOODS_ID,
+					   RD.PRODUCT_ID,
+					   SUM(RD.MONEY) MONEY
+				  FROM     MRETURN M
+					   INNER JOIN RETURN_DETAIL RD
+					     ON M.ID = RD.RETURN_ID
+				  WHERE  RD.APPOINT_TYPE = 4
+				  GROUP BY RD.SEND_GOODS_ID,RD.PRODUCT_ID) TMPAP
+			 ON SG.ID = TMPAP.SEND_GOODS_ID
+			    AND SGD.PRODUCT_ID = TMPAP.PRODUCT_ID
+		       LEFT JOIN (SELECT   SBG.SEND_GOODS_ID,
+					   SBGD.PRODUCT_ID,
+					   SUM(SBGD.COUNT) AS COUNT
+				  FROM     SELL_BACK_GOODS SBG
+					   INNER JOIN SELL_BACK_GOODS_DETAIL SBGD
+					     ON SBG.ID = SBGD.SELL_BACK_GOODS_ID
+				  WHERE    SBG.STATUS = 8
+				  GROUP BY SBG.SEND_GOODS_ID,SBGD.PRODUCT_ID) TMPBK
+			 ON SG.ID = TMPBK.SEND_GOODS_ID
+			    AND SGD.PRODUCT_ID = TMPBK.PRODUCT_ID
+		       LEFT JOIN (SELECT   SID.SEND_GOODS_ID,
+					   SID.PRODUCT_ID,
+					   SUM(SID.COUNT) AS COUNT,
+					   SUM(SID.MONEY) AS MONEY
+				  FROM     SELL_INVOICE SI
+					   INNER JOIN SELL_INVOICE_DETAIL SID
+					     ON SI.ID = SID.SELL_INVOICE_ID
+				  WHERE    SI.STATUS != 7
+				  GROUP BY SID.SEND_GOODS_ID,SID.PRODUCT_ID) TMPSI
+			 ON SG.ID = TMPSI.SEND_GOODS_ID
+			    AND SGD.PRODUCT_ID = TMPSI.PRODUCT_ID
+		       LEFT JOIN (SELECT   MID.SEND_GOODS_ID,
+					   MID.PRODUCT_ID,
+					   SUM(MID.COUNT) AS COUNT
+				  FROM     MAKE_INVOICE_DETAIL MID
+					   INNER JOIN MAKE_INVOICE MI
+					     ON MID.MAKE_INVOICE_ID = MI.ID
+				  WHERE   MI.STATUS != 1
+					      and MID.flag in(0,2)
+				  GROUP BY MID.SEND_GOODS_ID,MID.PRODUCT_ID) TMPCT
+			 ON SG.ID = TMPCT.SEND_GOODS_ID
+			    AND SGD.PRODUCT_ID = TMPCT.PRODUCT_ID
+		WHERE  IFNULL(SGD.COUNT,0) > IFNULL(TMPCT.COUNT,0)
+		ORDER BY SG.getDate,SG.ID
+	</select>
+	<!-- 发货明细  End -->
+	<!-- 发货明细分页 Begin -->
+	<select id="selectSendGoodsList.recordCount" parameterClass="SendGoodsParticularDto"
+		resultClass="java.lang.Integer">
+		SELECT  COUNT(*)
+		FROM   (SELECT SG.ID,
+			       SG.SELL_CONTRACT_ID,
+			       SG.PRODUCT_TYPE_ID,
+			       SG.CUSTOMER_ID,
+			       PT.NAME AS PRODTYPENAME,
+			       SC.PRODUCT_CONTRACT_CODE,
+			       SC.COMPANY_CONTRACT_CODE
+			FROM   SEND_GOODS SG,
+			       SELL_CONTRACT SC,
+			       PRODUCT_TYPE PT
+			WHERE  SG.STATUS = 5
+			       AND SEND_GOODS_TYPE = 1
+			       AND SG.SELL_CONTRACT_ID = SC.ID
+			       AND SG.CUSTOMER_ID = #customerId#
+			       AND SG.PRODUCT_TYPE_ID =#productTypeId#
+			       AND SG.user_id = #userId#
+			       AND SG.PRODUCT_TYPE_ID = PT.ID) AS SG
+		       INNER JOIN SEND_GOODS_DETAIL AS SGD
+			 ON SG.ID = SGD.SEND_GOODS_ID
+		       INNER JOIN PRODUCT P
+			 ON SGD.PRODUCT_ID = P.ID
+		       INNER JOIN SELL_CONTRACT_DETAIL SCD
+			 ON SCD.SELL_CONTRACT_ID = SG.SELL_CONTRACT_ID
+			    AND SGD.PRODUCT_ID = SCD.PRODUCT_ID
+					left join (
+				select sell_back_goods_detail.product_id,sell_back_goods.send_goods_id,ifnull(sum(sell_back_goods_detail.`count`),0) AS COUNT from sell_back_goods,sell_back_goods_detail where sell_back_goods_detail.sell_back_goods_id=sell_back_goods.id and sell_back_goods.status in(2,4,6,8) group by sell_back_goods_detail.product_id,sell_back_goods.send_goods_id
+			)as sellBackGoods  on sellBackGoods.send_goods_id=SG.id and sellBackGoods.product_id=SGD.product_id
+		       LEFT JOIN (SELECT   RD.SEND_GOODS_ID,
+					   RD.PRODUCT_ID,
+					   SUM(RD.MONEY) MONEY
+				  FROM     MRETURN M
+					   INNER JOIN RETURN_DETAIL RD
+					     ON M.ID = RD.RETURN_ID
+				  WHERE RD.APPOINT_TYPE = 4
+				  GROUP BY RD.SEND_GOODS_ID,RD.PRODUCT_ID) TMPAP
+			 ON SG.ID = TMPAP.SEND_GOODS_ID
+			    AND SGD.PRODUCT_ID = TMPAP.PRODUCT_ID
+		       LEFT JOIN (SELECT   SBG.SEND_GOODS_ID,
+					   SBGD.PRODUCT_ID,
+					   SUM(SBGD.COUNT) AS COUNT
+				  FROM     SELL_BACK_GOODS SBG
+					   INNER JOIN SELL_BACK_GOODS_DETAIL SBGD
+					     ON SBG.ID = SBGD.SELL_BACK_GOODS_ID
+				  WHERE    SBG.STATUS = 8
+				  GROUP BY SBG.SEND_GOODS_ID,SBGD.PRODUCT_ID) TMPBK
+			 ON SG.ID = TMPBK.SEND_GOODS_ID
+			    AND SGD.PRODUCT_ID = TMPBK.PRODUCT_ID
+		       LEFT JOIN (SELECT   SID.SEND_GOODS_ID,
+					   SID.PRODUCT_ID,
+					   SUM(SID.COUNT) AS COUNT,
+					   SUM(SID.MONEY) AS MONEY
+				  FROM     SELL_INVOICE SI
+					   INNER JOIN SELL_INVOICE_DETAIL SID
+					     ON SI.ID = SID.SELL_INVOICE_ID
+				  WHERE    SI.STATUS != 7
+				  GROUP BY SID.SEND_GOODS_ID,SID.PRODUCT_ID) TMPSI
+			 ON SG.ID = TMPSI.SEND_GOODS_ID
+			    AND SGD.PRODUCT_ID = TMPSI.PRODUCT_ID
+		       LEFT JOIN (SELECT   MID.SEND_GOODS_ID,
+					   MID.PRODUCT_ID,
+					   SUM(MID.COUNT) AS COUNT
+				  FROM     MAKE_INVOICE_DETAIL MID
+					   INNER JOIN MAKE_INVOICE MI
+					     ON MID.MAKE_INVOICE_ID = MI.ID
+				  WHERE MI.STATUS != 1 and MID.flag in(0,2)
+				  GROUP BY MID.SEND_GOODS_ID,MID.PRODUCT_ID) TMPCT
+			 ON SG.ID = TMPCT.SEND_GOODS_ID
+			    AND SGD.PRODUCT_ID = TMPCT.PRODUCT_ID
+		WHERE  IFNULL(SGD.COUNT,0)> IFNULL(TMPCT.COUNT,0)
+	</select>
+	<!-- 发货明细分页  End -->
+	<!-- 查找发货明细 Begin -->
+	<select id="selectSendGoodsListByObj.getDate" parameterClass="SendGoodsParticularDto"
+		resultClass="SendGoodsParticularDto">
+		SELECT   SG.ID AS ID,                                    <!--发货单号-->
+		         SG.CUSTOMER_ID AS CUSTOMERID,                   <!--客户ID-->
+		         SG.PRODTYPENAME AS PRODUCTTYPENAME,             <!--产品分类名称-->
+		         SG.PRODUCT_TYPE_ID AS PRODUCTTYPEID,            <!--产品分类ID-->
+		         SG.PRODUCT_CONTRACT_CODE AS PRODUCTCONTRACTNUM, <!--产品合同号-->
+		         SG.COMPANY_CONTRACT_CODE AS COMPANYCONTRACTNUM, <!--公司合同号-->
+		         SGD.PRODUCT_ID AS PRODUCTID,                    <!--产品ID-->
+		         P.CODE AS PRODUCTCODE,                          <!--产品编码-->
+		         P.NAME AS PRODUCTNAME,                          <!--产品名称-->
+		         P.TYPE AS SPECMODEL,                            <!--规格型号-->
+		         P.UNIT AS UNIT,                                 <!--单位-->
+		         SCD.PRICE AS SELLPRICE,                         <!--销售单价-->
+		         IFNULL(SGD.COUNT,0) AS SENDCOUNT,               <!--发货数-->
+		         IFNULL(TMPAP.MONEY,0) AS MONEY,                 <!--指定金额-->
+		         TMPCT.COUNT AS APPOINTCOUNT,                    <!--申请开票数-->
+		         IFNULL(TMPSI.COUNT,0) AS INVOICECOUNT,          <!--开票数-->
+		         IFNULL(TMPSI.MONEY,0) AS INVOICEMONEY,          <!--开票金额-->
+		         IFNULL(TMPBK.COUNT,0) AS BACKCOUNT,             <!--退货数-->
+		         IFNULL(SCD.PRICE,0)
+		           * IFNULL(TMPBK.COUNT,0) AS RETURNMONEY,        <!--退货金额-->
+		         SG.getDate as getDate,        <!--要求到账日期-->
+		         ifnull(sellBackGoods.COUNT,0) as sellBackGoodsCount   <!--退货数量-->
+		FROM     (SELECT SG.ID,
+		                 SG.SELL_CONTRACT_ID,
+		                 SG.PRODUCT_TYPE_ID,
+		                 SG.CUSTOMER_ID,
+		                 PT.NAME AS PRODTYPENAME,
+		                 SC.PRODUCT_CONTRACT_CODE,
+		                 SC.COMPANY_CONTRACT_CODE,
+		                 adddate(SG.send_Date,SG.arterm) as getDate
+		          FROM   SEND_GOODS SG,
+		                 SELL_CONTRACT SC,
+		                 PRODUCT_TYPE PT
+		          WHERE  SG.STATUS = 5
+		                 AND SEND_GOODS_TYPE = 1
+		                 AND SG.SELL_CONTRACT_ID = SC.ID
+		                 AND SG.CUSTOMER_ID = #customerId#
+		                 AND SG.user_id = #userId#
+		                 AND SG.PRODUCT_TYPE_ID = PT.ID) AS SG
+		         INNER JOIN SEND_GOODS_DETAIL AS SGD
+		           ON SG.ID = SGD.SEND_GOODS_ID
+		         INNER JOIN PRODUCT P
+		           ON SGD.PRODUCT_ID = P.ID
+		         INNER JOIN SELL_CONTRACT_DETAIL SCD
+		           ON SCD.SELL_CONTRACT_ID = SG.SELL_CONTRACT_ID
+		              AND SGD.PRODUCT_ID = SCD.PRODUCT_ID
+		         		left join (
+				select sell_back_goods_detail.product_id,sell_back_goods.send_goods_id,ifnull(sum(sell_back_goods_detail.`count`),0) AS COUNT from sell_back_goods,sell_back_goods_detail where sell_back_goods_detail.sell_back_goods_id=sell_back_goods.id and sell_back_goods.status in(2,4,6,8) group by sell_back_goods_detail.product_id,sell_back_goods.send_goods_id
+			)as sellBackGoods  on sellBackGoods.send_goods_id=SG.id and sellBackGoods.product_id=SGD.product_id
+		         LEFT JOIN (SELECT   RD.SEND_GOODS_ID,
+		                             RD.PRODUCT_ID,
+		                             SUM(RD.MONEY) MONEY
+		                    FROM     MRETURN M
+		                             INNER JOIN RETURN_DETAIL RD
+		                               ON M.ID = RD.RETURN_ID
+		                    WHERE    
+		                             RD.APPOINT_TYPE = 4
+		                    GROUP BY RD.SEND_GOODS_ID,RD.PRODUCT_ID) TMPAP
+		           ON SG.ID = TMPAP.SEND_GOODS_ID
+		              AND SGD.PRODUCT_ID = TMPAP.PRODUCT_ID
+		         LEFT JOIN (SELECT   SBG.SEND_GOODS_ID,
+		                             SBGD.PRODUCT_ID,
+		                             SUM(SBGD.COUNT) AS COUNT
+		                    FROM     SELL_BACK_GOODS SBG
+		                             INNER JOIN SELL_BACK_GOODS_DETAIL SBGD
+		                               ON SBG.ID = SBGD.SELL_BACK_GOODS_ID
+		                    WHERE    SBG.STATUS = 8
+		                    GROUP BY SBG.SEND_GOODS_ID,SBGD.PRODUCT_ID) TMPBK
+		           ON SG.ID = TMPBK.SEND_GOODS_ID
+		              AND SGD.PRODUCT_ID = TMPBK.PRODUCT_ID
+		         LEFT JOIN (SELECT   SID.SEND_GOODS_ID,
+		                             SID.PRODUCT_ID,
+		                             SUM(SID.COUNT) AS COUNT,
+		                             SUM(SID.MONEY) AS MONEY
+		                    FROM     SELL_INVOICE SI
+		                             INNER JOIN SELL_INVOICE_DETAIL SID
+		                               ON SI.ID = SID.SELL_INVOICE_ID
+		                    WHERE    SI.STATUS != 7
+		                    GROUP BY SID.SEND_GOODS_ID,SID.PRODUCT_ID) TMPSI
+		           ON SG.ID = TMPSI.SEND_GOODS_ID
+		              AND SGD.PRODUCT_ID = TMPSI.PRODUCT_ID
+		         LEFT JOIN (SELECT   MID.SEND_GOODS_ID,
+		                             MID.PRODUCT_ID,
+		                             SUM(MID.COUNT) AS COUNT
+		                    FROM     MAKE_INVOICE_DETAIL MID
+		                             INNER JOIN MAKE_INVOICE MI
+		                               ON MID.MAKE_INVOICE_ID = MI.ID
+		                    WHERE   MI.STATUS != 1 and MID.flag in(0,2)
+		                    GROUP BY MID.SEND_GOODS_ID,MID.PRODUCT_ID) TMPCT
+		           ON SG.ID = TMPCT.SEND_GOODS_ID
+		              AND SGD.PRODUCT_ID = TMPCT.PRODUCT_ID
+		WHERE    IFNULL(SGD.COUNT,0) > IFNULL(TMPCT.COUNT,0)  
+		
+		                
+		<isNotEmpty prepend="and" property="id">
+			SG.ID LIKE concat('%',#id#,'%')
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productTypeId">
+			SG.PRODUCT_TYPE_ID = #productTypeId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productContractNum">
+			SG.PRODUCT_CONTRACT_CODE LIKE
+			concat('%',#productContractNum#,'%')
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="companyContractNum">
+			SG.COMPANY_CONTRACT_CODE LIKE
+			concat('%',#companyContractNum#,'%')
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productCode">
+			P.CODE LIKE concat('%',#productCode#,'%')
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productName">
+			P.NAME LIKE concat('%',#productName#,'%')
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="specModel">
+			P.TYPE LIKE concat('%',#specModel#,'%')
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="beginTime">
+				<![CDATA[ SG.getDate>=#beginTime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="endTime">
+				<![CDATA[ SG.getDate<=#endTime# ]]>
+		</isNotEmpty>
+		ORDER BY  SG.getDate,SG.ID
+	</select>
+	<!-- 查找发货明细  End -->
+	<!-- 查找发货明细分页 Begin -->
+	<select id="selectSendGoodsListByObj.recordCount" parameterClass="SendGoodsParticularDto"
+		resultClass="java.lang.Integer">
+		SELECT   COUNT(*)
+		FROM     (SELECT SG.ID,
+		                 SG.SELL_CONTRACT_ID,
+		                 SG.PRODUCT_TYPE_ID,
+		                 SG.CUSTOMER_ID,
+		                 PT.NAME AS PRODTYPENAME,
+		                 SC.PRODUCT_CONTRACT_CODE,
+		                 SC.COMPANY_CONTRACT_CODE,
+		                 adddate(SG.send_Date,SG.arterm) as getDate
+		          FROM   SEND_GOODS SG,
+		                 SELL_CONTRACT SC,
+		                 PRODUCT_TYPE PT
+		          WHERE  SG.STATUS = 5
+		                 AND SEND_GOODS_TYPE = 1
+		                 AND SG.SELL_CONTRACT_ID = SC.ID
+		                 AND SG.CUSTOMER_ID = #customerId#
+		                 AND SG.user_id = #userId#
+		                 AND SG.PRODUCT_TYPE_ID = PT.ID) AS SG
+		         INNER JOIN SEND_GOODS_DETAIL AS SGD
+		           ON SG.ID = SGD.SEND_GOODS_ID
+		         INNER JOIN PRODUCT P
+		           ON SGD.PRODUCT_ID = P.ID
+		         INNER JOIN SELL_CONTRACT_DETAIL SCD
+		           ON SCD.SELL_CONTRACT_ID = SG.SELL_CONTRACT_ID
+		              AND SGD.PRODUCT_ID = SCD.PRODUCT_ID
+		        		left join (
+				select sell_back_goods_detail.product_id,sell_back_goods.send_goods_id,ifnull(sum(sell_back_goods_detail.`count`),0) AS COUNT from sell_back_goods,sell_back_goods_detail where sell_back_goods_detail.sell_back_goods_id=sell_back_goods.id and sell_back_goods.status in(2,4,6,8) group by sell_back_goods_detail.product_id,sell_back_goods.send_goods_id
+			)as sellBackGoods  on sellBackGoods.send_goods_id=SG.id and sellBackGoods.product_id=SGD.product_id
+		         LEFT JOIN (SELECT   RD.SEND_GOODS_ID,
+		                             RD.PRODUCT_ID,
+		                             SUM(RD.MONEY) MONEY
+		                    FROM     MRETURN M
+		                             INNER JOIN RETURN_DETAIL RD
+		                               ON M.ID = RD.RETURN_ID
+		                    WHERE    
+		                            	RD.APPOINT_TYPE = 4
+		                    GROUP BY RD.SEND_GOODS_ID,RD.PRODUCT_ID) TMPAP
+		           ON SG.ID = TMPAP.SEND_GOODS_ID
+		              AND SGD.PRODUCT_ID = TMPAP.PRODUCT_ID
+		         LEFT JOIN (SELECT   SBG.SEND_GOODS_ID,
+		                             SBGD.PRODUCT_ID,
+		                             SUM(SBGD.COUNT) AS COUNT
+		                    FROM     SELL_BACK_GOODS SBG
+		                             INNER JOIN SELL_BACK_GOODS_DETAIL SBGD
+		                               ON SBG.ID = SBGD.SELL_BACK_GOODS_ID
+		                    WHERE    SBG.STATUS = 8
+		                    GROUP BY SBG.SEND_GOODS_ID,SBGD.PRODUCT_ID) TMPBK
+		           ON SG.ID = TMPBK.SEND_GOODS_ID
+		              AND SGD.PRODUCT_ID = TMPBK.PRODUCT_ID
+		         LEFT JOIN (SELECT   SID.SEND_GOODS_ID,
+		                             SID.PRODUCT_ID,
+		                             SUM(SID.COUNT) AS COUNT,
+		                             SUM(SID.MONEY) AS MONEY
+		                    FROM     SELL_INVOICE SI
+		                             INNER JOIN SELL_INVOICE_DETAIL SID
+		                               ON SI.ID = SID.SELL_INVOICE_ID
+		                    WHERE    SI.STATUS != 7
+		                    GROUP BY SID.SEND_GOODS_ID,SID.PRODUCT_ID) TMPSI
+		           ON SG.ID = TMPSI.SEND_GOODS_ID
+		              AND SGD.PRODUCT_ID = TMPSI.PRODUCT_ID
+		         LEFT JOIN (SELECT   MID.SEND_GOODS_ID,
+		                             MID.PRODUCT_ID,
+		                             SUM(MID.COUNT) AS COUNT
+		                    FROM     MAKE_INVOICE_DETAIL MID
+		                             INNER JOIN MAKE_INVOICE MI
+		                               ON MID.MAKE_INVOICE_ID = MI.ID
+		                    WHERE  MI.STATUS != 1 and  MID.flag in(0,2)
+		                    GROUP BY MID.SEND_GOODS_ID,MID.PRODUCT_ID) TMPCT
+		           ON SG.ID = TMPCT.SEND_GOODS_ID
+		              AND SGD.PRODUCT_ID = TMPCT.PRODUCT_ID
+		WHERE  IFNULL(SGD.COUNT,0) > IFNULL(TMPCT.COUNT,0)              
+		<isNotEmpty prepend="and" property="id">
+			SG.ID LIKE concat('%',#id#,'%')
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productTypeId">
+			SG.PRODUCT_TYPE_ID = #productTypeId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productContractNum">
+			SG.PRODUCT_CONTRACT_CODE LIKE
+			concat('%',#productContractNum#,'%')
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="companyContractNum">
+			SG.COMPANY_CONTRACT_CODE LIKE
+			concat('%',#companyContractNum#,'%')
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productCode">
+			P.CODE LIKE concat('%',#productCode#,'%')
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productName">
+			P.NAME LIKE concat('%',#productName#,'%')
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="specModel">
+			P.TYPE LIKE concat('%',#specModel#,'%')
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="beginTime">
+				<![CDATA[ SG.getDate>=#beginTime# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="endTime">
+				<![CDATA[ SG.getDate<=#endTime# ]]>
+		</isNotEmpty>		
+	</select>
+	<!-- 查找发货明细分页  End -->
+	<!-- 添加开票 Begin -->
+	<insert id="insertInvoice" parameterClass="makeInvoiceAddDto">
+		INSERT INTO MAKE_INVOICE( ID,PRODUCT_TYPE_ID,CUSTOMER_ID,
+			CUSTOMER_NAME,INVOICE_TYPE,STATUS,DATE,
+			USER_ID,USER_NAME,USER_AREA_ID, TEXT,MONEY, DATETIME,SELL_ASS_ID)
+		VALUES(#id#,#productTypeId#,#customerId#,
+			#customerName#,#invoiceType#,#status#,#date#,
+			#userId#,#userName#,#userAreaId#, #text#,#money#, #dateTime#,#sellAssId#)
+	</insert>
+	<!-- 添加开票  End -->
+	<!-- 添加开票明细 Begin -->
+	<insert id="insertInvoiceDetail"
+		parameterClass="makeInvoiceDetail">
+		INSERT INTO MAKE_INVOICE_DETAIL(MAKE_INVOICE_ID,SEND_GOODS_ID,PRODUCT_ID,COUNT,MONEY)
+		VALUES(#makeInvoiceId#,#sendGoodsId#,#productId#,#count#,#money#)
+	</insert>
+	<!-- 添加开票明细  End -->
+	<!-- 查找开票之客户 Begin -->
+	<select id="selectInvoiceOfCustomerById" parameterClass="string"
+		resultClass="makeInvoiceAddDto">
+
+		SELECT CUSTOMER.INVOICE_BANK_NAME AS INVOICEBANKNAME,
+		       CUSTOMER.INVOICE_BANK_ACCOUNT AS INVOICEBANKACCOUNT,
+		       CUSTOMER.INVOICE_BANK_ADDRESS AS INVOICEBANKADDRESS,
+		       CUSTOMER.INVOICE_BANK_TEL AS INVOICEBANKTEL,
+		       CUSTOMER.TAX_NUMBER AS TAXNUMBER,
+		       CUSTOMER.ID AS CUSTOMERID,
+		       CUSTOMER.NAME AS CUSTOMERNAME,
+		       MAKE_INVOICE.INVOICE_TYPE AS INVOICETYPE,
+		       MAKE_INVOICE.TEXT AS TEXT,
+		       MAKE_INVOICE.TEXT_K3 AS TEXT_K3,
+		       MAKE_INVOICE.PRODUCT_TYPE_ID AS PRODUCTTYPEID,
+		       MAKE_INVOICE.MONEY AS MONEY,
+		       MAKE_INVOICE.ID AS ID,
+		       MAKE_INVOICE.STATUS AS STATUS,
+		       MAKE_INVOICE.DATE AS DATE,
+		       MAKE_INVOICE.USER_NAME AS USERNAME,
+		       MAKE_INVOICE.USER_ID AS USERID,
+		       PRODUCT_TYPE.NAME AS PRODUCTNAME
+		FROM   MAKE_INVOICE,
+		       CUSTOMER,
+		       PRODUCT_TYPE
+		WHERE  MAKE_INVOICE.ID = #id#
+		       AND CUSTOMER.ID = MAKE_INVOICE.CUSTOMER_ID
+		       AND PRODUCT_TYPE.ID = MAKE_INVOICE.PRODUCT_TYPE_ID
+	</select>
+	<!-- 查找开票之客户  End -->
+	<!-- 查找开票之明细 修改显示明细列表 Begin -->
+	<select id="selectInvoiceOfDetailById" parameterClass="string"
+		resultClass="SendGoodsParticularDto">
+		SELECT MAKE_INVOICE_DETAIL.SEND_GOODS_ID AS ID,
+		       MAKE_INVOICE_DETAIL.PRODUCT_ID AS PRODUCTID,		   <!--产品 -->
+		       RETURNA.PRODUCT_CONTRACT_CODE AS PRODUCTCONTRACTNUM,<!--产品 公司合同号-->
+		       RETURNA.COMPANY_CONTRACT_CODE AS COMPANYCONTRACTNUM,
+		       PRODUCT.NAME AS PRODUCTNAME,							<!--产品 -->
+		       PRODUCT.CODE AS PRODUCTCODE,
+		       PRODUCT.TYPE AS SPECMODEL,
+		       PRODUCT.UNIT AS UNIT,
+		       IFNULL(RETURNA.PRICE,0) AS SELLPRICE,				<!--销售单价-->
+		       IFNULL(RETURNA.COUNT,0) AS SENDCOUNT,				<!--发货数-->
+		       IFNULL(RETURNB.MONEY,0) AS MONEY,					<!--指定金额-->
+		       IFNULL(RETURNC.COUNT,0) AS INVOICECOUNT,				<!--开票数 -->
+		       IFNULL(RETURNC.MONEY,0) AS MAKEINVOICEMONEY,			<!--开票金额 -->
+		       MAKE_INVOICE_DETAIL.COUNT AS MAKEINVOICECOUNT,		<!-- 申请开票数-->
+		       MAKE_INVOICE_DETAIL.MONEY AS INVOICEMONEY,			<!-- 申请开票金额 -->
+		       IFNULL(RETURND.COUNT,0),								<!--退货数 -->
+		       IFNULL(RETURNE.COUNT,0) AS APPOINTCOUNT,				<!--已申请开票数 -->
+
+		       IFNULL(RETURND.COUNT,0)								<!--退货金额 -->
+		         * IFNULL(RETURNA.PRICE,0) AS RETURNMONEY,
+		         ifnull(sellBackGoods.COUNT,0) as sellBackGoodsCount,
+		         MAKE_INVOICE_DETAIL.flag 
+		FROM   MAKE_INVOICE
+
+		       INNER JOIN MAKE_INVOICE_DETAIL
+		         ON MAKE_INVOICE.ID = MAKE_INVOICE_DETAIL.MAKE_INVOICE_ID
+			left join (
+				select sell_back_goods_detail.product_id,sell_back_goods.send_goods_id,ifnull(sum(sell_back_goods_detail.`count`),0) AS COUNT from sell_back_goods,sell_back_goods_detail where sell_back_goods_detail.sell_back_goods_id=sell_back_goods.id and sell_back_goods.status in(2,4,6,8) group by sell_back_goods_detail.product_id,sell_back_goods.send_goods_id
+			)as sellBackGoods  on sellBackGoods.send_goods_id=make_invoice_detail.send_goods_id and sellBackGoods.product_id=make_invoice_detail.product_id
+		       LEFT JOIN PRODUCT
+		         ON PRODUCT.ID = MAKE_INVOICE_DETAIL.PRODUCT_ID
+		       LEFT JOIN (SELECT SEND_GOODS.ID,
+		                         SELL_CONTRACT.COMPANY_CONTRACT_CODE,
+		                         SELL_CONTRACT.PRODUCT_CONTRACT_CODE,
+		                         SELL_CONTRACT_DETAIL.PRICE,
+		                         SEND_GOODS_DETAIL.COUNT,
+		                         SEND_GOODS_DETAIL.PRODUCT_ID
+		                  FROM   SEND_GOODS,
+		                         SELL_CONTRACT,
+		                         SELL_CONTRACT_DETAIL,
+		                         SEND_GOODS_DETAIL
+		                  WHERE  SEND_GOODS.SELL_CONTRACT_ID = SELL_CONTRACT.ID
+		                         AND SELL_CONTRACT_DETAIL.SELL_CONTRACT_ID = SELL_CONTRACT.ID
+		                         AND SELL_CONTRACT_DETAIL.PRODUCT_ID = SEND_GOODS_DETAIL.PRODUCT_ID
+		                         AND SEND_GOODS_DETAIL.SEND_GOODS_ID = SEND_GOODS.ID
+		                         AND SEND_GOODS.SEND_GOODS_TYPE = 1) AS RETURNA
+		         ON MAKE_INVOICE_DETAIL.SEND_GOODS_ID = RETURNA.ID
+		            AND MAKE_INVOICE_DETAIL.PRODUCT_ID = RETURNA.PRODUCT_ID
+		       LEFT JOIN (SELECT   SUM(RETURN_DETAIL.MONEY) AS MONEY,
+		                           RETURN_DETAIL.PRODUCT_ID,
+		                           RETURN_DETAIL.SEND_GOODS_ID
+		                  FROM     RETURN_DETAIL,
+		                           MRETURN
+		                  WHERE    RETURN_DETAIL.RETURN_ID = MRETURN.ID
+		                           AND RETURN_DETAIL.APPOINT_TYPE = 4
+		                  GROUP BY RETURN_DETAIL.PRODUCT_ID,RETURN_DETAIL.SEND_GOODS_ID) AS RETURNB
+		         ON MAKE_INVOICE_DETAIL.SEND_GOODS_ID = RETURNB.SEND_GOODS_ID
+		            AND MAKE_INVOICE_DETAIL.PRODUCT_ID = RETURNB.PRODUCT_ID
+		       LEFT JOIN (SELECT   SUM(SELL_INVOICE_DETAIL.COUNT) AS COUNT,
+		                           SUM(SELL_INVOICE_DETAIL.MONEY) AS MONEY,
+		                           SELL_INVOICE_DETAIL.PRODUCT_ID,
+		                           SELL_INVOICE_DETAIL.SEND_GOODS_ID
+		                  FROM     SELL_INVOICE,
+		                           SELL_INVOICE_DETAIL
+		                  WHERE    SELL_INVOICE_DETAIL.SELL_INVOICE_ID = SELL_INVOICE.ID
+		                           AND SELL_INVOICE.STATUS != 7
+		                  GROUP BY SELL_INVOICE_DETAIL.PRODUCT_ID,SELL_INVOICE_DETAIL.SEND_GOODS_ID) AS RETURNC
+		         ON MAKE_INVOICE_DETAIL.SEND_GOODS_ID = RETURNC.SEND_GOODS_ID
+		            AND MAKE_INVOICE_DETAIL.PRODUCT_ID = RETURNC.PRODUCT_ID
+		       LEFT JOIN (SELECT   SUM(SELL_BACK_GOODS_DETAIL.COUNT) AS COUNT,
+		                           SELL_BACK_GOODS_DETAIL.PRODUCT_ID,
+		                           SELL_BACK_GOODS.SEND_GOODS_ID
+		                  FROM     SELL_BACK_GOODS_DETAIL,
+		                           SELL_BACK_GOODS
+		                  WHERE    SELL_BACK_GOODS.ID = SELL_BACK_GOODS_DETAIL.SELL_BACK_GOODS_ID and SELL_BACK_GOODS.status=8
+		                  GROUP BY SELL_BACK_GOODS_DETAIL.PRODUCT_ID,SELL_BACK_GOODS.SEND_GOODS_ID) AS RETURND
+		         ON MAKE_INVOICE_DETAIL.SEND_GOODS_ID = RETURND.SEND_GOODS_ID
+		            AND MAKE_INVOICE_DETAIL.PRODUCT_ID = RETURND.PRODUCT_ID
+		       LEFT JOIN (SELECT   SUM(MAKE_INVOICE_DETAIL.COUNT) AS COUNT,
+		                           MAKE_INVOICE_DETAIL.SEND_GOODS_ID,
+		                           MAKE_INVOICE_DETAIL.PRODUCT_ID
+		                  FROM     MAKE_INVOICE_DETAIL
+		                           INNER JOIN MAKE_INVOICE
+		                             ON MAKE_INVOICE.ID = MAKE_INVOICE_DETAIL.MAKE_INVOICE_ID
+		                                where 
+		                                MAKE_INVOICE.STATUS !=1 and MAKE_INVOICE_DETAIL.flag in(0,2) and MAKE_INVOICE.ID !=#id#
+		                  GROUP BY MAKE_INVOICE_DETAIL.SEND_GOODS_ID,MAKE_INVOICE_DETAIL.PRODUCT_ID) AS RETURNE
+		         ON MAKE_INVOICE_DETAIL.SEND_GOODS_ID = RETURNE.SEND_GOODS_ID
+		            AND MAKE_INVOICE_DETAIL.PRODUCT_ID = RETURNE.PRODUCT_ID
+		WHERE  MAKE_INVOICE.ID = #id#
+
+	</select>
+	<!-- 查找开票之明细  End -->
+	<!-- 修改开票 Begin -->
+	<update id="modifyInvoice" parameterClass="makeInvoiceAddDto">
+		UPDATE MAKE_INVOICE SET PRODUCT_TYPE_ID=#productTypeId#,
+			INVOICE_TYPE=#invoiceType#, STATUS=#status#, TEXT=#text#,MONEY=#money#,sell_ass_id=#sellAssId#
+		<isNotEmpty prepend="," property="date">DATE=#date#</isNotEmpty>
+		WHERE ID=#id#
+	</update>
+	<!-- 修改开票  End -->
+	<!-- 删除开票明细 Begin -->
+	<delete id="deleteInvoiceOfDetail" parameterClass="string">
+		DELETE FROM MAKE_INVOICE_DETAIL WHERE MAKE_INVOICE_ID=#id#
+	</delete>
+	<!-- 删除开票明细  End -->
+	<!-- 发票明细 Begin -->
+	<select id="getSellInvoiceList" parameterClass="string" resultClass="sellInvoiceDto">
+		SELECT 
+			SI.ID as id,
+			SI.status as status,
+			SID.ID AS sellInvoiceDetailId,						 <!--发票明细id-->
+			MID.SEND_GOODS_ID AS sendGoodsId,            		 <!--发货单号-->
+		       SI.NUMBER as number,                              <!--发票号-->
+		       SC.PRODUCT_CONTRACT_CODE AS companyContractNum,   <!--产品合同号-->
+		       SC.COMPANY_CONTRACT_CODE AS productContractNum,   <!--公司合同号-->
+		       P.CODE AS productCode,                          	 <!--产品编码-->
+		       P.NAME AS productName,                          	 <!--产品名称-->
+		       P.TYPE AS specModel,                         	 <!--规格型号-->
+		       P.UNIT AS unit,                          		 <!--单位-->
+		       ifnull(SCD.PRICE,0) AS sellPrice,                      	 <!--销售单价-->
+		       IFNULL(SGD.COUNT,0) AS sendCount,       			 <!--发货数-->
+		       IFNULL(TMPAP.MONEY,0) AS money,       			 <!--指定金额-->
+		       IFNULL(sid.COUNT,0) AS invoiceCount,    			 <!--开票数-->
+		       IFNULL(sid.MONEY,0) AS invoiceMoney,     		 <!--开票金额-->
+		       IFNULL(TMPBK.COUNT,0) AS BACKCOUNT,          	 <!--退货数-->
+		       IFNULL(SCD.PRICE,0)
+		         * IFNULL(TMPBK.COUNT,0) AS returnMoney       	 <!--退货金额-->
+		FROM   (SELECT ID,
+		               NUMBER,
+		               MAKE_INVOICE_ID,
+		               status
+		        FROM   SELL_INVOICE
+		        WHERE  STATUS != 7
+		               AND MAKE_INVOICE_ID = #id#) AS SI
+		       LEFT JOIN SELL_INVOICE_DETAIL SID
+		         ON SI.ID = SID.SELL_INVOICE_ID
+		       LEFT JOIN (SELECT MAKE_INVOICE_ID,
+		                         SEND_GOODS_ID,
+		                         PRODUCT_ID
+		                  FROM   MAKE_INVOICE_DETAIL
+		                  WHERE  MAKE_INVOICE_ID = #id#) MID
+		         ON SID.SEND_GOODS_ID = MID.SEND_GOODS_ID
+		            AND SID.PRODUCT_ID = MID.PRODUCT_ID
+		       LEFT JOIN (SELECT ID,
+		                         SELL_CONTRACT_ID
+		                  FROM   SEND_GOODS
+		                  WHERE  SEND_GOODS_TYPE = 1) SG
+		         ON MID.SEND_GOODS_ID = SG.ID
+		       LEFT JOIN SEND_GOODS_DETAIL SGD
+		         ON SG.ID = SGD.SEND_GOODS_ID
+		            AND MID.PRODUCT_ID = SGD.PRODUCT_ID
+		       LEFT JOIN SELL_CONTRACT SC
+		         ON SG.SELL_CONTRACT_ID = SC.ID
+		       LEFT JOIN SELL_CONTRACT_DETAIL SCD
+		         ON SC.ID = SCD.SELL_CONTRACT_ID
+		            AND MID.PRODUCT_ID = SCD.PRODUCT_ID
+		       LEFT JOIN PRODUCT P
+		         ON MID.PRODUCT_ID = P.ID
+		       LEFT JOIN (SELECT   SBG.SEND_GOODS_ID,
+		                           SBGD.PRODUCT_ID,
+		                           SUM(SBGD.COUNT) AS COUNT
+		                  FROM     SELL_BACK_GOODS SBG
+		                           INNER JOIN SELL_BACK_GOODS_DETAIL SBGD
+		                             ON SBG.ID = SBGD.SELL_BACK_GOODS_ID
+		                  WHERE    SBG.STATUS = 8
+		                  GROUP BY SBG.SEND_GOODS_ID,SBGD.PRODUCT_ID) TMPBK
+		         ON MID.SEND_GOODS_ID = TMPBK.SEND_GOODS_ID
+		            AND MID.PRODUCT_ID = TMPBK.PRODUCT_ID
+		       LEFT JOIN (SELECT   RD.SEND_GOODS_ID,
+		                           RD.PRODUCT_ID,
+		                           SUM(RD.MONEY) MONEY
+		                  FROM     MRETURN M
+		                           INNER JOIN RETURN_DETAIL RD
+		                             ON M.ID = RD.RETURN_ID
+		                  WHERE    RD.APPOINT_TYPE = 4
+		                  GROUP BY RD.SEND_GOODS_ID,RD.PRODUCT_ID) TMPAP
+		         ON MID.SEND_GOODS_ID = TMPAP.SEND_GOODS_ID
+		            AND MID.PRODUCT_ID = TMPAP.PRODUCT_ID
+	</select>
+	<!-- 发票明细 End -->
+	<!-- 查找开票之未开过发票的明细 Begin -->
+	<select id="getInvoiceOfDetailToSellById" parameterClass="string"
+		resultClass="SendGoodsParticularDto">
+		    SELECT   
+		    TMP.id as makeInvoiceId,
+				sendGoods.count as sendCount,  <!-- '发货数' -->
+				ifnull(sellBackgoods.count,0) as sellBackGoodsCount,	<!-- '退货数' -->
+				ifnull(makeinvoice.count,0) as makeInvoiceCount,<!-- '其他开票' -->
+				ifnull(sellinvoice.count,0) as sellInvoiceCount,<!-- '发票' -->
+							TMP.PRODUCT_ID AS productId,
+							TMP.make_invoice_id AS makeInvoiceId,
+							TMP.SEND_GOODS_ID as id,         			
+							         SC.PRODUCT_CONTRACT_CODE as productContractNum,   
+							         SC.COMPANY_CONTRACT_CODE as companyContractNum,   
+							         P.CODE as productCode,         				  
+							         P.NAME as productName,        					
+							         P.TYPE as specModel,        					
+							         P.UNIT as unit,         						  
+							         ifnull(SCD.PRICE,0) as sellPrice,     					
+							         TMP.COUNT as appointCount,  						   
+							         TMP.MONEY as money   							 
+							FROM  make_invoice_detail 
+							                   AS TMP
+				left join (
+					select send_goods_detail.`count`,send_goods_detail.send_goods_id,send_goods_detail.product_id from send_goods_detail,send_goods where send_goods.id=send_goods_detail.send_goods_id 
+				) as sendGoods on sendGoods.send_goods_id =TMP.SEND_GOODS_ID and sendGoods.product_id=TMP.PRODUCT_ID
+				
+				left join (
+					select sum(sell_back_goods_detail.`count`) as count,sell_back_goods_detail.product_id,sell_back_goods.send_goods_id from sell_back_goods,sell_back_goods_detail where sell_back_goods.id=sell_back_goods_detail.sell_back_goods_id and status in(2,4,6,8) group by sell_back_goods_detail.product_id,sell_back_goods.send_goods_id
+				)as sellBackgoods on sellBackgoods.product_id=TMP.PRODUCT_ID and sellBackgoods.send_goods_id=TMP.SEND_GOODS_ID
+				left join (
+					select sum(make_invoice_detail.`count`) as count,make_invoice_detail.send_goods_id, make_invoice_detail.product_id from make_invoice,make_invoice_detail where make_invoice.id=make_invoice_detail.make_invoice_id and make_invoice.id!=#id# and make_invoice.`status`!=1 group by make_invoice_detail.product_id,make_invoice_detail.send_goods_id
+				)as makeinvoice on makeinvoice.send_goods_id=TMP.SEND_GOODS_ID and makeinvoice.product_id=TMP.PRODUCT_ID
+					
+				left join (
+					select sum(sell_invoice_detail.`count`) as count,sell_invoice_detail.product_id,sell_invoice_detail.send_goods_id from sell_invoice,sell_invoice_detail where sell_invoice.id=sell_invoice_detail.sell_invoice_id and sell_invoice.make_invoice_id =#id# and sell_invoice.`status`!=7 group by sell_invoice_detail.product_id,sell_invoice_detail.send_goods_id
+				)as sellinvoice on sellinvoice.product_id=TMP.PRODUCT_ID and sellinvoice.send_goods_id=TMP.SEND_GOODS_ID
+							         INNER JOIN SEND_GOODS SG
+							           ON TMP.SEND_GOODS_ID = SG.ID
+							         INNER JOIN SELL_CONTRACT SC
+							           ON SG.SELL_CONTRACT_ID = SC.ID
+							         INNER JOIN SELL_CONTRACT_DETAIL SCD
+							           ON SC.ID = SCD.SELL_CONTRACT_ID
+							           AND TMP.PRODUCT_ID = SCD.PRODUCT_ID
+							         INNER JOIN PRODUCT P
+							           ON TMP.PRODUCT_ID = P.ID
+				
+				
+				
+							WHERE    TMP.MAKE_INVOICE_ID =#id#
+				and TMP.flag=0<!-- TMP.COUNT!=ifnull(sellinvoice.count,0) and sendGoods.count-ifnull(sellBackgoods.count,0)-ifnull(makeinvoice.count,0)>=TMP.COUNT -->
+			ORDER BY TMP.SEND_GOODS_ID
+	</select>
+	<!-- 查找开票之未开过发票的明细  End -->
+	<!-- 添加发票 Begin -->
+	<insert id="addSellInvoice" parameterClass="sellInvocleOfAddDto">
+		INSERT INTO SELL_INVOICE(ID,DATE,NUMBER,MAKE_INVOICE_ID,PRODUCT_TYPE_ID,CUSTOMER_ID,CUSTOMER_NAME,MONEY,INVOICE_TYPE,USER_NAME,USER_ID,user_area_id,remark)
+		 VALUES(#id#,#date#,#number#,#makeInvoiceId#,#productTypeId#,#customerId#,#customerName#,#money#,#invoiceType#,#confirmName#,#confirmId#,#userAreaId#,#remark#)
+	</insert>
+	<!-- 添加发票 End -->
+	<!-- 添加发票明细  End -->
+	<insert id="addSellInvoiceDetail" parameterClass="sellInvoiceDetailOfInvoiceDto">
+		INSERT INTO SELL_INVOICE_DETAIL(SELL_INVOICE_ID,SEND_GOODS_ID,PRODUCT_ID,COUNT,MONEY) SELECT #sellInvoiceId#,SEND_GOODS_ID,PRODUCT_ID,COUNT,MONEY FROM MAKE_INVOICE_DETAIL WHERE ID=#id#
+	</insert>
+	<!-- 添加明细  End -->		
+	<!-- 获取发票最大id发票  End -->
+	<select id="getSellInvoiceMaxId" parameterClass="string" resultClass="string">
+		SELECT ifnull(MAX(ID),0)
+         + 1
+		FROM   SELL_INVOICE
+	</select>
+	<!-- 获取发票最大id发票   End -->	
+	<!-- 获取销售助理 Begin -->
+	<select id="getSellAssistantId" parameterClass="getSellAssistantDto" resultClass="string">
+		SELECT USER_ID
+		FROM   USER_AREA_PRODUCT
+		WHERE  USER_AREA_ID=#userAreaId# AND PRODUCT_TYPE_ID=#productTypeId#
+	</select>
+	<!-- 获取销售助理   End -->	
+	<!-- 删除发票明细  Begin -->
+	<delete id="deleteSellInvoiceDetail" parameterClass="string">
+		DELETE FROM SELL_INVOICE_DETAIL WHERE ID=#id#
+	</delete>
+	<!-- 删除发票明细   End -->	
+	<!-- 删除发票  Begin -->
+	<delete id="deleteSellInvoice" parameterClass="string">
+		DELETE FROM SELL_INVOICE WHERE ID=#id#
+	</delete>
+	<!-- 删除发票   End -->	
+	<!-- 获取发票明细总数by id  Begin -->
+	<select id="getSellInvoiceCountById" parameterClass="string" resultClass="string">
+		SELECT COUNT(*) FROM SELL_INVOICE_DETAIL WHERE SELL_INVOICE_ID=#id#
+	</select>
+	<!-- 获取发票明细总数by id   End -->	
+	<!-- 获取发票号是否存在  Begin -->
+	<select id="getSellInvoiceNumber" parameterClass="string" resultClass="sellInvocleOfAddDto">
+		SELECT NUMBER FROM SELL_INVOICE where number=#id# LIMIT 1
+	</select>
+	<!-- 获取发票号是否存在   End -->
+	<!-- 获取emial是否存在  Begin -->
+	<select id="getMailIsExist" parameterClass="string" resultClass="mailEntity">
+		select mail.flag from mail where mail.subject=#subject#
+	</select>
+	<!-- 获取emial是否存在   End -->			
+	<!-- 添加email  Begin -->
+	<insert id="addMailOfMakeInvoice" parameterClass="mailEntity">
+		insert into mail(datetime,type,user_name,subject,text,flag) values(#datetime#,#type#,#userName#,#subject#,#text#,#flag#)
+	</insert>
+	<!-- 添加email   End -->	
+	<!-- 修改email  Begin -->
+	<update id="modifyMailOfMakeInvoice" parameterClass="mailEntity">
+		update mail set datetime=#datetime#,flag=#flag# where subject=#subject#
+	</update>
+	<!-- 修改email   End -->	
+	<!-- 查询email的id  Begin -->
+	<select id="selectMailId" parameterClass="mailEntity" resultClass="string">
+		select id from mail where mail.subject=#subject#
+	</select>
+	<!-- 查询email的id   End -->	
+	<!-- 添加email_address  Begin --> 
+	<insert id="addMailAddressOfMakeInvoice" parameterClass="mailAddresseeEntity">
+		insert into mail_addressee(mail_id,mail,name) values(#mailId#,#mail#,#name#)
+	</insert>
+	<!-- 添加email_address  End -->		
+	<!-- 修改开票明细flag  Begin --> 
+	<update id="modifyFlagOfMakeInvoice" parameterClass="makeInvoiceDetailEntity">
+		update make_invoice_detail set flag=#flag# where id=#id# 
+	</update>
+	<!-- 修改开票明细flag   End -->	
+	<!-- 查找开票明细id  Begin --> 
+	<select id="findMakeInvoiceDetailId" parameterClass="sellInvocleOfAddDto" resultClass="sellInvocleOfAddDto">
+		select make_invoice_detail.id as makeInvoiceId from sell_invoice,sell_invoice_detail
+		left join make_invoice_detail  on make_invoice_detail.make_invoice_id=#makeInvoiceId# and  make_invoice_detail.product_id=sell_invoice_detail.product_id and make_invoice_detail.send_goods_id=sell_invoice_detail.send_goods_id
+		where sell_invoice.id=sell_invoice_detail.sell_invoice_id
+		and sell_invoice.id=#id#
+	</select>
+	<!-- 查找开票明细id   End -->		
+	
+	<!--K3开票确认 by liuqg -->
+	<update id="updateInvoiceForConfirm" parameterClass="invoiceInfoDto">
+			UPDATE MAKE_INVOICE
+			SET    STATUS = #status#,
+				   confirm_id = #confirmId#,
+				   confirm_name = #confirmName#,
+				   confirm_date = #confirmDate#,
+				   text_k3=#text_k3#
+			WHERE  ID = #id#
+	</update>	
+	<!-- begin获取销售合同单价 -->
+	<select id="getSellContractPrice" parameterClass="map" resultClass="string">
+		select sell_contract_detail.price as price from sell_contract,sell_contract_detail,send_goods
+		where sell_contract.id=sell_contract_detail.sell_contract_id 
+		and  send_goods.sell_contract_id = sell_contract_detail.sell_contract_id
+		and sell_contract_detail.product_id = #productId# and  send_goods.id =#sendGoodsId#  
+	</select>
+</sqlMap>

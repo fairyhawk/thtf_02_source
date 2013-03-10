@@ -1,0 +1,1377 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="buyContract_sqlMap">
+
+	<!--采购合同类表 By Chenhj @2010-6-1-->
+	<typeAlias alias="buyContractDto" type="cn.com.thtf.egov.cms.dto.BuyContractDto" />
+    <typeAlias alias="searchCondition" type="cn.com.thtf.egov.cms.form.BuyContractSearchForm"/>
+        <!--采购合同信息By HanHaiyun @2010-6-9-->
+	<typeAlias alias="buyContractSelectDto" type="cn.com.thtf.egov.cms.dto.BuyContractSelectDto"/>
+	
+    <!--采购合同收货信息 By HanHaiyun @2010-6-10 -->
+    <typeAlias alias="buyContractReceivingInfoDto" type="cn.com.thtf.egov.cms.dto.BuyContractReceivingInfoDto"/>
+   
+    <!--采购合同产品信息 By HanHaiyun @2010-6-10 -->
+    <typeAlias alias="buyContractProductInfoDto" type="cn.com.thtf.egov.cms.dto.BuyContractProductInfoDto"/>
+    
+    <!--采购合同预览 By HanHaiyun @2010-6-11 -->
+    <typeAlias alias="buyContractPreviewDto" type="cn.com.thtf.egov.cms.dto.BuyContractPreviewDto"/>
+    
+    <!--采购合同评审 By HanHaiyun @2010-6-11 -->
+    <typeAlias alias="buyContractReviewDto" type="cn.com.thtf.egov.cms.dto.BuyContractReviewDto"/>
+    <typeAlias alias="userEntity" type="cn.com.thtf.egov.cms.entity.UserEntity"/>
+    <!-- 供应商 By Chenhj @2010-6-2-->
+	<typeAlias alias="supplierEntity" type="cn.com.thtf.egov.cms.entity.SupplierEntity"/>
+    <!-- 供应商-联系人 By Chenhj @2010-6-2-->
+    <typeAlias alias="supplierLinkmanEntity" type="cn.com.thtf.egov.cms.entity.SupplierLinkmanEntity"/>    
+    
+    <!-- 产品分类及部门信息 By Chenhj @2010-6-3 -->
+    <typeAlias alias="productTypeDeptDto" type="cn.com.thtf.egov.cms.dto.ProductTypeDeptDto"/>
+    <!-- 根据条件检索产品信息 By Chenhj @2010-6-3 -->
+    <typeAlias alias="productSelectDto" type="cn.com.thtf.egov.cms.dto.BuyContractProductSelectDto"/>
+    <typeAlias alias="searchProdCondition" type="cn.com.thtf.egov.cms.form.ProductSearchForm"/> 
+
+    <!-- 产品系列 By Chenhj @2010-6-4 -->
+    <typeAlias alias="prodSerieEntity" type="cn.com.thtf.egov.cms.entity.ProductSerieEntity"/>          
+
+    <!-- 库房收获地址 By Chenhj @2010-6-4 -->
+    <typeAlias alias="stockroomDto" type="cn.com.thtf.egov.cms.dto.StockroomAndAddressDto"/>    
+    <!-- 客户收获地址 By Chenhj @2010-6-4 -->
+    <typeAlias alias="customerAddressDto" type="cn.com.thtf.egov.cms.dto.CustomerAndAddressDto"/>
+    <!-- 公司收获地址 By Chenhj @2010-6-4 -->
+    <typeAlias alias="companyAddressEntity" type="cn.com.thtf.egov.cms.entity.CompanyAddressEntity"/>    
+    <!-- 收货地址添加 By Chenhj @2010-6-7 -->
+    <typeAlias alias="receiveDetailDto" type="cn.com.thtf.egov.cms.dto.ReceiveDetailDto"/>
+    <!-- 采购合同dto -->
+    <typeAlias alias="buyContractOfAddDto" type="cn.com.thtf.egov.cms.dto.BuyContractOfAddDto"/>
+    <!-- 采购合同明细dto -->
+    <typeAlias alias="buyContractDetailDto" type="cn.com.thtf.egov.cms.dto.BuyContractDetailDto"/>     
+     <!-- 公司地址dto -->
+    <typeAlias alias="companyAddressDto" type="cn.com.thtf.egov.cms.dto.CompanyAddressDto"/>  
+    <!-- 收获明细选择 地址信息dto -->
+    <typeAlias alias="buyContractOfReceiveInfoDto" type="cn.com.thtf.egov.cms.dto.BuyContractOfReceiveInfoDto"/>
+    
+    <!-- 采购合同列表 By ChenHuajiang @2010-6-1 -->
+	<select id="buyContractLists.selectBuyContracts" resultClass="buyContractDto" parameterClass="searchCondition">	
+		select
+			   BC.ID,                                                <!--合同流水号-->
+			   PT.ID AS PRODUCTTYPEID,                               <!--产品分类ID-->		
+		       PT.NAME AS PRODUCTTYPENAME,                           <!--产品分类名称-->
+		       BC.PRODUCT_CONTRACT_CODE AS PRODUCTCONTRACTCODE,      <!--产品合同号-->
+		       BC.COMPANY_CONTRACT_CODE AS COMPANYCONTRACTCODE,      <!--公司合同号-->
+		       BC.NAME AS SUPPLIERNAME,                              <!--供货商名称-->
+		       BC.CONTRACT_TYPE AS CONTRACTTYPE,                     <!--合同类型-->
+		       BC.TEMPLATE_TYPE AS TEMPLATETYPE,                     <!--模版类型-->
+		       BC.PAYMENT_WAY PAYMENTWAY,                            <!--付款方式-->
+		       BC.ARTERM,                                            <!--帐期(天)-->
+		       BC.DATE AS SIGNDATE,                                  <!--签订日期-->
+		       BC.USER_NAME AS USERNAME,                             <!--人员名称-->
+		       BC.STATUS,                                            <!--合同状态-->
+		       IFNULL(BC.MONEY,0) AS CONTRACTMONEY,                  <!--合同金额-->
+		       IFNULL(ISTK.MONEY,0) AS INSTOCKMONEY,                 <!--入库金额-->
+		       IFNULL(TMPAPP.APPOINTMONEY,0) AS APPOINTMONEY,        <!--指定金额-->
+		       IFNULL(TMPADVA.ADVANCEMONEY,0) AS ADVANCEMONEY,       <!--预付金额-->
+		       IFNULL(TMPINVO.INVOICEMONEY,0) AS INVOICEMONEY,       <!--收票金额-->
+		       IFNULL(BBC.BACKCONTRACTMONEY,0) AS BACKCONTRACTMONEY, <!--退货合同金额-->
+		       IFNULL(TMPBG.BACKGOODSMONEY,0) AS BACKGOODSMONEY      <!--返厂金额-->
+		from(
+			select 
+				BC.ID,
+				BC.PRODUCT_TYPE_ID,
+				SL.NAME,
+				BC.PRODUCT_CONTRACT_CODE,
+				BC.COMPANY_CONTRACT_CODE,
+				BC.CONTRACT_TYPE,
+		        BC.TEMPLATE_TYPE,
+		        BC.PAYMENT_WAY ,
+		        BC.ARTERM, 
+		        BC.DATE,
+		        BC.USER_NAME,
+		        BC.STATUS, 
+		        BC.MONEY
+			from 
+				BUY_CONTRACT as BC
+			INNER JOIN SUPPLIER SL
+			         ON BC.SUPPLIER_ID = SL.ID
+			<dynamic prepend="WHERE">
+				<!-- 检索条件 -->
+				<isNotEmpty prepend="and" property="productContractCode">
+					BC.PRODUCT_CONTRACT_CODE LIKE CONCAT('%', #productContractCode#, '%')
+				</isNotEmpty>
+				
+				<isNotEmpty prepend="and" property="companyContractCode">
+					BC.COMPANY_CONTRACT_CODE LIKE CONCAT('%', #companyContractCode#, '%')
+				</isNotEmpty> 
+				
+				<isNotEmpty prepend="and" property="productTypeId">
+					BC.PRODUCT_TYPE_ID = #productTypeId# 
+				</isNotEmpty> 
+				
+				<isNotEmpty prepend="and" property="supplierName">
+					SL.NAME LIKE CONCAT('%', #supplierName#, '%')
+				</isNotEmpty>		
+				
+				<isNotEmpty prepend="and" property="contractType">
+					BC.CONTRACT_TYPE = #contractType#
+				</isNotEmpty> 
+	
+				<isNotEmpty prepend="and" property="templateType">
+					BC.TEMPLATE_TYPE = #templateType#
+				</isNotEmpty> 
+	
+				<isNotEmpty prepend="and" property="userName">
+					BC.USER_NAME LIKE CONCAT('%', #userName#, '%')
+				</isNotEmpty> 
+	
+				<isNotEmpty prepend="and" property="status">
+					BC.STATUS =#status#
+				</isNotEmpty> 
+													
+				<isNotEmpty prepend="and" property="startTime">
+					<![CDATA[STR_TO_DATE(BC.DATE,'%Y-%m-%d') >= STR_TO_DATE(#startTime#,'%Y-%m-%d') ]]>					 
+				</isNotEmpty>
+				
+				<isNotEmpty prepend="and" property="endTime">
+					<![CDATA[STR_TO_DATE(BC.DATE,'%Y-%m-%d') <= STR_TO_DATE(#endTime#,'%Y-%m-%d') ]]>					
+				</isNotEmpty>
+				 
+	            <!-- 权限判断 -->
+				<!-- 产品总监 -->
+				<isEqual prepend="and" property="roleId" compareValue="10">
+					BC.USER_ID = #userId#
+				</isEqual>
+	
+				<!-- 法务专员 -->
+				<isEqual prepend="and" property="roleId" compareValue="15">
+					<isNotEmpty property="initStr">
+						BC.STATUS = 2
+					</isNotEmpty> 
+				</isEqual>
+	
+				<!-- 采购主管 -->
+				<isEqual prepend="and" property="roleId" compareValue="11">
+					BC.PRODUCT_TYPE_ID IN 
+					(
+						SELECT  PRODUCT_TYPE_ID 
+						FROM    USER_PRODUCT
+						WHERE   USER_ID = #userId#
+					)
+					<isNotEmpty prepend="and" property="initStr">
+						BC.STATUS = 4
+					</isNotEmpty>
+				</isEqual>
+	
+				<!-- 运营总监 -->
+				<isEqual prepend="and" property="roleId" compareValue="17">
+					<isNotEmpty property="initStr">
+						BC.STATUS = 8 
+					</isNotEmpty>
+				</isEqual>
+	
+				<!-- 运营助理 -->
+				<isEqual prepend="and" property="roleId" compareValue="16">
+					<isNotEmpty property="initStr">
+						BC.STATUS = 6 
+					</isNotEmpty>
+				</isEqual>
+	
+				<!-- 采购专员 -->
+				<isEqual prepend="and" property="roleId" compareValue="8">
+					BC.PRODUCT_TYPE_ID IN 
+					(
+						SELECT  PRODUCT_TYPE_ID 
+						FROM    USER_PRODUCT
+						WHERE   USER_ID = #userId#
+					)
+					<isNotEmpty prepend="and" property="initStr">
+						(BC.STATUS = 10 or BC.STATUS = 11)
+					</isNotEmpty>						
+				</isEqual>															            
+	        </dynamic>		
+	        	ORDER BY ID desc
+			    limit $star$,$rows$  
+			) as BC
+	       INNER JOIN PRODUCT_TYPE PT
+		         ON BC.PRODUCT_TYPE_ID = PT.ID
+		   LEFT JOIN (SELECT   BUY_CONTRACT_ID,
+		                           SUM(MONEY) AS MONEY
+		                  FROM     IN_STOCK
+		                  WHERE    STATUS = 6
+		                  GROUP BY BUY_CONTRACT_ID,PRODUCT_TYPE_ID) ISTK
+		         ON BC.ID = ISTK.BUY_CONTRACT_ID      
+		  LEFT JOIN (SELECT   ISTK.BUY_CONTRACT_ID,
+		                           SUM(PD.MONEY) AS APPOINTMONEY
+		                  FROM     IN_STOCK ISTK,
+		                           PAYMENT P,
+		                           PAYMENT_DETAIL PD
+		                  WHERE    P.STATUS = 13
+		                           AND P.ID = PD.PAYMENT_ID
+		                           AND PD.APPOINT_TYPE = 1
+		                           AND PD.IN_STOCK_ID = ISTK.ID
+		                  GROUP BY ISTK.BUY_CONTRACT_ID) TMPAPP
+		         ON BC.ID = TMPAPP.BUY_CONTRACT_ID       
+		   LEFT JOIN (SELECT   PD.BUY_CONTRACT_ID,
+		                           SUM(PD.MONEY) AS ADVANCEMONEY
+		                  FROM     
+		                           PAYMENT P,
+		                           PAYMENT_DETAIL PD
+		                  WHERE    P.STATUS = 13
+		                           AND P.ID = PD.PAYMENT_ID
+		                           AND PD.APPOINT_TYPE = 0
+		                  GROUP BY PD.BUY_CONTRACT_ID) TMPADVA
+		         ON BC.ID = TMPADVA.BUY_CONTRACT_ID
+		    LEFT JOIN (SELECT   ISTK.BUY_CONTRACT_ID,
+		                           SUM(RID.MONEY) AS INVOICEMONEY
+		                  FROM     IN_STOCK ISTK,
+		                           RECEIVE_INVOICE RI,
+		                           RECEIVE_INVOICE_DETAIL RID
+		                  WHERE    RI.STATUS = 1
+		                           AND RI.ID = RID.RECEIVE_INVOICE_ID
+		                           AND RID.IN_STOCK_ID = ISTK.ID
+		                  GROUP BY ISTK.BUY_CONTRACT_ID) TMPINVO
+		         ON BC.ID = TMPINVO.BUY_CONTRACT_ID  
+		    LEFT JOIN (SELECT   BUY_CONTRACT_ID,
+		                           SUM(MONEY) AS BACKCONTRACTMONEY
+		                  FROM     BUY_BACK_CONTRACT
+		                  WHERE    STATUS = 11
+		                  GROUP BY BUY_CONTRACT_ID) BBC
+		         ON BC.ID = BBC.BUY_CONTRACT_ID    
+		    LEFT JOIN (SELECT   ISTK.BUY_CONTRACT_ID,
+		                           SUM(BBG.MONEY) AS BACKGOODSMONEY
+		                  FROM     IN_STOCK ISTK,
+		                           BUY_BACK_GOODS BBG
+		                  WHERE    BBG.STATUS = 11
+		                           AND BBG.IN_STOCK_ID = ISTK.ID
+		                  GROUP BY ISTK.BUY_CONTRACT_ID) TMPBG
+		         ON BC.ID = TMPBG.BUY_CONTRACT_ID                      
+	</select>
+
+    <!-- 采购合同列表分页 By ChenHuajiang @2010-6-1 -->
+	<select id="buyContractLists.recordCount" resultClass="java.lang.Integer" parameterClass="searchCondition">	       
+		SELECT COUNT(*)
+		FROM   BUY_CONTRACT BC
+		       INNER JOIN SUPPLIER SL
+		         ON BC.SUPPLIER_ID = SL.ID
+        <dynamic prepend="WHERE">
+			<!-- 检索条件 -->
+			<isNotEmpty prepend="and" property="productContractCode">
+				BC.PRODUCT_CONTRACT_CODE LIKE CONCAT('%', #productContractCode#, '%')
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="and" property="companyContractCode">
+				BC.COMPANY_CONTRACT_CODE LIKE CONCAT('%', #companyContractCode#, '%')
+			</isNotEmpty> 
+			
+			<isNotEmpty prepend="and" property="productTypeId">
+				BC.PRODUCT_TYPE_ID = #productTypeId# 
+			</isNotEmpty> 
+			
+			<isNotEmpty prepend="and" property="supplierName">
+				SL.NAME LIKE CONCAT('%', #supplierName#, '%')
+			</isNotEmpty>		
+			
+			<isNotEmpty prepend="and" property="contractType">
+				BC.CONTRACT_TYPE = #contractType#
+			</isNotEmpty> 
+
+			<isNotEmpty prepend="and" property="templateType">
+				BC.TEMPLATE_TYPE = #templateType#
+			</isNotEmpty> 
+
+			<isNotEmpty prepend="and" property="userName">
+				BC.USER_NAME LIKE CONCAT('%', #userName#, '%')
+			</isNotEmpty> 
+
+			<isNotEmpty prepend="and" property="status">
+				BC.STATUS =#status#
+			</isNotEmpty> 
+												
+			<isNotEmpty prepend="and" property="startTime">
+				<![CDATA[STR_TO_DATE(BC.DATE,'%Y-%m-%d') >= STR_TO_DATE(#startTime#,'%Y-%m-%d') ]]>					 
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="and" property="endTime">
+				<![CDATA[STR_TO_DATE(BC.DATE,'%Y-%m-%d') <= STR_TO_DATE(#endTime#,'%Y-%m-%d') ]]>					
+			</isNotEmpty>
+			 
+            <!-- 权限判断 -->
+			<!-- 产品总监 -->
+			<isEqual prepend="and" property="roleId" compareValue="10">
+				BC.USER_ID = #userId#
+			</isEqual>
+
+			<!-- 法务专员 -->
+			<isEqual prepend="and" property="roleId" compareValue="15">
+				<isNotEmpty property="initStr">
+					BC.STATUS = 2
+				</isNotEmpty> 
+			</isEqual>
+
+			<!-- 采购主管 -->
+			<isEqual prepend="and" property="roleId" compareValue="11">
+				BC.PRODUCT_TYPE_ID IN 
+				(
+					SELECT  PRODUCT_TYPE_ID 
+					FROM    USER_PRODUCT
+					WHERE   USER_ID = #userId#
+				)
+				<isNotEmpty prepend="and" property="initStr">
+					BC.STATUS = 4
+				</isNotEmpty>
+			</isEqual>
+
+			<!-- 运营总监 -->
+			<isEqual prepend="and" property="roleId" compareValue="17">
+				<isNotEmpty property="initStr">
+					BC.STATUS = 8 
+				</isNotEmpty>
+			</isEqual>
+
+			<!-- 运营助理 -->
+			<isEqual prepend="and" property="roleId" compareValue="16">
+				<isNotEmpty property="initStr">
+					BC.STATUS = 6 
+				</isNotEmpty>
+			</isEqual>
+
+			<!-- 采购专员 -->
+			<isEqual prepend="and" property="roleId" compareValue="8">
+				BC.PRODUCT_TYPE_ID IN 
+				(
+					SELECT  PRODUCT_TYPE_ID 
+					FROM    USER_PRODUCT
+					WHERE   USER_ID = #userId#
+				)
+				<isNotEmpty prepend="and" property="initStr">
+					(BC.STATUS = 10 or BC.STATUS = 11)
+				</isNotEmpty>						
+			</isEqual>															            
+        </dynamic>		         	
+	</select>
+	
+	<!-- 供应商选择 -->	
+	<select id="suppliers.selectAllSuppliers" resultClass="supplierEntity" parameterClass="java.util.HashMap">
+		SELECT   ID,
+		         NAME,
+		         PROVINCE,
+		         CITY,
+		         REMIT_BANK_NAME AS REMITBANKNAME,
+		         REMIT_BANK_ACCOUNT AS REMITBANKACCOUNT,
+		         INVOICE_TYPE AS INVOICETYPE,
+		         TAX_RATE AS TAXRATE
+		FROM     SUPPLIER
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="and" property="supplierName">
+				NAME LIKE CONCAT('%', #supplierName#, '%')
+			</isNotEmpty>			
+		</dynamic>		
+		ORDER BY NAME
+	</select>
+	<!-- 供应商选择 分页 -->	
+	<select id="suppliers.recordCount" resultClass="java.lang.Integer" parameterClass="java.util.HashMap">
+		SELECT   COUNT(*)
+		FROM     SUPPLIER
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="and" property="supplierName">
+				NAME LIKE CONCAT('%', #supplierName#, '%')
+			</isNotEmpty>			
+		</dynamic>			
+	</select>
+
+	<!-- 供应商-联系人 -->	
+	<select id="linkman.selectLinkmansBySupplierId" resultClass="supplierLinkmanEntity" parameterClass="java.util.HashMap">
+		SELECT   ID,
+		         NAME,
+		         TEL,
+		         FAX
+		FROM     SUPPLIER_LINKMAN
+		WHERE    SUPPLIER_ID = #supplierId#
+		ORDER BY NAME
+	</select>
+	
+	<!-- 联系人 信息-->	
+	<select id="linkman.selectLinkmanById" resultClass="supplierLinkmanEntity" parameterClass="java.util.HashMap">
+		SELECT   TEL,
+		         FAX,
+		         MOBILE
+		FROM     SUPPLIER_LINKMAN
+		WHERE    ID = #id#
+		ORDER BY NAME
+	</select>
+	
+	<!-- 产品分类及部门 信息-->	
+	<select id="productType.selectProductTypeByUserId" resultClass="productTypeDeptDto" parameterClass="java.util.HashMap">
+		SELECT   PT.ID AS PRODID,
+		         PT.NO AS PRODNO,
+		         PT.NAME AS PRODNAME,
+		         PT.PRODUCT_DEPT_ID AS PRODDEPTID,
+		         PD.NAME AS PRODDEPTNAME,
+		         PT.CLIMIT
+		FROM     PRODUCT_TYPE PT,
+		         PRODUCT_DEPT PD
+		WHERE    PT.PRODUCT_DEPT_ID = PD.ID
+		<!-- 产品总监 -->
+		<isNotEmpty prepend="and" property="userId">
+			PT.ID IN 
+			(
+				SELECT  PRODUCT_TYPE_ID 
+				FROM    USER_PRODUCT
+				WHERE   USER_ID = #userId#
+			)		
+		</isNotEmpty>		
+		ORDER BY PT.NAME
+	</select>
+	
+	<!-- 根据条件检索产品信息 -->	
+	<select id="productSelected.selectProductByCondition" resultClass="productSelectDto" parameterClass="searchProdCondition">
+		SELECT   P.PRODID,            <!--产品ID-->
+		         P.PRODSERIEID,       <!--产品系列ID-->
+		         P.PRODCODE,          <!--产品编码-->
+		         P.PRODNAME,          <!--产品名称-->
+		         P.PRODTYPE,          <!--规格型号-->
+		         P.PRODUNIT,          <!--单位-->
+		         (CASE 
+		            WHEN SUM(IFNULL(SK.NUM,0)) = 0 THEN 0
+		            ELSE ROUND((IFNULL(P.MONEY,0)
+		                         / SUM(IFNULL(SK.NUM,0))
+		                         * (1 + (P.TAX_RATE / 100))),2)
+		          END) AS STOCKUNITPRICE,                   <!--库存单价-->	
+		          (CASE 
+		            WHEN SUM(IFNULL(SK.NUM,0)) = 0 THEN 0
+		            ELSE ROUND((IFNULL(P.MONEY,0)
+		                         / SUM(IFNULL(SK.NUM,0))),2)
+		          END) AS noTaxOfPrice, 	         <!--库存单价未上税-->
+		         SUM(IFNULL(SK.NUM,0)) AS STOCKTOTALCOUNT,  <!--库存总数-->
+		         IFNULL(D.COUNT,0) AS DEMANDCOUNT           <!--需求数-->
+		FROM     (SELECT P.ID AS PRODID,
+		                 PS.ID AS PRODSERIEID,
+		                 P.CODE AS PRODCODE,
+		                 P.NAME AS PRODNAME,
+		                 P.TYPE AS PRODTYPE,
+		                 P.UNIT AS PRODUNIT,
+		                 P.MONEY,
+		                 C.TAX_RATE
+		          FROM   PRODUCT_TYPE PT,
+		                 PRODUCT_SERIE PS,
+		                 PRODUCT P,
+		                 COMPANY C
+		          WHERE  PT.ID = #prodTypeId#
+		                 AND PT.ID = PS.PRODUCT_TYPE_ID
+		                 AND PS.ID = P.PRODUCT_SERIES_ID
+		                 AND C.TAX_RATE >= -99) P
+		         LEFT JOIN STOCK SK
+		           ON P.PRODID = SK.PRODUCT_ID
+		         LEFT JOIN (SELECT   PRODUCT_ID,
+		                             SUM(COUNT) AS COUNT
+		                    FROM     DEMAND
+		                    WHERE    STATUS = 0
+		                    GROUP BY PRODUCT_ID) D
+		           ON P.PRODID = D.PRODUCT_ID
+        WHERE 1=1
+			<!-- 检索条件 -->
+			<isNotEmpty prepend="and" property="prodSerieId">
+				P.PRODSERIEID = #prodSerieId#
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="and" property="prodCode">
+				P.PRODCODE LIKE CONCAT('%', #prodCode#, '%')
+			</isNotEmpty> 
+			
+			<isNotEmpty prepend="and" property="prodName">
+				P.PRODNAME LIKE CONCAT('%', #prodName#, '%')
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="prodType">
+				P.PRODTYPE LIKE CONCAT('%', #prodType#, '%')
+			</isNotEmpty>			         		           
+		GROUP BY P.PRODID ASC
+	</select>
+	
+	<!-- 根据条件检索产品信息 分页 -->	
+	<select id="productSelected.recordCount" resultClass="java.lang.Integer" parameterClass="searchProdCondition">
+		SELECT  COUNT(TMP.PRODID)
+		FROM 
+		(SELECT P.PRODID
+		FROM     (SELECT P.ID AS PRODID,
+		                 PS.ID AS PRODSERIEID,
+		                 P.CODE AS PRODCODE,
+		                 P.NAME AS PRODNAME,
+		                 P.TYPE AS PRODTYPE,
+		                 P.UNIT AS PRODUNIT,
+		                 P.MONEY,
+		                 C.TAX_RATE
+		          FROM   PRODUCT_TYPE PT,
+		                 PRODUCT_SERIE PS,
+		                 PRODUCT P,
+		                 COMPANY C
+		          WHERE  PT.ID = #prodTypeId#
+		                 AND PT.ID = PS.PRODUCT_TYPE_ID
+		                 AND PS.ID = P.PRODUCT_SERIES_ID
+		                 AND C.TAX_RATE >= -99) P
+		         LEFT JOIN STOCK SK
+		           ON P.PRODID = SK.PRODUCT_ID
+		         LEFT JOIN (SELECT   PRODUCT_ID,
+		                             SUM(COUNT) AS COUNT
+		                    FROM     DEMAND
+		                    WHERE    STATUS = 0
+		                    GROUP BY PRODUCT_ID) D
+		           ON P.PRODID = D.PRODUCT_ID
+		WHERE   1=1        
+			<!-- 检索条件 -->
+			<isNotEmpty prepend="and" property="prodSerieId">
+				P.PRODSERIEID = #prodSerieId#
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="and" property="prodCode">
+				P.PRODCODE LIKE CONCAT('%', #prodCode#, '%')
+			</isNotEmpty> 
+			
+			<isNotEmpty prepend="and" property="prodName">
+				P.PRODNAME LIKE CONCAT('%', #prodName#, '%')
+			</isNotEmpty>
+
+			<isNotEmpty prepend="and" property="prodType">
+				P.PRODTYPE LIKE CONCAT('%', #prodType#, '%')
+			</isNotEmpty>		           
+		GROUP BY P.PRODID)TMP
+	</select>
+	
+	<!-- 产品系列-->	
+	<select id="prodSerie.selectProdSeriesByProdTypeId" resultClass="prodSerieEntity" parameterClass="java.util.HashMap">
+		SELECT   ID,
+		         NO,
+		         NAME
+		FROM     PRODUCT_SERIE
+		WHERE    PRODUCT_TYPE_ID = #prodTypeId#
+		ORDER BY NAME
+	</select>
+										
+	<!-- 库房收货地址选择 -->	
+	<select id="stock.selectAllStockrooms" resultClass="stockroomDto">
+		SELECT   SR.ID AS STOCKROOMID,
+		         SR.NAME AS STOCKROOMNAME,
+		         SRA.ID AS STOCKROOMADDRESSID,
+		         SRA.NAME AS GOODSNAME,
+		         SRA.ADDRESS AS GOODSADDRESS,
+		         SRA.POSTCODE,
+		         SRA.LINKMAN,
+		         SRA.TEL,
+		         SRA.MOBILE
+		FROM     STOCKROOM SR,
+		         STOCKROOM_ADDRESS SRA
+		WHERE    SR.TYPE != 2
+		         AND SR.ID = SRA.STOCKROOM_ID
+		ORDER BY SR.NAME,
+		         SRA.NAME
+	</select>
+	<!-- 库房收货地址选择 分页 -->	
+	<select id="stock.recordCount" resultClass="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM     STOCKROOM SR,
+		         STOCKROOM_ADDRESS SRA
+		WHERE    SR.TYPE != 2
+		         AND SR.ID = SRA.STOCKROOM_ID
+	</select>
+
+	<!-- 客户收货地址选择 -->	
+	<select id="customerAddress.selectAllCustomers" resultClass="customerAddressDto" parameterClass="java.util.HashMap">
+		SELECT   C.ID AS CUSTOMERID,
+		         C.NAME AS CUSTOMERNAME,
+		         CA.ID AS ADDRESSID,
+		         CA.NAME AS ADDRESSNAME,
+		         CA.ADDRESS,
+		         CA.POSTCODE,
+		         CA.LINKMAN,
+		         CA.TEL,
+		         CA.MOBILE
+		FROM     CUSTOMER C,
+		         CUSTOMER_ADDRESS CA
+		WHERE    C.ID = CA.CUSTOMER_ID
+		<isNotEmpty prepend="and" property="customerName">
+			C.NAME LIKE CONCAT('%', #customerName#, '%')
+		</isNotEmpty>			
+		ORDER BY C.NAME,
+		         CA.NAME
+	</select>
+	<!-- 客户收货地址选择 分页 -->	
+	<select id="customerAddress.recordCount" resultClass="java.lang.Integer" parameterClass="java.util.HashMap">
+		SELECT COUNT(*)
+		FROM     CUSTOMER C,
+		         CUSTOMER_ADDRESS CA
+		WHERE    C.ID = CA.CUSTOMER_ID
+		<isNotEmpty prepend="and" property="customerName">
+			C.NAME LIKE CONCAT('%', #customerName#, '%')
+		</isNotEmpty>			
+		ORDER BY C.NAME,
+		         CA.NAME
+	</select>
+
+	<!-- 公司收货地址选择 -->	
+	<select id="companyAddress.selectAllCompanies" resultClass="companyAddressDto">
+		SELECT CA.ID,
+				company.id as companyId,
+		       CA.NAME,
+		       CA.ADDRESS,
+		       CA.POSTCODE,
+		       CA.LINKMAN,
+		       CA.TEL,
+		       CA.MOBILE
+		FROM   COMPANY_ADDRESS CA,company
+	</select>
+	 <!-- 采购合同信息查看  By HanHaiyun @2010-6-9 -->
+     <select id="customerAddress.selectBuyContractDetail" resultClass="buyContractSelectDto" parameterClass="java.lang.String">
+		SELECT B.ID					   AS ID,
+			   B.PRODUCT_TYPE_ID	   AS PRODUCTTYPEID,
+			   SUPP.name         AS SUPPLIERNAME,
+		       SUPP.PROVINCE           AS PROVINCE,
+		       SUPP.CITY               AS CITY,
+		       SUPP.REMIT_BANK_NAME    AS REMITBANKNAME,
+		       SUPP.REMIT_BANK_ACCOUNT AS REMITBANKACCOUNT,
+		       B.INVOICE_TYPE          AS INVOICETYPE,
+		       B.TAX_RATE              AS TAXRATE,
+		       SUP_LK.NAME             AS LINKMANNAME,
+		       SUP_LK.TEL              AS LINKMANTEL,
+		       SUP_LK.FAX              AS LINKMANFAX,
+		       B.CONTRACT_TYPE         AS CONTRACTTYPE,
+		       B.TEMPLATE_TYPE         AS TEMPLATETYPE,
+		       B.PLACE                 AS PLACE,
+		       B.QUALITY               AS QUALITY,
+		       B.CHECK_LIMIT           AS CHECKLIMIT,
+		       B.PROTECT_LIMIT         AS PROTECTLIMIT,
+		       B.PAYMENT_TYPE          AS PAYMENTTYPE,
+		       B.PAYMENT_WAY           AS PAYMENTWAY,
+		       B.ARTERM                AS ARTERM,
+		       B.CONTRACT_PAYMENT_TIME AS CONTRACTPAYMENTTIME,
+		       B.PREPAY_MONEY          AS PREPAYMONEY,
+		       B.SEND_PAYMENT_TIME     AS SENDPAYMENTTIME,
+		       B.REQUEST_DATE          AS REQUESTDATE,
+		       B.TRANSPORT_WAY         AS TRANSPORTWAY,
+		       B.TEXT                  AS TEXT,
+		       B.STATUS                AS STATUS,
+		       B.LEGAL_ID			   AS LEGALID,
+		       B.LEGAL_NAME            AS LEGALNAME,
+		       B.LEGAL_DATE            AS LEGALDATE,
+		       B.LEGAL_IDEA            AS LEGALIDEA,
+		       B.LEGAL_TEXT            AS LEGALTEXT,
+		       B.BUY_MAN_ID			   AS BUYMANID,
+		       B.BUY_MAN_NAME          AS BUYMANNAME,
+		       B.BUY_MAN_DATE          AS BUYMANDATE,
+		       B.BUY_MAN_IDEA          AS BUYMANIDEA,
+		       B.BUY_MAN_TEXT          AS BUYMANTEXT,
+		       B.OPE_MAJ_ID 		   AS OPEMAJID,
+		       B.OPE_MAJ_NAME          AS OPEMAJNAME,
+		       B.OPE_MAJ_DATE          AS OPEMAJDATE,
+		       B.OPE_MAJ_IDEA          AS OPEMAJIDEA,
+		       B.OPE_MAJ_TEXT          AS OPEMAJTEXT,
+		       PROT.NAME               AS PRODUCTTYPENAME,
+		       PROD.NAME               AS PRODUCTDEPTNAME,
+		       PROD.no               	AS PRODUCTDEPTno,<!-- 部门编号 -->
+		       PROT.no as productTypeNo,<!-- 产品分类编号 -->
+		       B.product_contract_code as productContractCode,
+		       B.company_contract_code as companyCONTRACTCode,
+		       B.user_name as userName,
+		       B.money as money,
+		       B.dateTime as dateTime,
+		       B.file               	AS fileName,
+		       b.delivery_Terms as deliveryTerms
+		FROM   SUPPLIER AS SUPP,
+		       SUPPLIER_LINKMAN AS SUP_LK,
+		       BUY_CONTRACT AS B
+		       LEFT JOIN PRODUCT_TYPE AS PROT
+		         ON PROT.ID = B.PRODUCT_TYPE_ID
+		       LEFT JOIN PRODUCT_DEPT AS PROD
+		         ON PROD.ID = PROT.PRODUCT_DEPT_ID
+		WHERE  B.SUPPLIER_ID = SUPP.ID
+		       AND B.SUPPLIER_LINKMAN_ID = SUP_LK.ID
+		       AND B.ID = #Id#
+     </select>
+  <!-- 采购合同收货信息查看  By HanHaiyun @2010-6-10 -->
+     <select id="customerAddress.selectBuyContractReceivingInfo" resultClass="buyContractReceivingInfoDto" parameterClass="java.lang.String">
+		SELECT 
+			   CA.ID       AS ID,
+		       CUS.NAME    AS STOCKROOMNAME,
+		       CA.NAME     AS STOCKROOMADDRESSNAME,
+		       CA.ADDRESS  AS ADDRESS,
+		       CA.POSTCODE AS POSTCODE,
+		       CA.LINKMAN  AS LINKMAN,
+		       CA.TEL      AS TEL,
+		       CA.MOBILE   AS MOBILE
+		FROM   CUSTOMER_ADDRESS AS CA,
+		       RECEIVE_GOODS_DETAIL AS RGD,
+		       CUSTOMER AS CUS,
+		       BUY_CONTRACT AS BC
+		WHERE  RGD.BUY_CONTRACT_ID = BC.ID
+		       AND RGD.COMPANY_ID = CA.ID
+		       AND CUS.ID = CA.CUSTOMER_ID
+		       AND RGD.COMPANY_TYPE = 1
+		       AND BC.ID = #Id#
+		UNION 
+		SELECT CMP.ID       AS ID,
+		       ''          AS STOCKROOMNAME,
+		       CMP.NAME     AS STOCKROOMADDRESSNAME,
+		       CMP.ADDRESS  AS ADDRESS,
+		       CMP.POSTCODE AS POSTCODE,
+		       CMP.LINKMAN  AS LINKMAN,
+		       CMP.TEL      AS TEL,
+		       CMP.MOBILE   AS MOBILE
+		FROM   COMPANY_ADDRESS AS CMP,
+		       RECEIVE_GOODS_DETAIL AS RGD,
+		       BUY_CONTRACT AS BC
+		WHERE  RGD.BUY_CONTRACT_ID = BC.ID
+		       AND RGD.COMPANY_ID = CMP.ID
+		       AND RGD.COMPANY_TYPE = 2
+		       AND BC.ID = #Id#
+		UNION 
+		SELECT ST.ID       AS ID,
+		       STO.NAME    AS STOCKROOMNAME,
+		       ST.NAME     AS STOCKROOMADDRESSNAME,
+		       ST.ADDRESS  AS ADDRESS,
+		       ST.POSTCODE AS POSTCODE,
+		       ST.LINKMAN  AS LINKMAN,
+		       ST.TEL      AS TEL,
+		       ST.MOBILE   AS MOBILE
+		FROM   STOCKROOM_ADDRESS AS ST,
+		       RECEIVE_GOODS_DETAIL AS RGD,
+		       STOCKROOM AS STO,
+		       BUY_CONTRACT AS BC
+		WHERE  RGD.BUY_CONTRACT_ID = BC.ID
+		       AND RGD.COMPANY_ID = ST.ID
+		       AND ST.STOCKROOM_ID = STO.ID
+		       AND RGD.COMPANY_TYPE = 3
+		       AND BC.ID = #Id#
+     </select>
+      <!-- 采购合同产品查询  By HanHaiyun @2010-6-11-->
+     <select id="customerAddress.selectBuyContractProducts" resultClass="buyContractProductInfoDto" parameterClass="java.lang.String">
+		SELECT PRO.ID AS PRODID,                  <!--产品ID-->
+		       PRO.CODE AS PRODCODE,              <!--产品编码-->
+		       PRO.NAME AS PRODNAME,              <!--产品名称-->
+		       PRO.TYPE AS PRODTYPE,              <!--规格型号-->
+		       PRO.UNIT AS PRODUNIT,              <!--单位-->
+		       PT.NAME AS PRODTYPENAME,           <!--产品分类名称-->
+		       BD.COUNT AS BUYCOUNT,              <!--采购数-->
+		       BD.PRICE AS BUYPRICE,              <!--采购单价-->
+		       BD.COUNT*BD.PRICE AS BUYMONEY,     <!--采购金额-->
+		       IFNULL(VPI.INSTOCKMONEY,0) AS INSTOCKMONEY,    <!--入库金额-->
+		       IFNULL(TMPAPP.APPOINTMONEY,0) 
+		         AS APPOINTMONEY,                             <!--指定金额-->
+		       IFNULL(TMPINV.RECEIVEINVOICEMONEY,0) 
+		         AS RECEIVEINVOICEMONEY,                      <!--收票金额-->
+		       IFNULL(TMPCON.BACKCOUNT,0)
+		         * BD.PRICE AS BACKCONTRACTMONEY,             <!--退货合同金额-->
+		       IFNULL(TMPRET.RETURNCOUNT,0)
+		         * BD.PRICE AS RETURNMONEY,                   <!--返厂金额-->
+		       IFNULL(VST.TOTALNUM,0) AS STOCKTOTALNUM,       <!--库存总数-->
+		       IFNULL(D.COUNT,0) AS DEMANDCOUNT,              <!--需求数-->
+		       IFNULL(TMPPRICE.UNITPRICE,0) AS STOCKUNITPRICE,<!--库存单价-->
+		       TMPPRICE.noTaxOfPrice as noTaxOfPrice,
+		       ROUND((BD.PRICE - TMPPRICE.UNITPRICE) / TMPPRICE.UNITPRICE,4)AS INCREASERATE                          <!--增长率-->  
+		FROM   (SELECT BUY_CONTRACT_ID,
+		               PRODUCT_ID,
+		               COUNT,
+		               PRICE
+		        FROM   BUY_CONTRACT_DETAIL
+		        WHERE  BUY_CONTRACT_ID = #Id#) BD
+		       INNER JOIN BUY_CONTRACT AS B
+		         ON BD.BUY_CONTRACT_ID = B.ID
+		       INNER JOIN PRODUCT AS PRO
+		         ON BD.PRODUCT_ID = PRO.ID
+		       INNER JOIN PRODUCT_TYPE AS PT
+		         ON B.PRODUCT_TYPE_ID = PT.ID
+		       INNER JOIN SUPPLIER S
+		         ON B.SUPPLIER_ID = S.ID
+		       LEFT JOIN (
+					SELECT   ISD.PRODUCT_ID AS PRODUCT_ID,
+					         INS.BUY_CONTRACT_ID AS BUY_CONTRACT_ID,
+					         SUM(ISD.COUNT) AS COUNT,
+					         ISD.PRICE AS PRICE,
+					         (SUM(ISD.COUNT)
+					            * ISD.PRICE) AS INSTOCKMONEY
+					FROM     IN_STOCK INS,
+					         IN_STOCK_DETAIL ISD
+					WHERE    INS.STATUS = 6
+					         AND INS.ID = ISD.IN_STOCK_ID
+					         AND INS.BUY_CONTRACT_ID = #id#
+					GROUP BY INS.BUY_CONTRACT_ID,ISD.PRODUCT_ID		       
+		       ) VPI
+		         ON VPI.BUY_CONTRACT_ID = BD.BUY_CONTRACT_ID
+		            AND VPI.PRODUCT_ID = BD.PRODUCT_ID
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+		                           PD.PRODUCT_ID,
+		                           SUM(PD.MONEY) APPOINTMONEY
+		                  FROM     IN_STOCK ISK,
+		                           PAYMENT_DETAIL PD,
+		                           PAYMENT P
+		                  WHERE    ISK.BUY_CONTRACT_ID = #Id#
+		                           AND ISK.ID = PD.IN_STOCK_ID
+		                           AND PD.PAYMENT_ID = P.ID
+		                           AND P.STATUS = 13
+		                           AND PD.APPOINT_TYPE = 1
+		                  GROUP BY ISK.BUY_CONTRACT_ID,PD.PRODUCT_ID) TMPAPP
+		         ON BD.BUY_CONTRACT_ID = TMPAPP.BUY_CONTRACT_ID
+		            AND BD.PRODUCT_ID = TMPAPP.PRODUCT_ID
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+		                           RID.PRODUCT_ID,
+		                           SUM(RID.MONEY) RECEIVEINVOICEMONEY
+		                  FROM     IN_STOCK ISK,
+		                           RECEIVE_INVOICE_DETAIL RID,
+		                           RECEIVE_INVOICE RI
+		                  WHERE    ISK.BUY_CONTRACT_ID = #Id#
+		                           AND ISK.ID = RID.IN_STOCK_ID
+		                           AND RID.RECEIVE_INVOICE_ID = RI.ID
+		                           AND RI.STATUS = 1
+		                  GROUP BY ISK.BUY_CONTRACT_ID,RID.PRODUCT_ID) TMPINV
+		         ON BD.BUY_CONTRACT_ID = TMPINV.BUY_CONTRACT_ID
+		            AND BD.PRODUCT_ID = TMPINV.PRODUCT_ID
+		       LEFT JOIN (SELECT   BBC.BUY_CONTRACT_ID,
+		                           BBCD.PRODUCT_ID,
+		                           SUM(COUNT) BACKCOUNT
+		                  FROM     BUY_BACK_CONTRACT BBC,
+		                           BUY_BACK_CONTRACT_DETAIL BBCD
+		                  WHERE    BBC.BUY_CONTRACT_ID = #Id#
+		                           AND BBC.STATUS = 11
+		                           AND BBC.ID = BBCD.BUY_BACK_CONTRACT_ID
+		                  GROUP BY BBC.BUY_CONTRACT_ID,BBCD.PRODUCT_ID) TMPCON
+		         ON BD.BUY_CONTRACT_ID = TMPCON.BUY_CONTRACT_ID
+		            AND BD.PRODUCT_ID = TMPCON.PRODUCT_ID
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+		                           BBGD.PRODUCT_ID,
+		                           SUM(BBGD.COUNT) RETURNCOUNT
+		                  FROM     IN_STOCK ISK,
+		                           BUY_BACK_GOODS_DETAIL BBGD,
+		                           BUY_BACK_GOODS BBG
+		                  WHERE    ISK.BUY_CONTRACT_ID = #Id#
+		                           AND ISK.ID = BBG.IN_STOCK_ID
+		                           AND BBGD.BUY_BACK_GOODS_ID = BBG.ID
+		                           AND BBG.STATUS = 11
+		                  GROUP BY ISK.BUY_CONTRACT_ID,BBGD.PRODUCT_ID) TMPRET
+		         ON BD.BUY_CONTRACT_ID = TMPRET.BUY_CONTRACT_ID
+		            AND BD.PRODUCT_ID = TMPRET.PRODUCT_ID
+		       LEFT JOIN VIEW_STOCK_TOTALNUM VST
+		         ON BD.PRODUCT_ID = VST.PRODUCT_ID
+		       LEFT JOIN (SELECT   PRODUCT_ID,
+		                           SUM(COUNT) AS COUNT
+		                  FROM     DEMAND
+		                  WHERE    STATUS = 0
+		                  GROUP BY PRODUCT_ID) D
+		         ON BD.PRODUCT_ID = D.PRODUCT_ID
+		       LEFT JOIN (SELECT P.ID AS PRODUCT_ID,
+		                         (CASE 
+		                            WHEN (VST.TOTALNUM = 0) THEN 0
+		                            ELSE ROUND((IFNULL((P.MONEY
+		                                                  / IFNULL(VST.TOTALNUM,0))
+		                                                  * (1 + (C.TAX_RATE / 100)),0)),
+		                                       2)
+		                          END) AS UNITPRICE,
+		                          (CASE 
+		                            WHEN (VST.TOTALNUM = 0) THEN 0
+		                            ELSE ROUND((IFNULL((P.MONEY
+		                                                  / IFNULL(VST.TOTALNUM,0)),0)),
+		                                       2)
+		                          END) AS noTaxOfPrice
+		                  FROM   PRODUCT P
+		                         LEFT JOIN VIEW_STOCK_TOTALNUM VST
+		                           ON P.ID = VST.PRODUCT_ID
+		                         LEFT JOIN COMPANY C
+		                           ON C.TAX_RATE >= -99		                           
+		                           ) TMPPRICE
+		         ON BD.PRODUCT_ID = TMPPRICE.PRODUCT_ID  
+     </select>
+     <!-- 采购合同预览  By HanHaiyun @2010-6-11-->
+     <select id="customerAddress.selectBuyContractPreview" resultClass="buyContractPreviewDto" parameterClass="java.lang.String">
+		SELECT B.ID						AS ID,
+			   B.PRODUCT_CONTRACT_CODE  AS PRODUCTCONTRACTCODE,
+		       B.COMPANY_CONTRACT_CODE  AS COMPANYCONTRACTCODE,
+		       B.DATE                   AS BUYCONTRACTDATE,
+		       B.PLACE                  AS PLACE,
+		       B.USER_NAME				AS PRODSUPERINTENDENTNAME,
+		       B.QUALITY                AS QUALITY,
+		       B.CHECK_LIMIT			AS CHECKLIMIT,
+		       B.TRANSPORT_WAY          AS TRANSPORTWAY,
+		       B.PAYMENT_WAY            AS PAYMENTWAY,
+		       B.PROTECT_LIMIT          AS PROTECTLIMIT,
+		       B.PAYMENT_WAY            AS PAYMENTWAY,
+		       B.ARTERM                 AS ARTERM,
+		       B.PAYMENT_TYPE			AS PAYMENTTYPE,
+		       B.CONTRACT_PAYMENT_TIME  AS CONTRACTPAYMENTTIME,
+		       B.PREPAY_MONEY           AS PREPAYMONEY,
+		       B.SEND_PAYMENT_TIME      AS SENDPAYMENTTIME,
+		       B.REQUEST_DATE           AS REQUESTDATE,
+		       SUPLK.TEL                AS SUPPLIERLINKMANTEL,
+		       SUPLK.NAME				AS LINKMANNAME,
+		       SUP.name          AS SUPPLIERNAME,
+		       SUP.REMIT_BANK_NAME      AS REMITBANKNAME,
+		       SUP.REMIT_BANK_ACCOUNT   AS REMITBANKACCOUNT,
+		       COM.NAME                 AS COMPANYNAME,
+		       COM.INVOICE_BANK_NAME    AS INVOICEBANKNAME,
+		       COM.INVOICE_BANK_TEL     AS INVOICEBANKTEL,
+		       COM.INVOICE_BANK_ADDRESS AS INVOICEBANKADDRESS,
+		       COM.INVOICE_BANK_ACCOUNT AS INVOICEBANKACCOUNT,
+		       COM.TAX_NUMBER           AS TAXNUMBER,
+		       B.delivery_Terms as deliveryTerms
+		FROM   SUPPLIER AS SUP,
+		       BUY_CONTRACT AS B,
+		       COMPANY AS COM,
+		       SUPPLIER_LINKMAN AS SUPLK
+		WHERE  B.SUPPLIER_ID = SUP.ID
+		       AND COM.ID = 1
+		       AND SUPLK.ID = B.SUPPLIER_LINKMAN_ID
+		       AND B.ID = #Id#
+     </select>
+     <!--根据采购合同产品类型查询出该类型的负责人 By HanHaiyun @2010-6-12-->
+     <select id="buyContract_sqlMap.selectBuyContractUserProduct" resultClass="userEntity" parameterClass="java.lang.String">
+	    SELECT U.NAME AS NAME,
+	      	   U.ID   AS ID,
+	      	   U.ROLE_ID AS ROLEID
+		FROM   USER_PRODUCT AS UP,
+		       USER AS U,
+		       BUY_CONTRACT AS B
+		WHERE  B.PRODUCT_TYPE_ID = UP.PRODUCT_TYPE_ID
+		       AND U.ID = UP.USER_ID
+			   AND U.ROLE_ID=8
+		       AND B.ID =#buyContractId#
+     </select>
+      <!--查询采购合同运营总监所对应的用户 By HanHaiyun @2010-6-12-->
+     <select id="buyContract_sqlMap.selectUserRole" resultClass="userEntity" parameterClass="java.lang.String">
+ 		SELECT U.NAME AS NAME,
+ 			   U.ID AS ID,
+ 			   U.ROLE_ID AS ROLEID
+ 		FROM USER AS U,BUY_CONTRACT AS B
+ 		WHERE U.ID=B.OPE_MAJ_ID AND B.ID=#Id#
+     </select>
+     <!--采购合同评审 By HanHaiyun @2010-6-12-->
+     <update id="buyContract_sqlMap.review" parameterClass="buyContractReviewDto">
+     	UPDATE BUY_CONTRACT 
+     	SET    STATUS = #status#
+     	<isNotEmpty prepend="," property="legalName">
+		       LEGAL_ID = #legalId#,
+		       LEGAL_NAME = #legalName#,
+		       LEGAL_DATE = #legalDate#,
+		       LEGAL_IDEA = #legalIdea#,
+		       LEGAL_TEXT = #legalText#,
+		       BUY_MAN_ID = #buyManId#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="buyManName">
+		  	   BUY_MAN_ID = #buyManId#,
+		  	   OPE_MAJ_ID = #opeMajId#,
+		       BUY_MAN_NAME = #buyManName#,
+		       BUY_MAN_DATE = #buyManDate#,
+		       BUY_MAN_IDEA = #buyManIdea#,
+		       BUY_MAN_TEXT = #buyManText#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="opeMajName">
+		 	   OPE_MAJ_ID = #opeMajId#,
+		 	   	<isEqual prepend="" property="opeMajIdea" compareValue="1">
+		 	  		 DATE = DATE_FORMAT(NOW(),'%Y-%m-%d'),
+		 	   </isEqual>
+		 	   PRODUCT_CONTRACT_CODE =#prodContractCode#,
+		       OPE_MAJ_NAME = #opeMajName#,
+		       OPE_MAJ_DATE = #opeMajDate#,
+		       OPE_MAJ_IDEA = #opeMajIdea#,
+		       OPE_MAJ_TEXT = #opeMajText#
+		</isNotEmpty>
+		WHERE  ID = #id#
+     </update>
+	<!-- 收货地址添加 -->	
+	<select id="receive.selectRerceiveAddress" resultClass="receiveDetailDto" parameterClass="java.util.HashMap">
+		SELECT P.CODE AS PRODCODE,<!-- 产品编码 -->
+		       P.NAME AS PRODNAME,<!-- 产品名称 -->
+		       P.TYPE AS PRODTYPE,<!-- 规格型号 -->
+		       P.UNIT AS PRODUNIT,<!-- 单位 -->
+		       P.id AS prodId,<!-- 产品id -->
+		       BCD.COUNT AS BUYCOUNT,<!-- 采购数 -->
+		       BCD.id AS id,<!-- id -->
+		       RGD.COMPANYTYPE,
+		       RGD.COMPANYID,
+		       RGD.ADDRESSID,
+		       IFNULL(RGD.RECEIVETOTALCOUNT,0) AS RECEIVETOTALCOUNT,<!-- 其他地址收获数 -->
+		       IFNULL(BCD.COUNT,0)
+		         - IFNULL(RGD.RECEIVETOTALCOUNT,0) AS RECEIVECOUNT
+		FROM   BUY_CONTRACT_DETAIL BCD
+		       INNER JOIN PRODUCT P
+		         ON BCD.PRODUCT_ID = P.ID
+		       LEFT JOIN (SELECT   ID AS RECEIVEID,
+		                           BUY_CONTRACT_ID AS BUYCONTRACTID,
+		                           COMPANY_TYPE AS COMPANYTYPE,
+		                           PRODUCT_ID,
+		                           COMPANY_ID AS COMPANYID,
+		                           ADDRESS_ID AS ADDRESSID,
+		                           SUM(COUNT) AS RECEIVETOTALCOUNT
+		                  FROM     RECEIVE_GOODS_DETAIL
+		                  WHERE    BUY_CONTRACT_ID = #buyContractId#
+		                  GROUP BY BUY_CONTRACT_ID,PRODUCT_ID) RGD
+		         ON BCD.PRODUCT_ID = RGD.PRODUCT_ID
+		            AND BCD.BUY_CONTRACT_ID = RGD.BUYCONTRACTID
+		WHERE  BCD.BUY_CONTRACT_ID = #buyContractId#
+	</select>
+	<!-- 添加采购合同 Begin -->	
+	<insert id="addBuyContract" parameterClass="buyContractOfAddDto">
+		insert into buy_contract(status,id,CONTRACT_type,template_type,place,
+					quality,check_limit,protect_limit,clause,supplier_linkman_id,
+					file,supplier_id,supplier_name,invoice_type,tax_rate,
+					product_type_id,payment_type,payment_way,arterm,contract_payment_time,
+					prepay_money,send_payment_time,request_date,transport_way,
+					user_id,user_name,text,money,datetime,delivery_terms) 
+			values(1,#id#,#contractType#,#templateType#,#place#,
+			#quality#,#checkLimit#,#protectLimit#,#clause#,#supplierLinkmanId#,
+			#fileName#,#supplierId#,#supplierName#,#invoiceType#,#taxRate#,
+			#productTypeId#,#paymentType#,#paymentWay#,#arterm#,#contractPaymentTime#,
+			#prepayMoney#,#sendPaymentTime#,#requestDate#,#transportWay#,
+			#userId#,#userName#,#text#,#money#,#dateTime#,#deliveryTerms#
+			)
+	</insert>
+	<!-- 添加采购合同 End -->
+	<!-- 添加采购合同 明细 Begin -->	
+	<insert id="addBuyContractDetail" parameterClass="buyContractDetailDto">
+		insert into buy_contract_detail(buy_contract_id,product_id,count,price) 
+			values(#buyContractId#,#productId#,#count#,#price#)
+	</insert>
+	<!-- 添加采购合同 明细 End -->
+	<!-- 添加采购合同 收获地址 Begin -->	
+	<insert id="addReceiveOfBuyContract" parameterClass="receiveDetailDto">
+		insert into receive_goods_detail(buy_contract_id,company_type,company_id,address_id,product_id,count) 
+			values(#buyContractId#,#companyType#,#companyId#,#addressId#,#prodId#,#buyCount#)
+	</insert>
+	<!-- 添加采购合同 收获地址 End -->	
+	<!-- 查询收获地址是否存在 地址 根据companyType和addressId和buyContractId Begin -->	
+	<select id="selectReceiveOfBuyContract" parameterClass="receiveDetailDto" resultClass="java.lang.Integer">
+		select count(id) from receive_goods_detail where address_id=#addressId# and company_type=#companyType# and buy_contract_id=#buyContractId# and company_id=#companyId#
+	</select>
+	<!-- 查询收获地址是否存在 地址 根据companyType和addressId End -->		
+	<!-- 删除收获地址 Begin -->	
+	<delete id="deleteReceiveOfBuyContract" parameterClass="receiveDetailDto">
+		delete from receive_goods_detail where buy_contract_id=#buyContractId# and address_id=#addressId# and company_type=#companyType# and company_id=#companyId#
+	</delete>
+	<!-- 删除收获地址 End -->		
+	
+	<!-- 修改采购合同 显示 Begin -->	
+	<select id="modifyBuyContractOfShow" parameterClass="java.lang.String" resultClass="buyContractOfAddDto">
+			SELECT 
+			   BUY_CONTRACT.ID					  AS id,<!-- 修改采购合同 -->
+		       BUY_CONTRACT.TAX_RATE              AS TAXRATE,<!-- 增值税税率 -->
+		       BUY_CONTRACT.CONTRACT_TYPE         AS contractType,<!-- 合同类型 -->
+		       BUY_CONTRACT.TEMPLATE_TYPE         AS templateType,<!-- 模板类型 -->
+		       BUY_CONTRACT.PLACE                 AS PLACE,<!-- 签订地点 -->
+		       BUY_CONTRACT.QUALITY               AS QUALITY,<!-- 质量标准 -->
+		       BUY_CONTRACT.CHECK_LIMIT           AS CHECKLIMIT,<!-- 验收期限 -->
+		       BUY_CONTRACT.PROTECT_LIMIT         AS PROTECTLIMIT,<!-- 质保期 -->
+		       BUY_CONTRACT.file         		  AS fileName,<!-- 文件name -->
+		       
+		       BUY_CONTRACT.supplier_id 		  AS supplierId,<!-- 供货商编号 -->
+		       SUPP.name         AS supplierName,<!-- 供货商名称 -->
+		       SUPP.PROVINCE           			  AS PROVINCE,<!-- 省份 -->
+		       SUPP.CITY               			  AS CITY,<!-- 城市 -->
+		       SUPP.REMIT_BANK_NAME    			  AS REMITBANKNAME,<!-- 汇款银行名称 -->
+		       SUPP.REMIT_BANK_ACCOUNT 			  AS REMITBANKACCOUNT,<!-- 汇款银行帐号 -->
+		       BUY_CONTRACT.INVOICE_TYPE          AS INVOICETYPE,<!-- 发票类型 -->
+		       BUY_CONTRACT.TAX_RATE              AS TAXRATE,<!-- 增值税税率 -->
+		       
+		       BUY_CONTRACT.supplier_linkman_id   AS supplierLinkmanId,<!-- 供货商联系人编号 -->
+		       SUP_LK.TEL              			  AS linkmanTel,<!-- 电话 -->
+		       SUP_LK.FAX              			  AS linkmanFox,<!-- 传真 -->
+		       
+		       
+		       BUY_CONTRACT.product_type_id       AS productTypeId,<!-- 产品分类编号 -->
+		       PROD.NAME              			  AS PRODUCTDEPTNAME,<!-- 产品部门名称 -->
+		       BUY_CONTRACT.money        	      AS money,<!-- 采购金额合计 -->
+		       
+		       BUY_CONTRACT.PAYMENT_TYPE          AS paymentType,<!-- 付款类型号 --> 
+		       BUY_CONTRACT.PAYMENT_WAY           AS paymentWay,<!-- 付款方式 -->
+		       BUY_CONTRACT.ARTERM                AS ARTERM,<!-- 帐期 -->
+		       BUY_CONTRACT.CONTRACT_PAYMENT_TIME AS contractPaymentTime,<!-- 签订后付款期限 -->
+		       BUY_CONTRACT.PREPAY_MONEY          AS PREPAYMONEY,<!-- 预付金额 -->
+		       BUY_CONTRACT.SEND_PAYMENT_TIME     AS SENDPAYMENTTIME,<!-- 货到后付款期限 -->
+		       BUY_CONTRACT.REQUEST_DATE          AS REQUESTDATE,<!-- 要求到货日期 -->
+		       BUY_CONTRACT.TRANSPORT_WAY         AS TRANSPORTWAY,<!-- 货运方式 -->
+		       BUY_CONTRACT.TEXT                  AS TEXT,<!-- 特殊说明 -->
+		       BUY_CONTRACT.LEGAL_NAME            AS LEGALNAME,
+		       BUY_CONTRACT.LEGAL_DATE            AS LEGALDATE,
+		       BUY_CONTRACT.LEGAL_IDEA            AS LEGALIDEA,
+		       BUY_CONTRACT.LEGAL_TEXT            AS LEGALTEXT,
+		       BUY_CONTRACT.BUY_MAN_NAME          AS BUYMANNAME,
+		       BUY_CONTRACT.BUY_MAN_DATE          AS BUYMANDATE,
+		       BUY_CONTRACT.BUY_MAN_IDEA          AS BUYMANIDEA,
+		       BUY_CONTRACT.BUY_MAN_TEXT          AS BUYMANTEXT,
+		       BUY_CONTRACT.OPE_MAJ_NAME          AS OPEMAJNAME,
+		       BUY_CONTRACT.OPE_MAJ_DATE          AS OPEMAJDATE,
+		       BUY_CONTRACT.OPE_MAJ_IDEA          AS OPEMAJIDEA,
+		       BUY_CONTRACT.OPE_MAJ_TEXT          AS OPEMAJTEXT,
+		       BUY_CONTRACT.delivery_terms        as deliveryTerms 
+		FROM   SUPPLIER AS SUPP,
+		       SUPPLIER_LINKMAN AS SUP_LK,
+		       BUY_CONTRACT
+		       LEFT JOIN PRODUCT_TYPE AS PROT
+		         ON PROT.ID = BUY_CONTRACT.PRODUCT_TYPE_ID
+		       LEFT JOIN PRODUCT_DEPT AS PROD
+		         ON PROD.ID = PROT.PRODUCT_DEPT_ID
+		WHERE  BUY_CONTRACT.SUPPLIER_ID = SUPP.ID
+		       AND BUY_CONTRACT.SUPPLIER_LINKMAN_ID = SUP_LK.ID
+		       AND BUY_CONTRACT.ID = #id#
+	</select>
+	<!-- 修改采购合同 显示 End -->	
+    <!-- 修改采购合同of产品 Bengin-->
+    <select id="getBuyContractProductInfoOfModify" resultClass="buyContractProductInfoDto" parameterClass="java.lang.String">
+		SELECT PRODUCT.id AS PRODID,                  <!--产品ID-->
+		       PRODUCT.CODE AS PRODCODE,              <!--产品编码-->
+		       PRODUCT.NAME AS PRODNAME,              <!--产品名称-->
+		       PRODUCT.TYPE AS PRODTYPE,              <!--规格型号-->
+		       PRODUCT.UNIT AS PRODUNIT,              <!--单位-->
+		       buy_contract_detail.COUNT AS BUYCOUNT,              <!--采购数-->
+		       buy_contract_detail.PRICE AS BUYPRICE,              <!--采购单价-->
+		       buy_contract_detail.COUNT*buy_contract_detail.PRICE AS BUYMONEY,     <!--采购金额-->
+		       IFNULL(D.COUNT,0) AS DEMANDCOUNT,  	<!--需求数-->
+		       IFNULL(STOCK.stockSum,0) AS STOCKTOTALCOUNT,<!--实际库存总数-->
+		       IFNULL(STOCK.noTaxOfPrice,0.00) as noTaxOfPrice,<!--未上税库存单价-->
+		       IFNULL(STOCK.price,0.00) AS STOCKUNITPRICE<!--库存单价-->
+		 FROM   buy_contract_detail
+			INNER JOIN PRODUCT
+		         ON buy_contract_detail.PRODUCT_ID = PRODUCT.ID
+			INNER JOIN BUY_CONTRACT 
+		         ON buy_contract_detail.buy_contract_id = BUY_CONTRACT.ID
+ 			INNER JOIN PRODUCT_TYPE
+		         ON BUY_CONTRACT. PRODUCT_TYPE_ID = PRODUCT_TYPE.ID
+ 			LEFT JOIN (
+						select ifnull(sum(stock.num),0) as stockSum ,stock.product_id,
+							(CASE 
+				            WHEN SUM(IFNULL(stock.num,0)) = 0 THEN 0
+				            ELSE ROUND((IFNULL(product.MONEY,0)
+		                         / SUM(IFNULL(stock.num,0)))
+		                         * (1 + (C.TAX_RATE / 100)),2)
+		          			END)  as price,
+							(CASE 
+				            WHEN SUM(IFNULL(stock.num,0)) = 0 THEN 0
+				            ELSE ROUND((IFNULL(product.MONEY,0)
+		                         / SUM(IFNULL(stock.num,0))),2)
+		          			END)  as noTaxOfPrice
+						from stock,product,COMPANY C
+						where product.id=stock.product_id
+						AND C.TAX_RATE >= -99
+						group by stock.product_id
+				) STOCK 
+		        ON PRODUCT.id = STOCK.PRODUCT_ID
+ 			LEFT JOIN (SELECT   PRODUCT_ID,
+		                      SUM(COUNT) AS COUNT
+		                FROM     DEMAND
+		                    WHERE    STATUS = 0
+		                    GROUP BY PRODUCT_ID) D
+		           ON PRODUCT.ID = D.PRODUCT_ID
+		    WHERE  buy_contract_detail.buy_contract_id =#Id#
+		    ORDER BY PRODUCT.CODE ASC
+     </select>	
+	<!-- 修改采购合同of产品 End-->
+	<!-- 采购合同 收货信息地址列表 Begin-->
+		<select id="getBuyContractOfReceiveInfo" resultClass="buyContractOfReceiveInfoDto" parameterClass="java.lang.String">
+			select 
+				company_type as companyType,
+				company_id as companyId,
+				receive_goods_detail.buy_contract_id as id,
+				(case 
+					when company_type=1 then typeOfstockroom.receiveId
+					when company_type=2 then typeOfCompany.receiveId
+					when company_type=3 then typeOfCustomer.receiveId
+				end ) as receiveId,
+				(case 
+					when company_type=1 then typeOfstockroom.receiveName
+					when company_type=2 then typeOfCompany.receiveName
+					when company_type=3 then typeOfCustomer.receiveName
+				end) as receiveName,
+				(case 
+					when company_type=1 then typeOfstockroom.addressId
+					when company_type=2 then typeOfCompany.addressId
+					when company_type=3 then typeOfCustomer.addressId
+				end) as addressId,
+				(case 
+					when company_type=1 then typeOfstockroom.goodsName
+					when company_type=2 then typeOfCompany.goodsName
+					when company_type=3 then typeOfCustomer.goodsName
+				end) as goodsName,
+				(case 
+					when company_type=1 then typeOfstockroom.address
+					when company_type=2 then typeOfCompany.address
+					when company_type=3 then typeOfCustomer.address
+				end) as address,
+				(case 
+					when company_type=1 then typeOfstockroom.linkman
+					when company_type=2 then typeOfCompany.linkman
+					when company_type=3 then typeOfCustomer.linkman
+				end) as linkman,
+				(case 
+					when company_type=1 then typeOfstockroom.tel
+					when company_type=2 then typeOfCompany.tel
+					when company_type=3 then typeOfCustomer.tel
+				end) as tel,
+				(case 
+					when company_type=1 then typeOfstockroom.postcode
+					when company_type=2 then typeOfCompany.postcode
+					when company_type=3 then typeOfCustomer.postcode
+				end) as postcode,
+				(case 
+					when company_type=1 then typeOfstockroom.mobile
+					when company_type=2 then typeOfCompany.mobile
+					when company_type=3 then typeOfCustomer.mobile
+				end) as mobile
+			from 
+				receive_goods_detail
+				left join (
+					select 
+						customer.id as receiveId,
+						customer.name as receiveName,
+						customer_address.id as  addressId,
+						customer_address.name as goodsName,
+						customer_address.address as address,
+						customer_address.linkman as linkman,
+						customer_address.tel as tel,
+						customer_address.postcode as postcode,
+						customer_address.mobile as mobile
+					 from 
+						customer,customer_address where customer_address.customer_id=customer.id
+				) as typeOfCustomer on typeOfCustomer.addressId=receive_goods_detail.address_id and receive_goods_detail.company_type=3
+				left join (
+					select 
+						company.id as receiveId,
+						company.name as receiveName,
+						company_address.id as addressId,
+						company_address.name as goodsName,
+						company_address.address as address,
+						company_address.linkman as linkman,
+						company_address.mobile as mobile,
+						company_address.postcode as postcode,
+						company_address.tel as tel
+					 from 
+						company,company_address
+				) as typeOfCompany on typeOfCompany.addressId=receive_goods_detail.address_id and receive_goods_detail.company_type=2
+				left join (
+					select 
+						stockroom.id as receiveId,
+						stockroom.name as receiveName,
+						stockroom_address.id as addressId,
+						stockroom_address.address as address,
+						stockroom_address.linkman as linkman,
+						stockroom_address.mobile as mobile,
+						stockroom_address.name as goodsName,
+						stockroom_address.postcode as postcode,
+						stockroom_address.tel as tel
+					 from 
+						stockroom,stockroom_address where stockroom.id=stockroom_address.stockroom_id
+				) as typeOfstockroom on typeOfstockroom.addressId=receive_goods_detail.address_id and receive_goods_detail.company_type=1
+			where receive_goods_detail.buy_contract_id =#id# group by receive_goods_detail.company_type,receive_goods_detail.address_id,receive_goods_detail.company_id
+		</select>
+	<!-- 采购合同 收货信息地址列表 End-->
+	<!-- 采购合同 收货信息物品列表 Begin-->
+		<select id="getBuyContractOfReceiveProduct" resultClass="receiveDetailDto" parameterClass="buyContractOfReceiveInfoDto">
+				select 
+					product.id as prodId,
+					product.code as prodCode,
+					product.name as prodName,
+					product.`type` as prodType,
+					product.unit as prodUnit,
+					buy_contract_detail.`count` as buyCount,
+					receive_goods_detail.`count` as receiveCount
+				from receive_goods_detail 
+				LEFT JOIN product on receive_goods_detail.product_id=product.id
+				left join buy_contract_detail on buy_contract_detail.buy_contract_id =receive_goods_detail.buy_contract_id and product.id=buy_contract_detail.product_id
+				where receive_goods_detail.company_type=#companyType# and receive_goods_detail.address_id=#addressId# and receive_goods_detail.company_id=#companyId# and receive_goods_detail.buy_contract_id=#id#
+				order by receive_goods_detail.id desc
+		</select>
+	<!-- 采购合同 收货信息物品列表 End-->
+	<!-- 采购合同 收货信息物品总数 Begin-->
+		<select id="getBuyContractOfReceiveProductCount" resultClass="buyContractDetailDto" parameterClass="string">
+				select 
+				receive_goods_detail.product_id as productId,
+					ifnull(sum(receive_goods_detail.`count`),0) as count
+				from receive_goods_detail 
+				LEFT JOIN product on receive_goods_detail.product_id=product.id
+				left join buy_contract_detail on buy_contract_detail.buy_contract_id =receive_goods_detail.buy_contract_id and product.id=buy_contract_detail.product_id
+				where receive_goods_detail.buy_contract_id=#id# group by receive_goods_detail.product_id
+		</select>
+	<!-- 采购合同 收货信息物品总数 End-->	
+	<!-- 删除采购合同 明细 Begin -->	
+	<delete id="deleteBuyContractDetail" parameterClass="java.lang.String">
+		delete from buy_contract_detail where buy_contract_detail.buy_contract_id=#id#
+	</delete>
+	<!-- 删除采购合同 明细 End -->	
+	<!-- 修改采购合同 Begin -->					   
+	<update id="modifyBuyContract" parameterClass="buyContractOfAddDto">
+		update buy_contract set 
+			status=#status#,
+			CONTRACT_type=#contractType#,
+			template_type=#templateType#,
+			place=#place#,
+			quality=#quality#,
+			check_limit=#checkLimit#,
+			protect_limit=#protectLimit#,
+			clause=#clause#,
+			file=#fileName#,
+			supplier_id=#supplierId#,
+			supplier_name=#supplierName#,
+			invoice_type=#invoiceType#,
+			tax_rate=#taxRate#,
+			supplier_linkman_id=#supplierLinkmanId#,
+			product_type_id=#productTypeId#,
+			payment_type=#paymentType#,
+			payment_way=#paymentWay#,
+			arterm=#arterm#,
+			contract_payment_time=#contractPaymentTime#,
+			prepay_money=#prepayMoney#,
+			send_payment_time=#sendPaymentTime#,
+			request_date=#requestDate#,
+			transport_way=#transportWay#,
+			text=#text#,
+			money=#money#,
+			legal_id=#legalId#,
+			buy_man_id=#buyManId#,
+			delivery_terms=#deliveryTerms#
+			
+			<isEqual prepend="," property="submitType" compareValue="submit">
+				legal_name=null,
+				legal_date=null,
+				legal_idea=null,
+				legal_text=null,
+				date=null,
+				product_contract_code=null,
+				buy_man_name=null,
+				buy_man_date=null,
+				buy_man_idea=null,
+				buy_man_text=null,
+				
+				ope_maj_id=null,
+				ope_maj_name=null,
+	            ope_maj_date=null,
+	            ope_maj_idea=null,
+	            ope_maj_text=null
+			</isEqual>
+		where id=#id#	
+	</update>
+	<!-- 修改采购合同 End -->	
+	<!-- 判断公司合同号是否存在 Begin -->	
+	<select id="getBuyContractIsExist" parameterClass="buyContractOfAddDto" resultClass="java.lang.String">
+		select count(id) from buy_contract where buy_contract.company_contract_code=#companyContractCode#
+	</select>
+	<!-- 判断公司合同号是否存在 End -->	
+	<!-- 修改采购合同 确认 Begin -->	
+	<update id="updateBuyContractOfDecide" parameterClass="buyContractOfAddDto">
+		update buy_contract set status=#status#,company_contract_code=#companyContractCode# where id=#id#
+	</update>
+	<!-- 修改采购合同 确认 End -->	
+	<!-- 打印评审表 Begin -->	
+	<update id="modifyCommentTableOfStatus" parameterClass="java.lang.String">
+		update buy_contract set status=11 where id=#id#
+	</update>
+	<!-- 打印评审表 End -->		
+	<!-- 删除采购合同 收获地址 Begin -->	
+	<delete id="deleteBuyContractAddress" parameterClass="java.lang.String">
+		delete from receive_goods_detail where buy_contract_id=#id#
+	</delete>
+	<!-- 删除采购合同 收获地址 End -->	
+	<!-- 删除采购合同 Begin -->	
+	<delete id="deleteBuyContract" parameterClass="java.lang.String">
+		delete from buy_contract where id=#id#
+	</delete>
+	<!-- 删除采购合同 End -->	
+	<!-- 查询状态 Begin -->	
+	<select id="getStrutsOfAll" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		select ifnull(status,0) from $table$ where id=#id#
+	</select>
+	<!-- 查询状态  End -->	
+</sqlMap>

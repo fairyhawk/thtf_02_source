@@ -1,0 +1,1006 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="sellBack">
+	<typeAlias alias="sellBackListDto" type="cn.com.thtf.egov.cms.dto.SellBackListDto"/>
+	<typeAlias alias="userEntity" type="cn.com.thtf.egov.cms.entity.UserEntity"/>
+	 <typeAlias alias="productTypeEntity" type="cn.com.thtf.egov.cms.entity.ProductTypeEntity" /> 
+	 <typeAlias alias="sellBackSearchDto" type="cn.com.thtf.egov.cms.dto.SellBackSearchDto" /> 
+	 <typeAlias alias="sellBackAssessDto" type="cn.com.thtf.egov.cms.dto.SellBackAssessDto"/> 
+	 
+	<!-- 根据回款单显示退款申请信息  By LiuQingGang -->
+    <typeAlias alias="sellBackForMreturnDto" type="cn.com.thtf.egov.cms.dto.SellBackForMreturnDto" />
+    <!-- 联系人  By LiuQingGang -->
+    <typeAlias alias="customerLinkmanEntity" type="cn.com.thtf.egov.cms.entity.CustomerLinkmanEntity" />
+    <!-- 追加退款  By LiuQingGang --> 
+	<typeAlias alias="sellBackAddDto" type="cn.com.thtf.egov.cms.dto.SellBackAddDto" />   
+	 <!--回款单信息  By LiuQingGang --> 
+	<typeAlias alias="mreturnEntity" type="cn.com.thtf.egov.cms.entity.MreturnEntity" />
+	 <!--产品分类信用额度显示列表 By LiuQingGang  -->
+	 <typeAlias alias="customerProInfoListDto" type="cn.com.thtf.egov.cms.dto.CustomerProInfoListDto" />
+	 
+
+	<!-- 根据用户ID和权限获取退款一览  by zzx-->
+	<select id="selectSellBackList.selectSellBackList" parameterClass="userEntity" resultClass="sellBackListDto">
+		SELECT DISTINCT SELL_BACK.ID,
+		       SELL_BACK.RETURN_ID           AS RETURNID,
+	       	   SELL_BACK.PRODUCT_TYPE_ID     AS PRODUCTTYPEID,
+		       PRODUCT_TYPE.NAME             AS PRODUCTTYPENAME,
+		       SELL_BACK.CUSTOMER_ID         AS CUSTOMERID,
+		       SELL_BACK.CUSTOMER_NAME       AS CUSTOMERNAME,
+		       SELL_BACK.CUSTOMER_LINKMAN_ID AS CUSTOMERLINKMANID,
+		       SELL_BACK.BACK_WAY            AS BACKWAY,
+		       SELL_BACK.NUMBER,
+		       SELL_BACK.MONEY,
+		       SELL_BACK.STATUS,
+		       SELL_BACK.DATE,
+		       SELL_BACK.USER_ID             AS USERID,
+		       SELL_BACK.USER_NAME           AS USERNAME,
+		       SELL_BACK.TEXT,
+		       SELL_BACK.BACK_DATE           AS BACKDATE,
+		       SELL_BACK.CONFIRM_ID          AS CONFIRMID,
+		       SELL_BACK.CONFIRM_NAME        AS CONFIRMNAME,
+		       SELL_BACK.SELL_MAJ_ID         AS SELLMAJID,
+		       SELL_BACK.SELL_MAJ_NAME       AS SELLMAJNAME,
+		       SELL_BACK.SELL_MAJ_DATE       AS SELLMAJDATE,
+		       SELL_BACK.SELL_MAJ_IDEA       AS SELLMAJIDEA,
+		       SELL_BACK.SELL_MAJ_TEXT       AS SELLMAJTEXT,
+		       SELL_BACK.OPE_MAJ_ID          AS OPEMAJID,
+		       SELL_BACK.OPE_MAJ_NAME        AS OPEMAJNAME,
+		       SELL_BACK.OPE_MAJ_DATE        AS OPEMAJDATE,
+		       SELL_BACK.OPE_MAJ_IDEA        AS OPEMAJIDEA,
+		       SELL_BACK.OPE_MAJ_TEXT        AS OPEMAJTEXT,
+		       SELL_BACK.DATETIME
+		FROM   SELL_BACK
+		       LEFT JOIN PRODUCT_TYPE
+		         ON PRODUCT_TYPE.ID = SELL_BACK.PRODUCT_TYPE_ID
+			   left join user u1
+		         on u1.id = SELL_BACK.user_id
+		<!-- 销售总监 -->
+		<isEqual prepend="," property="roleId" compareValue="5">
+				user_product
+		</isEqual>
+		<!-- 区域总监 -->
+		<isEqual prepend="," property="roleId" compareValue="9">
+				user_area_product,user_area_mapping,user_product
+		</isEqual>
+		<!-- 区域经理-->
+		<isEqual prepend="," property="roleId" compareValue="19">
+				user_area_product,user_area_mapping
+		</isEqual>
+		<!-- 大区经理-->
+		<isEqual prepend="," property="roleId" compareValue="20">
+				user_area_product,user_area_mapping
+		</isEqual>		
+		
+		<dynamic prepend="WHERE">			
+
+			<!-- 销售总监 (负责产品分类,发票状态为销售总监待评审)-->
+			<isEqual prepend="" property="roleId" compareValue="5">
+				user_product.user_id=#id# and sell_back.product_type_id=user_product.product_type_id
+					and sell_back.status=2
+			</isEqual>
+
+			<!-- 运营总监(发票状态为运营总监待评审) -->
+			<isEqual prepend="" property="roleId" compareValue="17">
+						sell_back.status=4
+			</isEqual>
+
+			<!-- 销售助理(该销售助理新建的退款，所有状态)-->
+			<isEqual prepend="" property="roleId" compareValue="3">
+				user_id=#id#				
+			</isEqual>
+			
+			<!-- 区域总监 (负责产品分类,负责区域)-->
+			<isEqual prepend="" property="roleId" compareValue="9">
+				user_product.user_id=#id# AND sell_back.product_type_id=user_product.product_type_id
+		        AND SELL_BACK.user_id = user_area_product.user_id
+			    AND  user_area_product.user_area_id=#userAreaId#
+			</isEqual>
+			<!-- 区域经理(负责区域)-->
+			<isEqual prepend="" property="roleId" compareValue="19">
+				SELL_BACK.user_id = user_area_product.user_id
+				AND  user_area_product.user_area_id IN
+				(SELECT user_area_id
+				FROM user_area_mapping 
+				WHERE user_area_mapping.user_id=#id#)
+			</isEqual>	
+			<!-- 大区经理(负责区域)-->
+			<isEqual prepend="" property="roleId" compareValue="20">
+				SELL_BACK.user_id = user_area_product.user_id
+				AND  user_area_product.user_area_id IN
+				(SELECT user_area_id
+				FROM user_area_mapping 
+				WHERE user_area_mapping.user_id=#id#)
+			</isEqual>
+
+		</dynamic>
+		order by 
+ 			 sell_back.id desc
+	</select>
+	
+	<!--获得所有的产品分类 By zzx--> 
+	<select id="selectProductTypeList" resultClass="productTypeEntity">
+			SELECT   PRODUCT_TYPE.ID,
+			         PRODUCT_TYPE.NO,
+			         PRODUCT_TYPE.NAME,
+			         PRODUCT_TYPE.PRODUCT_DEPT_ID,
+			         PRODUCT_TYPE.CLIMIT
+			FROM     PRODUCT_TYPE
+			ORDER BY PRODUCT_TYPE.PRODUCT_DEPT_ID
+	</select>
+	
+	<!-- 根据用户的ID和权限获取退票一览 (分页用) by zzx-->
+	
+	<select id="selectSellBackList.recordCount" parameterClass="userEntity" resultClass="java.lang.Integer">
+	  
+	 SELECT COUNT(DISTINCT SELL_BACK.ID)
+		FROM   SELL_BACK
+		       LEFT JOIN PRODUCT_TYPE
+		         ON PRODUCT_TYPE.ID = SELL_BACK.PRODUCT_TYPE_ID
+			   left join user u1
+		         on u1.id = SELL_BACK.user_id
+		<!-- 销售总监 -->
+		<isEqual prepend="," property="roleId" compareValue="5">
+				user_product
+		</isEqual>
+		<!-- 区域总监 -->
+		<isEqual prepend="," property="roleId" compareValue="9">
+				user_area_product,user_area_mapping,user_product
+		</isEqual>
+		<!-- 区域经理-->
+		<isEqual prepend="," property="roleId" compareValue="19">
+				user_area_product,user_area_mapping
+		</isEqual>
+		<!-- 大区经理-->
+		<isEqual prepend="," property="roleId" compareValue="20">
+				user_area_product,user_area_mapping
+		</isEqual>
+		<dynamic prepend="WHERE">			
+
+			<!-- 销售总监 (负责产品分类,发票状态为销售总监待评审)-->
+			<isEqual prepend="" property="roleId" compareValue="5">
+				user_product.user_id=#id# and sell_back.product_type_id=user_product.product_type_id
+					and sell_back.status=2
+			</isEqual>
+
+			<!-- 运营总监(发票状态为运营总监待评审) -->
+			<isEqual prepend="" property="roleId" compareValue="17">
+						sell_back.status=4
+			</isEqual>
+
+			<!-- 销售助理(该销售助理新建的退款，所有状态)-->
+			<isEqual prepend="" property="roleId" compareValue="3">
+				user_id=#id#					
+			</isEqual>
+			
+			<!-- 区域总监 (负责产品分类,负责区域)-->
+			<isEqual prepend="" property="roleId" compareValue="9">
+				user_product.user_id=#id# AND sell_back.product_type_id=user_product.product_type_id
+		        AND SELL_BACK.user_id = user_area_product.user_id
+			    AND  user_area_product.user_area_id=#userAreaId#
+			</isEqual>
+			<!-- 区域经理(负责区域)-->
+			<isEqual prepend="" property="roleId" compareValue="19">
+				SELL_BACK.user_id = user_area_product.user_id
+				AND  user_area_product.user_area_id IN
+				(SELECT user_area_id
+				FROM user_area_mapping 
+				WHERE user_area_mapping.user_id=#id#)
+			</isEqual>	
+			<!-- 大区经理(负责区域)-->
+			<isEqual prepend="" property="roleId" compareValue="20">
+				SELL_BACK.user_id = user_area_product.user_id
+				AND  user_area_product.user_area_id IN
+				(SELECT user_area_id
+				FROM user_area_mapping 
+				WHERE user_area_mapping.user_id=#id#)
+			</isEqual>
+			
+
+		</dynamic>
+		order by 
+ 			 sell_back.id desc
+	</select>
+	
+	
+	 <!-- 根据画面条件检索款一览 by zzx-->
+	<select id="selectSellBackByCondition.selectSellBackByCondition" parameterClass="sellBackSearchDto" resultClass="sellBackListDto">
+		SELECT DISTINCT SELL_BACK.ID,
+		       SELL_BACK.RETURN_ID           AS RETURNID,
+	       	   SELL_BACK.PRODUCT_TYPE_ID     AS PRODUCTTYPEID,
+		       PRODUCT_TYPE.NAME             AS PRODUCTTYPENAME,
+		       SELL_BACK.CUSTOMER_ID         AS CUSTOMERID,
+		       SELL_BACK.CUSTOMER_NAME       AS CUSTOMERNAME,
+		       SELL_BACK.CUSTOMER_LINKMAN_ID AS CUSTOMERLINKMANID,
+		       SELL_BACK.BACK_WAY            AS BACKWAY,
+		       SELL_BACK.NUMBER,
+		       SELL_BACK.MONEY,
+		       SELL_BACK.STATUS,
+		       SELL_BACK.DATE,
+		       SELL_BACK.USER_ID             AS USERID,
+		       SELL_BACK.USER_NAME           AS USERNAME,
+		       SELL_BACK.TEXT,
+		       SELL_BACK.BACK_DATE           AS BACKDATE,
+		       SELL_BACK.CONFIRM_ID          AS CONFIRMID,
+		       SELL_BACK.CONFIRM_NAME        AS CONFIRMNAME,
+		       SELL_BACK.SELL_MAJ_ID         AS SELLMAJID,
+		       SELL_BACK.SELL_MAJ_NAME       AS SELLMAJNAME,
+		       SELL_BACK.SELL_MAJ_DATE       AS SELLMAJDATE,
+		       SELL_BACK.SELL_MAJ_IDEA       AS SELLMAJIDEA,
+		       SELL_BACK.SELL_MAJ_TEXT       AS SELLMAJTEXT,
+		       SELL_BACK.OPE_MAJ_ID          AS OPEMAJID,
+		       SELL_BACK.OPE_MAJ_NAME        AS OPEMAJNAME,
+		       SELL_BACK.OPE_MAJ_DATE        AS OPEMAJDATE,
+		       SELL_BACK.OPE_MAJ_IDEA        AS OPEMAJIDEA,
+		       SELL_BACK.OPE_MAJ_TEXT        AS OPEMAJTEXT,
+		       SELL_BACK.DATETIME
+		FROM   SELL_BACK
+		       LEFT JOIN PRODUCT_TYPE
+		         ON PRODUCT_TYPE.ID = SELL_BACK.PRODUCT_TYPE_ID
+			   left join user u1
+		         on u1.id = SELL_BACK.user_id
+	
+		<!-- 销售总监 -->
+		<isEqual prepend="," property="roleId" compareValue="5">
+				user_product
+		</isEqual>
+		
+		<!-- 区域总监 -->
+		<isEqual prepend="," property="roleId" compareValue="9">
+				user_area_product,user_area_mapping,user_product
+		</isEqual>
+		<!-- 区域经理-->
+		<isEqual prepend="," property="roleId" compareValue="19">
+				user_area_product,user_area_mapping
+		</isEqual>
+		<!-- 大区经理-->
+		<isEqual prepend="," property="roleId" compareValue="20">
+				user_area_product,user_area_mapping
+		</isEqual>
+		<dynamic prepend="WHERE">			
+
+			<!-- 销售总监 (负责产品分类,发票状态为销售总监待评审)-->
+			<isEqual prepend="and" property="roleId" compareValue="5">
+				user_product.user_id=#loginId# and sell_back.product_type_id=user_product.product_type_id
+					
+			</isEqual>
+
+			<!-- 销售助理(该销售助理新建的退款，所有状态)-->
+			<isEqual prepend="and" property="roleId" compareValue="3">
+				user_id=#loginId#				
+			</isEqual>
+			
+			<!-- 区域总监 (负责产品分类,负责区域)-->
+			<isEqual prepend="and" property="roleId" compareValue="9">
+				user_product.user_id=#loginId# AND sell_back.product_type_id=user_product.product_type_id
+		        AND SELL_BACK.user_id = user_area_product.user_id
+			    AND  user_area_product.user_area_id=#userAreaId#
+			</isEqual>
+			<!-- 区域经理(负责产品分类，负责区域)-->
+			<isEqual prepend="and" property="roleId" compareValue="19">
+				SELL_BACK.user_id = user_area_product.user_id
+				AND  user_area_product.user_area_id IN
+				(SELECT user_area_id
+				FROM user_area_mapping 
+				WHERE user_area_mapping.user_id=#loginId#)
+			</isEqual>	
+			<!-- 大区经理(负责产品分类，负责区域)-->
+			<isEqual prepend="and" property="roleId" compareValue="20">
+				SELL_BACK.user_id = user_area_product.user_id
+				AND  user_area_product.user_area_id IN
+				(SELECT user_area_id
+				FROM user_area_mapping 
+				WHERE user_area_mapping.user_id=#loginId#)
+			</isEqual>	
+		
+		
+			<!-- 画面条件 -->
+		
+			<isNotEmpty prepend="and" property="id">
+				sell_back.id = #id#
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="returnId">
+				sell_back.return_id=#returnId# 
+			</isNotEmpty>		
+			<isNotEmpty prepend="and" property="customerName">
+				
+				sell_back.customer_name   like concat( '%' ,#customerName#, '%' ) 
+				 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="productTypeId">
+			sell_back.product_type_id=#productTypeId#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="number">
+			sell_back.number=#number#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userName">
+				sell_back.user_name like  '%$userName$%'		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="confirmName">
+				sell_back.confirm_name like 	 '%$confirmName$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="status">
+				sell_back.status=#status#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="backWay">
+				sell_back.back_way=#backWay#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="dateStart">
+				<![CDATA[  DATE_FORMAT(sell_back.date,'%Y%m%d')>=  DATE_FORMAT(#dateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="dateEnd">
+				<![CDATA[  DATE_FORMAT(sell_back.date,'%Y%m%d')<=  DATE_FORMAT(#dateEnd#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="backDateStart">
+				<![CDATA[  DATE_FORMAT(sell_back.back_date,'%Y%m%d')>=  DATE_FORMAT(#backDateStart#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="backDateEnd">
+				<![CDATA[  DATE_FORMAT(sell_back.back_date,'%Y%m%d')<=  DATE_FORMAT(#backDateEnd#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			
+
+		</dynamic>
+		order by 
+ 			 sell_back.id desc 
+	</select>
+		
+	 <!-- 根据画面条件检索款一览 (分页)by zzx-->
+	<select id="selectSellBackByCondition.recordCount" parameterClass="sellBackSearchDto" resultClass="java.lang.Integer">
+		SELECT COUNT(DISTINCT SELL_BACK.ID)		       
+		FROM   SELL_BACK
+		       LEFT JOIN PRODUCT_TYPE
+		         ON PRODUCT_TYPE.ID = SELL_BACK.PRODUCT_TYPE_ID
+			   left join user u1
+		         on u1.id = SELL_BACK.user_id
+	
+		<!-- 销售总监 -->
+		<isEqual prepend="," property="roleId" compareValue="5">
+				user_product
+		</isEqual>
+		
+		<!-- 区域总监 -->
+		<isEqual prepend="," property="roleId" compareValue="9">
+				user_area_product,user_area_mapping,user_product
+		</isEqual>
+		<!-- 区域经理-->
+		<isEqual prepend="," property="roleId" compareValue="19">
+				user_area_product,user_area_mapping
+		</isEqual>
+		<!-- 大区经理-->
+		<isEqual prepend="," property="roleId" compareValue="20">
+				user_area_product,user_area_mapping
+		</isEqual>
+		<dynamic prepend="WHERE">			
+
+			<!-- 销售总监 (负责产品分类,发票状态为销售总监待评审)-->
+			<isEqual prepend="and" property="roleId" compareValue="5">
+				user_product.user_id=#loginId# and sell_back.product_type_id=user_product.product_type_id
+					
+			</isEqual>
+			<!-- 销售助理(该销售助理新建的退款，所有状态)-->
+			<isEqual prepend="and" property="roleId" compareValue="3">
+				user_id=#loginId#				
+			</isEqual>
+			
+			<!-- 区域总监 (负责产品分类,负责区域)-->
+			<isEqual prepend="and" property="roleId" compareValue="9">
+				user_product.user_id=#loginId# AND sell_back.product_type_id=user_product.product_type_id
+		        AND SELL_BACK.user_id = user_area_product.user_id
+			    AND  user_area_product.user_area_id=#userAreaId#
+			</isEqual>
+			<!-- 区域经理(负责产品分类，负责区域)-->
+			<isEqual prepend="and" property="roleId" compareValue="19">
+				SELL_BACK.user_id = user_area_product.user_id
+				AND  user_area_product.user_area_id IN
+				(SELECT user_area_id
+				FROM user_area_mapping 
+				WHERE user_area_mapping.user_id=#loginId#)
+			</isEqual>	
+			<!-- 大区经理(负责产品分类，负责区域)-->
+			<isEqual prepend="and" property="roleId" compareValue="20">
+				SELL_BACK.user_id = user_area_product.user_id
+				AND  user_area_product.user_area_id IN
+				(SELECT user_area_id
+				FROM user_area_mapping 
+				WHERE user_area_mapping.user_id=#loginId#)
+			</isEqual>
+			
+		
+			<!-- 画面条件 -->
+		
+			<isNotEmpty prepend="and" property="id">
+				sell_back.id = #id#
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="returnId">
+				sell_back.return_id=#returnId# 
+			</isNotEmpty>		
+			<isNotEmpty prepend="and" property="customerName">
+				
+				sell_back.customer_name   like concat( '%' ,#customerName#, '%' ) 
+				 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="productTypeId">
+			sell_back.product_type_id=#productTypeId#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="number">
+			sell_back.number=#number#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userName">
+				sell_back.user_name like  '%$userName$%'		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="confirmName">
+				sell_back.confirm_name like 	 '%$confirmName$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="status">
+				sell_back.status=#status#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="backWay">
+				sell_back.back_way=#backWay#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="dateStart">
+				<![CDATA[  DATE_FORMAT(sell_back.date,'%Y%m%d')>=  DATE_FORMAT(#dateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="dateEnd">
+				<![CDATA[  DATE_FORMAT(sell_back.date,'%Y%m%d')<=  DATE_FORMAT(#dateEnd#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="backDateStart">
+				<![CDATA[  DATE_FORMAT(sell_back.back_date,'%Y%m%d')>=  DATE_FORMAT(#backDateStart#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="backDateEnd">
+				<![CDATA[  DATE_FORMAT(sell_back.back_date,'%Y%m%d')<=  DATE_FORMAT(#backDateEnd#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+		</dynamic>
+		order by 
+ 			 sell_back.id	desc
+		</select>
+	<!--退款确认 By zzx--> 
+	<update id="modifySellBackConfirm" parameterClass="sellBackListDto" >
+		update sell_back set 
+		sell_back.status=#status#,
+		sell_back.confirm_name=#confirmName#,
+		sell_back.back_date =date_format(now(),'%Y-%m-%d') 
+		where sell_back.id=#id#	
+			
+	</update>
+	<!--打印 By zzx--> 
+	<update id="modifySellBackPrint" parameterClass="java.lang.String">
+		update sell_back set 
+		sell_back.status=7
+		where sell_back.id=#sellBackId#				
+	</update>
+	<!--查询退款表信息和客户信息 by zzx-->
+	<select id="selectSellBackCustomerInfo" parameterClass="java.lang.String" resultClass="sellBackAssessDto">
+		SELECT SELL_BACK.ID,
+		       SELL_BACK.CUSTOMER_NAME     AS CUSTOMERNAME,
+		       SELL_BACK.RETURN_ID         AS RETURNID,
+		       SELL_BACK.PRODUCT_TYPE_ID   AS PRODUCTTYPEID,
+		       SELL_BACK.CUSTOMER_ID       AS CUSTOMERID,
+			   SELL_BACK.USER_NAME         as USERNAME,
+		       SELL_BACK.STATUS,
+			   SELL_BACK.DATE,
+		       CUSTOMER_LINKMAN.NAME,
+		       CUSTOMER_LINKMAN.TEL,
+		       CUSTOMER_LINKMAN.FAX,
+		       CUSTOMER.PROVINCE,
+		       CUSTOMER.CITY,
+		       CUSTOMER.REMIT_BANK_ACCOUNT AS REMITBANKACCOUNT,
+		       CUSTOMER.REMIT_BANK_NAME    AS REMITBANKNAME,
+		       SELL_BACK.BACK_WAY          AS BACKWAY,
+		       SELL_BACK.MONEY as MONEY,
+		       SELL_BACK.TEXT,
+	           SELL_BACK.CONFIRM_ID        AS CONFIRMID,
+		       SELL_BACK.SELL_MAJ_DATE     AS SELLMAJDATE,
+		       SELL_BACK.SELL_MAJ_ID       AS SELLMAJID,
+		       SELL_BACK.SELL_MAJ_IDEA     AS SELLMAJIDEA,
+		       SELL_BACK.SELL_MAJ_NAME     AS SELLMAJNAME,
+		       SELL_BACK.SELL_MAJ_TEXT     AS SELLMAJTEXT,
+		       SELL_BACK.OPE_MAJ_DATE      AS OPEMAJDATE,
+		       SELL_BACK.OPE_MAJ_ID        AS OPEMAJID,
+		       SELL_BACK.OPE_MAJ_IDEA      AS OPEMAJIDEA,
+		       SELL_BACK.OPE_MAJ_NAME      AS OPEMAJNAME,
+		       SELL_BACK.OPE_MAJ_TEXT      AS OPEMAJTEXT,
+		       SELL_BACK.CUSTOMER_LINKMAN_ID as CUSTOMERLINKMANID
+		FROM   SELL_BACK
+		       LEFT JOIN CUSTOMER
+		         ON SELL_BACK.CUSTOMER_ID = CUSTOMER.ID
+		       LEFT JOIN CUSTOMER_LINKMAN
+		         ON SELL_BACK.CUSTOMER_LINKMAN_ID = CUSTOMER_LINKMAN.ID
+		WHERE  SELL_BACK.ID = #sellBackId#
+	</select>
+	
+	<!--查询产品部门名称 by zzx-->
+	<select id="selectProductDeptName" parameterClass="java.lang.String" resultClass="java.lang.String">
+		SELECT PRODEPT.NAME AS PRODEPTNAME
+		FROM   PRODUCT_DEPT PRODEPT,
+		       PRODUCT_TYPE PROTYPE
+		WHERE  PROTYPE.PRODUCT_DEPT_ID = PRODEPT.ID
+      			 AND PROTYPE.ID = #productTypeId#
+	</select>
+	
+		
+	<!--退款评审  jiangmx-->
+	<update id="updateSellBackAssess"  parameterClass="sellBackAssessDto">
+		update sell_back
+	      set  status=#status#
+	    
+	   <isEqual compareValue="5" property="roleId">
+	          ,sell_maj_date = date_format(now(),'%Y-%m-%d'),
+	           sell_maj_name = #sellMajName#,
+	           sell_maj_idea = #sellMajIdea#,  
+			   sell_maj_text = #sellMajText#
+	   
+	   </isEqual>
+	   
+	   <isEqual compareValue="17" property="roleId">
+	   	      ,ope_maj_date = date_format(now(),'%Y-%m-%d'),
+	           ope_maj_name = #opeMajName#,
+			   ope_maj_idea = #opeMajIdea#,  
+			   ope_maj_text = #opeMajText#
+	   </isEqual>
+	      
+	      where sell_back.id = #id#
+	   
+	</update>
+	
+	<!--删除退款  jiangmx-->
+	<delete id="deleteSellBack" parameterClass="java.lang.String">
+    	delete from sell_back where sell_back.id=#sellBackId#
+    </delete> 
+
+     <!--根据回款单显示信息(退款申请时用)  LiuQingGang-->
+     
+	<select id="selectInfoByMreturnId" parameterClass="java.lang.String" resultClass="sellBackForMreturnDto">
+		select 
+		    distinct 
+		    customer.name as customerName, 
+			customer.province as customerProvince,
+			customer.city as customerCity,
+			customer.remit_bank_name as remitBankName,
+			customer.remit_bank_account as remitBankAccount,
+			IFNULL(mreturn.money,0) as mreturnMoney,
+		 
+			IFNULL(contNum.contMoney,0) as contMoney,
+			 
+			IFNULL(detailNum.detailMoney,0) as detailMoney,
+			 
+			IFNULL(backSuccessNum.backSuccessmoney,0) as backSuccessmoney,
+			 
+			IFNULL(IFNULL(mreturn.money,0) -IFNULL(contMoney,0)-IFNULL(detailMoney,0)-IFNULL(backSuccessmoney,0),0) as prodMoney,
+			
+			IFNULL((mreturn.money -
+			  IFNULL(contNum.contMoney,0)-
+			  IFNULL(detailNum.detailMoney,0)-
+			  IFNULL(backNum.backMoney,0)),0) as mreturnCanBackMoney  
+			  
+		from 
+			mreturn left join customer on 
+			mreturn.customer_id= customer.id  
+			left join return_detail on  
+			mreturn.id= return_detail.return_id 
+		 
+		left join   
+			<!--  合同预收金额（指定到合同合计）-->
+			(select return_detail.return_id as mrId ,ifnull(sum(return_detail.money),0) as contMoney  
+			from mreturn left join return_detail 
+			on  mreturn.id=return_detail.return_id 
+			where 
+			return_detail.appoint_type =2 and 
+			mreturn.id=#mreturnId#
+			group by return_detail.return_id) as contNum  on mreturn.id= contNum.mrId 
+		left join
+			<!--  指定金额(指定到发货明细的合计)-->
+			(select return_detail.return_id as mrId ,ifnull(sum(return_detail.money),0) as detailMoney  
+			from mreturn left join return_detail 
+			on  mreturn.id=return_detail.return_id 
+			where 
+			return_detail.appoint_type =4 and 
+			mreturn.id=#mreturnId#
+			group by return_detail.return_id) as detailNum  on mreturn.id= detailNum.mrId 
+		left join 
+			<!--  已退款金额（退款表中成功退款记录的合计）-->
+			(select sell_back.return_id as mrId,ifnull(sum(sell_back.money),0) as backSuccessMoney 
+			from mreturn left join sell_back 
+			on mreturn.id=sell_back.return_id where sell_back.status=8 and 
+			mreturn.id=#mreturnId#
+			group by sell_back.return_id ) as backSuccessNum on  mreturn.id= backSuccessNum.mrId
+		left join 
+			<!-- 退款金额（退款表中正常退款记录的合计）-->
+			(select sell_back.return_id as mrId,ifnull(sum(sell_back.money),0) as backMoney 
+			from mreturn left join sell_back 
+			on mreturn.id=sell_back.return_id where sell_back.status in(2,4,6,7,8) and 
+			mreturn.id=#mreturnId#
+			group by sell_back.return_id ) as backNum on  mreturn.id= backNum.mrId
+		
+		where 
+			mreturn.id=#mreturnId# 
+		 
+     limit 1
+	</select>
+	 
+	
+	
+	<!-- 根据回款单号获得客户联系人  By LiuQingGang -->
+	<select id="selectCustomerInfoByMId" parameterClass="java.lang.String" resultClass="customerLinkmanEntity">
+		select  customer_linkman.id,
+			customer_linkman.name,
+			customer_linkman.fax 
+		from    mreturn left join customer_linkman on 
+			mreturn.customer_id = customer_linkman.customer_id 
+		where 
+			mreturn.id=#mreturnId#
+		order by  customer_linkman.id  
+	</select>
+	
+	<!-- 获得联系人电话传真  By LiuQingGang -->
+	<select id="selectLinkMsgByLinkManId" parameterClass="java.lang.String" resultClass="customerLinkmanEntity">
+		SELECT ID,
+		       TEL,
+		       FAX
+		FROM   CUSTOMER_LINKMAN
+		WHERE  ID = #id#
+	</select>
+	
+	<!-- 提交保存退款(申请)  By LiuQingGang -->
+	<insert  id="insertSellBack" parameterClass="sellBackAddDto">
+		insert into sell_back(
+			id, 
+			return_id, 
+			product_type_id, 
+			customer_id, 
+			customer_name,
+			customer_linkman_id, 
+			back_way, 
+			number, 
+			money,
+			status,
+			date,
+			user_id,
+			user_name,
+			text,
+			confirm_id, 
+			confirm_name, 
+			sell_maj_id, 
+			ope_maj_id,
+			datetime)
+		values(
+			#id#,
+			#returnId#,
+			#productTypeId#,
+			#customerId#,
+			#customerName#,
+			#customerLinkmanId#,
+			#backWay#,
+			#number#,
+			#money#,
+			#status#,
+			DATE_FORMAT(NOW(),'%Y-%m-%d'),
+			#userId#,
+			#userName#,
+			#text#,
+			#confirmId#,
+			#confirmName#,
+			#sell_majId#,
+			#ope_majId#,
+			DATE_FORMAT(NOW(),'%Y-%m-%d')
+		)	
+	</insert>
+	
+	<!-- 获取回款单信息  By LiuQingGang -->
+	<select id="selectMreturnById" parameterClass="java.lang.String"  resultClass="mreturnEntity">
+	  select 
+		id as id,
+		no as no,
+		product_type_id as productTypeId,
+		return_type as returnType, 
+		customer_id as customerId,
+		customer_name as customerName,
+		date as date,
+		return_date as returnDate,
+		return_way as returnWay ,
+		number as number,
+		money as money,
+		user_id as userId,
+		user_name as userName,
+		text as text,
+		time_stamp as time_stamp
+		from mreturn 
+		where mreturn.id=#mreturnId#
+	
+	</select>
+	
+	<!-- 获得 产品分类预收金额合计(本客户本产品分类，申请修改评审通用)  By LiuQingGang-->
+	<!-- ∑（回款金额-指定金额-合同预收金额-退款金额（成功）） -->
+	
+	<select id="selectProductAdvanceMoneySum" parameterClass="mreturnEntity" resultClass="java.math.BigDecimal"> 
+		select  
+			IFNULL(returnMoney.mrmomey ,0)-IFNULL(contNum.contMoney,0)-
+			IFNULL(detailNum.detailMoney,0)-IFNULL(backSuccessNum.backSuccessMoney,0) as proMoney
+		 
+		from    <!--  回款金额 -->
+			( select IFNULL(sum(mreturn.money),0) as mrmomey from mreturn
+			where mreturn.customer_id=#customerId# and
+			mreturn.product_type_id=#productTypeId# ) as returnMoney ,
+		   
+			<!-- 合同金额（指定到合同合计）-->
+			(select ifnull(sum(return_detail.money),0) as contMoney  
+			from mreturn left join return_detail 
+			on  mreturn.id=return_detail.return_id 
+			where 
+			return_detail.appoint_type =2 and 
+			mreturn.customer_id=#customerId# and
+			mreturn.product_type_id=#productTypeId#)as    contNum,
+		 
+			<!--  指定金额(指定到发货明细的合计)-->
+			(select ifnull(sum(return_detail.money),0) as detailMoney  
+			from mreturn left join return_detail 
+			on  mreturn.id=return_detail.return_id 
+			where 
+			return_detail.appoint_type =4 and 
+			mreturn.customer_id=#customerId# and
+			mreturn.product_type_id=#productTypeId#) as detailNum,
+		 
+			<!--  退款成功金额-->
+			(select ifnull(sum(sell_back.money),0) as backSuccessMoney 
+			from mreturn left join sell_back 
+			on mreturn.id=sell_back.return_id where sell_back.status=8 and 
+			mreturn.customer_id=#customerId# and
+			mreturn.product_type_id=#productTypeId# ) as backSuccessNum	
+
+	</select>
+	
+	<!-- 获得产品分类可退款金额(本客户本产品分类，申请修改评审通用)  By LiuQingGang -->
+	<select id="selectProductCanBackMoney" parameterClass="mreturnEntity" resultClass="java.math.BigDecimal">
+		select  
+			IFNULL(returnMoney.mrmomey ,0)-IFNULL(contNum.contMoney,0)-
+			IFNULL(detailNum.detailMoney,0)-IFNULL(backSuccessNum.backSuccessMoney,0)
+			-IFNULL(usedMoney.useMoney,0)
+			 as proCanBackMoney
+		 
+		from    <!--  回款金额 -->
+			( select IFNULL(sum(mreturn.money),0) as mrmomey from mreturn
+			where mreturn.customer_id=#customerId# and
+			mreturn.product_type_id=#productTypeId# ) as returnMoney ,
+		   
+			<!-- 合同金额（指定到合同合计）-->
+			(select ifnull(sum(return_detail.money),0) as contMoney  
+			from mreturn left join return_detail 
+			on  mreturn.id=return_detail.return_id 
+			where 
+			return_detail.appoint_type =2 and 
+			mreturn.customer_id=#customerId# and
+			mreturn.product_type_id=#productTypeId#)as    contNum,
+		 
+			<!--  指定金额(指定到发货明细的合计)-->
+			(select ifnull(sum(return_detail.money),0) as detailMoney  
+			from mreturn left join return_detail 
+			on  mreturn.id=return_detail.return_id 
+			where 
+			return_detail.appoint_type =4 and 
+			mreturn.customer_id=#customerId# and
+			mreturn.product_type_id=#productTypeId#) as detailNum,
+		 
+			<!--  退款有效的金额-->
+			(select ifnull(sum(sell_back.money),0) as backSuccessMoney 
+			from mreturn left join sell_back 
+			on mreturn.id=sell_back.return_id where sell_back.status in (2,4,6,7,8) and 
+			mreturn.customer_id=#customerId# and
+			mreturn.product_type_id=#productTypeId# ) as backSuccessNum,		
+			<!--  已用信用-->
+			(select  sum(IFNULL(customer_credit_detail.money,0) ) as useMoney
+			from customer_credit 
+			left join customer_credit_detail on 
+			customer_credit.id = customer_credit_detail.customer_credit_id 
+			where customer_credit.customer_id=#customerId# and customer_credit.product_type_id=#productTypeId# )
+			 as usedMoney
+				
+	</select>
+	
+	<!-- 获得客户信息列表(根据本客户和本产品分类编码,申请修改评审通用)  By LiuQingGang -->
+	<select id="selectCustomerProInfoList" parameterClass="mreturnEntity" resultClass="customerProInfoListDto">
+		 select distinct 
+			product_type.name as productName,
+			credit_type.name as creditTypeName ,
+			customer_credit.id as id, <!--客户信用编号-->
+			customer_credit.credit_type_id as creditTypeId <!--信用类型编号-->
+			,customer_credit.project_name as projectName, <!--项目名称-->
+			customer_credit.arterm as arterm, <!--账期-->	
+			IFNULL(customer_credit.climit,0) as climit, <!--信用额度--> 
+			IFNULL(userMoney.money,0) as canUseLimit<!--已用金额-->  
+		from customer_credit 
+			left join product_type on  customer_credit.product_type_id=product_type.id
+			left join  credit_type on  customer_credit.credit_type_id = credit_type.id,
+			(
+			<!--已用金额 -->
+			select customer_credit.id as id  ,sum(customer_credit_detail.money) as money
+			from customer_credit ,customer_credit_detail
+			where customer_credit.id=customer_credit_detail.customer_credit_id and 
+			customer_credit.customer_id=#customerId# and customer_credit.product_type_id=#productTypeId#  
+			group by customer_credit.id 
+			) as userMoney
+			 
+		where 
+			customer_credit.customer_id=#customerId# and customer_credit.product_type_id=#productTypeId#  and
+			userMoney.id=customer_credit.id
+			order by customer_credit.credit_type_id,customer_credit.project_name  	
+	</select>
+	
+	<!-- 修改-保存 By LiuQingGang-->
+	<update id="updateSellBackSave" parameterClass="sellBackAssessDto">
+		update  sell_back set 
+		sell_back.customer_linkman_id=#customerLinkmanId#,
+		sell_back.back_way=#backWay#,
+		sell_back.money=#money#,
+		sell_back.text=#text#,
+		sell_back.date=date_format(now(),'%Y-%m-%d') 
+		where sell_back.id=#id#
+	</update>
+	
+	<!-- 修改-提交 By LiuQingGang-->
+	<update id="updateSellBackSubmit" parameterClass="sellBackAssessDto">		
+		update  sell_back set 
+		sell_back.customer_linkman_id=#customerLinkmanId#,
+		sell_back.back_way=#backWay#,
+		sell_back.money=#money#,
+		sell_back.text=#text#,
+		sell_back.date=date_format(now(),'%Y-%m-%d'),
+		sell_back.status=2, 
+		confirm_name='', 
+		sell_maj_name='',
+		sell_maj_date='',
+		sell_maj_idea='',
+		sell_maj_text='', 
+		ope_maj_name='',
+		ope_maj_date='',
+		ope_maj_idea='',
+		ope_maj_text=''
+		where sell_back.id=#id# 
+	</update>
+	
+	<!-- 评审显示客户产品信用信息 By LiuQingGang -->
+	
+	<select id="selectCustomerCreditList" parameterClass="java.lang.String" resultClass="sellBackForMreturnDto">
+		select   
+		  
+			IFNULL(product_type.name,'') as customerName,<!-- 产品类型 名称  -->
+			IFNULL(mr.money,0) -
+			IFNULL(contNum.contMoney,0)-
+			IFNULL(detailNum.detailMoney,0) -
+			IFNULL(backSuccessNum.backSuccessMoney,0) 
+			as prodMoney, <!-- 产品分类预收金额 -->
+			IFNULL(usedLimit.money,0) as mreturnCanBackMoney<!-- 已用信用  -->
+					  
+		from 
+			<!--本客户的产品分类(客户信用中) -->
+			(select  distinct 
+			customer_credit.customer_id,customer_credit.product_type_id from 
+			customer_credit where  customer_credit.customer_id=#customerId#)
+			as customer_credit
+		
+		left join
+			<!--本客户每个产品分类的回款合计 -->
+			(
+			SELECT mreturn.customer_id as customer_id,mreturn.product_type_id as product_type_id,
+			sum(IFNULL(mreturn.money,0)) as money  from mreturn where 
+			mreturn.customer_id=#customerId#
+			group by mreturn.customer_id,mreturn.product_type_id) as mr on
+			customer_credit.product_type_id=mr.product_type_id and
+				customer_credit.customer_id=mr.customer_id 
+		left join   
+			<!--  合同预收金额 -->
+			(select mreturn.product_type_id as product_type_id,mreturn.customer_id as customer_id,
+			ifnull(sum(return_detail.money),0) as contMoney  
+			from mreturn left join return_detail 
+			on  mreturn.id=return_detail.return_id 
+			where 
+			return_detail.appoint_type =2 and 
+			mreturn.customer_id=#customerId#
+			group by mreturn.product_type_id,mreturn.customer_id) as contNum  
+			on customer_credit.product_type_id=contNum.product_type_id and
+				customer_credit.customer_id=contNum.customer_id
+		left join
+			<!--  指定金额-->
+			(select  mreturn.product_type_id as product_type_id,mreturn.customer_id as customer_id ,
+			ifnull(sum(return_detail.money),0) as detailMoney  
+			from mreturn left join return_detail 
+			on  mreturn.id=return_detail.return_id 
+			where 
+			return_detail.appoint_type =4 and 
+			mreturn.customer_id=#customerId#
+			group by  mreturn.product_type_id,mreturn.customer_id) as detailNum  
+			on  customer_credit.product_type_id=detailNum.product_type_id and
+				customer_credit.customer_id=detailNum.customer_id
+		left join 
+			<!--  已退款金额（退款成功的合计）-->
+			(select sell_back.customer_id,sell_back.product_type_id,
+			sum(ifnull(sell_back.money,0)) as backSuccessMoney
+			from sell_back
+			WHERE sell_back.customer_id=#customerId# and
+			sell_back.status =8
+			group by sell_back.customer_id,sell_back.product_type_id
+			) as backSuccessNum 
+			on   customer_credit.product_type_id=backSuccessNum.product_type_id and
+				   customer_credit.customer_id=backSuccessNum.customer_id
+		left join
+			<!--  已用信用  -->
+			(select customer_credit.customer_id,customer_credit.product_type_id as product_type_id,
+			sum(IFNULL(customer_credit_detail.money,0)) as money
+			from customer_credit ,customer_credit_detail
+			where customer_credit.id=customer_credit_detail.customer_credit_id and 
+			customer_credit.customer_id=#customerId# 
+			group by  customer_credit.customer_id,customer_credit.product_type_id ) as usedLimit on
+			customer_credit.product_type_id=usedLimit.product_type_id and
+				   customer_credit.customer_id=usedLimit.customer_id
+			<!--取产品分类名称 -->
+		left join product_type on
+		
+			customer_credit.product_type_id=product_type.id
+	
+	</select>	
+	
+	<!-- 评审显示客户可退款金额 By LiuQingGang -->
+	
+	<select id="selectCustomerbackmoney" parameterClass="java.lang.String" resultClass="java.math.BigDecimal">
+		select   
+		   distinct
+			IFNULL(mr.money,0) -
+			IFNULL(contNum.contMoney,0)-
+			IFNULL(detailNum.detailMoney,0) -
+			IFNULL(backSuccessNum.backSuccessMoney,0) -IFNULL(usedLimit.money,0)
+			 as a
+					  
+		from  
+			(
+			SELECT mreturn.customer_id as customer_id,
+			sum(IFNULL(mreturn.money,0)) as money  from mreturn where 
+			mreturn.customer_id=#customerId#
+			group by mreturn.customer_id) as mr 
+		left JOIN
+		 
+			<!--  合同预收金额 -->
+			(select mreturn.customer_id as customer_id,
+			ifnull(sum(return_detail.money),0) as contMoney  
+			from mreturn left join return_detail 
+			on  mreturn.id=return_detail.return_id 
+			where 
+			return_detail.appoint_type =2 and 
+			mreturn.customer_id=#customerId#
+			group by mreturn.customer_id) as contNum  on 
+				mr.customer_id=contNum.customer_id
+			left JOIN
+			<!--  指定金额-->
+			(select  mreturn.customer_id as customer_id ,
+			ifnull(sum(return_detail.money),0) as detailMoney  
+			from mreturn left join return_detail 
+			on  mreturn.id=return_detail.return_id 
+			where 
+			return_detail.appoint_type =4 and 
+			mreturn.customer_id=#customerId#
+			group by  mreturn.customer_id) as detailNum on
+				mr.customer_id=detailNum.customer_id
+		left JOIN
+			<!--  已退款金额（退款表中有效的记录的合计）-->
+			(select sell_back.customer_id,sell_back.product_type_id,
+			sum(ifnull(sell_back.money,0)) as backSuccessMoney
+			from sell_back
+			WHERE sell_back.customer_id=#customerId# and
+			sell_back.status  in (2,4,6,7,8)
+			group by sell_back.customer_id 
+			) as backSuccessNum on
+				mr.customer_id=backSuccessNum.customer_id
+		left JOIN
+			<!--  已用信用  -->
+			(select customer_credit.customer_id,
+			sum(IFNULL(customer_credit_detail.money,0)) as money
+			from customer_credit ,customer_credit_detail
+			where customer_credit.id=customer_credit_detail.customer_credit_id and 
+			customer_credit.customer_id=#customerId# 
+			group by  customer_credit.customer_id ) as usedLimit
+				on mr.customer_id= usedLimit.customer_id
+
+	
+	</select>	
+	
+
+</sqlMap>

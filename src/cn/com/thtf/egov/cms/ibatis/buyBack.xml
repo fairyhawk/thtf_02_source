@@ -1,0 +1,361 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="buyBack_sqlMap">
+    <!-- 查看采购退款信息  By JiangMX-->
+	<typeAlias alias="buyBackListDto" type="cn.com.thtf.egov.cms.dto.BuyBackListDto"/>
+	
+	<!-- 增加采购退款信息 By LiuQingGang -->
+    <typeAlias alias="addbuyBackListDto" type="cn.com.thtf.egov.cms.dto.AddBuyBackListDto" />
+    
+    <!-- 付款信息(录入修改查看通用) By LiuQingGang -->
+    <typeAlias alias="paymentInfoForBuyBackDto" type="cn.com.thtf.egov.cms.dto.PaymentInfoForBuyBackDto" />    
+   
+     <!--管理页面检索 by zhangzx-->
+	<typeAlias alias="buyBackSearchDto" type="cn.com.thtf.egov.cms.dto.BuyBackSearchDto"/>
+	<typeAlias alias="userEntity" type="cn.com.thtf.egov.cms.entity.UserEntity"/>
+    
+	 	<!-- 查看采购退款信息  By JiangMX-->
+	 	<select id="selectBuyBackInfo" parameterClass="java.lang.String" resultClass="buyBackListDto">
+	 		select buy_back.payment_id          as paymentId, 
+                   buy_back.no                  as no, 
+                   buy_back.product_type_id     as productTypeId, 
+                   buy_back.supplier_id         as supplierId,
+                   buy_back.supplier_name       as supplierName, 
+	               buy_back.date                as date, 
+	               buy_back.back_date           as backDate, 
+	               buy_back.back_way            as backWay, 
+	               buy_back.number              as number, 
+	               buy_back.money               as money, 
+	               buy_back.user_id             as userId, 
+	               buy_back.user_name           as userName, 
+	               buy_back.text                as text
+  
+            from   buy_back
+
+            where buy_back.id = #buyBackId#
+	 	 	
+	 	</select>
+	  
+	 	
+	 	<!--删除采购退款信息    By JiangMX-->
+	    <delete id="deleteBuyBackInfo" parameterClass="java.lang.String">
+    	    delete from buy_back where buy_back.id = #buyBackId#
+        </delete> 
+	 	
+    
+    <!-- 增加采购退款信息 By LiuQingGang -->	 
+	<insert id="insertBuyBack" parameterClass="addbuyBackListDto">
+		insert  into buy_back (
+			id,
+			payment_id,
+			no,
+			product_type_id,
+			supplier_id,
+			supplier_name,
+			date,
+			back_date,
+			back_way,
+			number,
+			money,
+			user_id,
+			user_name,
+			text,
+			datetime
+		
+		) values (
+			#id#,
+			#paymentId#,
+			#no#,
+			#productTypeId#,
+			#supplierId#,
+			#supplierName#,
+			date_format(now(),'%Y-%m-%d'),
+			#backDate#,
+			#backWay#,
+			#number#,
+			#money#,
+			#userId#,
+			#userName#,
+			#text#,
+			date_format(now(),'%Y-%m-%d')
+			 ) 
+	</insert>
+	
+	
+	<!-- 修改采购退款信息 By LiuQingGang -->	
+	 
+	<update id="modifyBuyBack" parameterClass="addbuyBackListDto">
+		update buy_back set 
+			buy_back.no=#no#,   
+			buy_back.date=date_format(now(),'%Y-%m-%d'),
+			buy_back.back_date=#backDate#,
+			buy_back.back_way=#backWay#,
+			buy_back.number=#number#,
+			buy_back.money=#money#, 
+			buy_back.text=#text# 
+		where buy_back.id=#id#
+	
+	</update>
+	
+	<!-- 查询付款单信息(录入查看时用) selectPaymentById -->
+	<select id="selectPaymentById" parameterClass="java.lang.String" resultClass="paymentInfoForBuyBackDto">
+		select 
+			payment.id as id,
+			payment.product_type_id as productTypeId,<!--产品分类编号-->
+			IFNULL(product_type.name,'') as productTypeName,
+			payment.supplier_id as supplierId,<!--供货商编号-->
+			payment.supplier_name as supplierName,<!--供货商名称  -->
+			IFNULL(payment.money,0) as paymentMoney  ,<!--付款总额-->
+			IFNULL(ma.money,0) as alreadyAppointMoney,<!--已指定-->
+			IFNULL(mb.money,0) as alreadyBackMoney , <!--已退款-->
+			(IFNULL(payment.money,0) - IFNULL(ma.money,0) -
+			IFNULL(mb.money,0) )as canBackMoney <!--可退款-->
+		  
+		from payment  left join product_type on 
+			payment.product_type_id= product_type.id
+			<!--已指定金额-->
+		left JOIN (
+			select payment.id as id, sum(IFNULL(payment_detail.money,0)) as money from payment
+			left JOIN  payment_detail
+			on payment.id=payment_detail.payment_id  where payment.id=#id# 
+			group by payment_detail.payment_id
+			) as ma on payment.id=ma.id 
+			<!--已退款金额-->
+		left JOIN (
+			SELECT buy_back.payment_id as id,sum(IFNULL(buy_back.money,0))  as money
+			from   buy_back where buy_back.payment_id=#id# 
+			group by buy_back.payment_id
+			) as mb on   payment.id=mb.id 
+		
+		where payment.id=#id#  	
+	
+	</select>
+
+	<!-- 根据用户ID和权限获取退款一览  by zzx-->
+	<select id="selectBuyBackList.selectBuyBackList" parameterClass="userEntity" resultClass="buyBackListDto">
+		SELECT BUY_BACK.ID,
+		       PAYMENT_ID        AS PAYMENTID,
+		       BUY_BACK.NO,
+		       PRODUCT_TYPE_ID   AS PRODUCTTYPEID,
+		       PRODUCT_TYPE.NAME AS PRODUCTTYPENAME,
+		       SUPPLIER_ID       AS SUPPLIERID,
+		       SUPPLIER_NAME     AS SUPPLIERNAME,
+		       DATE,
+		       BACK_DATE         AS BACKDATE,
+		       BACK_WAY          AS BACKWAY,
+		       NUMBER,
+		       MONEY,
+		       USER_ID           AS USERID,
+		       USER_NAME         AS USERNAME,
+		       TEXT,
+		       DATETIME
+		FROM   BUY_BACK
+		       LEFT JOIN PRODUCT_TYPE
+		         ON PRODUCT_TYPE.ID = BUY_BACK.PRODUCT_TYPE_ID		
+		<dynamic prepend="WHERE">	
+			<!-- 采购专员(自己录入的)-->
+			<isEqual prepend="" property="roleId" compareValue="8">
+				user_id=#id#				
+			</isEqual>
+		</dynamic>
+		order by 
+ 			 BUY_BACK.id desc
+	</select>
+	
+	<!-- 根据用户ID和权限获取退款一览(分页)  by zzx-->
+	<select id="selectBuyBackList.recordCount" parameterClass="userEntity" resultClass="java.lang.Integer">
+		SELECT COUNT(BUY_BACK.ID)		       
+		FROM   BUY_BACK
+		       LEFT JOIN PRODUCT_TYPE
+		         ON PRODUCT_TYPE.ID = BUY_BACK.PRODUCT_TYPE_ID		
+		<dynamic prepend="WHERE">	
+			<!-- 采购专员(自己录入的)-->
+			<isEqual prepend="" property="roleId" compareValue="8">
+				user_id=#id#				
+			</isEqual>
+		</dynamic>
+		order by 
+ 			 BUY_BACK.id desc
+	</select>
+	
+	<!--获得所有的产品分类 By zzx--> 
+	<select id="selectProductTypeList" resultClass="productTypeEntity">
+			SELECT   PRODUCT_TYPE.ID,
+			         PRODUCT_TYPE.NO,
+			         PRODUCT_TYPE.NAME,
+			         PRODUCT_TYPE.PRODUCT_DEPT_ID,
+			         PRODUCT_TYPE.CLIMIT
+			FROM     PRODUCT_TYPE
+			ORDER BY PRODUCT_TYPE.PRODUCT_DEPT_ID
+	</select>
+	
+	 <!-- 根据画面条件检索款一览 by zzx-->
+	<select id="selectBuyBackByCondition.selectBuyBackByCondition" parameterClass="buyBackSearchDto" resultClass="buyBackListDto">
+		SELECT BUY_BACK.ID,
+		       PAYMENT_ID        AS PAYMENTID,
+		       BUY_BACK.NO,
+		       PRODUCT_TYPE_ID   AS PRODUCTTYPEID,
+		       PRODUCT_TYPE.NAME AS PRODUCTTYPENAME,
+		       SUPPLIER_ID       AS SUPPLIERID,
+		       SUPPLIER_NAME     AS SUPPLIERNAME,
+		       DATE,
+		       BACK_DATE         AS BACKDATE,
+		       BACK_WAY          AS BACKWAY,
+		       NUMBER,
+		       MONEY,
+		       USER_ID           AS USERID,
+		       USER_NAME         AS USERNAME,
+		       TEXT,
+		       DATETIME
+		FROM   BUY_BACK
+		       LEFT JOIN PRODUCT_TYPE
+		         ON PRODUCT_TYPE.ID = BUY_BACK.PRODUCT_TYPE_ID		
+		
+		<dynamic prepend="WHERE">
+
+			<!-- 销售助理(该销售助理新建的退款，所有状态)-->
+			<isEqual prepend="and" property="roleId" compareValue="8">
+				user_id=#loginId#				
+			</isEqual>
+		
+			<!-- 画面条件 -->		
+			<isNotEmpty prepend="and" property="id">
+				buy_back.id = #id#
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="paymentId">
+				buy_back.payment_id=#paymentId# 
+			</isNotEmpty>	
+			<isNotEmpty prepend="and" property="no">
+				buy_back.no=#no# 
+			</isNotEmpty>		
+			<isNotEmpty prepend="and" property="productTypeId">
+			buy_back.product_type_id=#productTypeId#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="supplierName">
+				
+				buy_back.supplier_name   like concat( '%' ,#supplierName#, '%' ) 
+				 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="money">
+			buy_back.money=#money#	 
+			</isNotEmpty>			
+			<isNotEmpty prepend="and" property="number">
+			buy_back.number=#number#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userName">
+				buy_back.user_name like   concat( '%' ,#userName#,'%' ) 	 
+			</isNotEmpty>			
+			<isNotEmpty prepend="and" property="backWay">
+				buy_back.back_way=#backWay#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="dateStart">
+				<![CDATA[  DATE_FORMAT(buy_back.date,'%Y%m%d')>=  DATE_FORMAT(#dateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="dateEnd">
+				<![CDATA[  DATE_FORMAT(buy_back.date,'%Y%m%d')<=  DATE_FORMAT(#dateEnd#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="backDateStart">
+				<![CDATA[  DATE_FORMAT(buy_back.back_date,'%Y%m%d')>=  DATE_FORMAT(#backDateStart#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="backDateEnd">
+				<![CDATA[  DATE_FORMAT(buy_back.back_date,'%Y%m%d')<=  DATE_FORMAT(#backDateEnd#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			
+
+		</dynamic>
+		order by 
+ 			 buy_back.id desc
+	</select>
+		
+	 <!-- 根据画面条件检索款一览 (分页)by zzx-->
+	<select id="selectBuyBackByCondition.recordCount" parameterClass="buyBackSearchDto" resultClass="java.lang.Integer">
+		SELECT COUNT(BUY_BACK.ID)		       
+		FROM   BUY_BACK
+		       LEFT JOIN PRODUCT_TYPE
+		         ON PRODUCT_TYPE.ID = BUY_BACK.PRODUCT_TYPE_ID	
+	
+		<dynamic prepend="WHERE">
+
+			<!-- 销售助理(该销售助理新建的退款，所有状态)-->
+			<isEqual prepend="and" property="roleId" compareValue="8">
+				user_id=#loginId#				
+			</isEqual>
+		
+			<!-- 画面条件 -->		
+			<isNotEmpty prepend="and" property="id">
+				buy_back.id = #id#
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="paymentId">
+				buy_back.payment_id=#paymentId# 
+			</isNotEmpty>	
+			<isNotEmpty prepend="and" property="no">
+				buy_back.no=#no# 
+			</isNotEmpty>		
+			<isNotEmpty prepend="and" property="productTypeId">
+			buy_back.product_type_id=#productTypeId#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="supplierName">
+				
+				buy_back.supplier_name   like concat( '%' ,#supplierName#, '%' ) 
+				 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="money">
+			buy_back.money=#money#	 
+			</isNotEmpty>			
+			<isNotEmpty prepend="and" property="number">
+			buy_back.number=#number#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="userName">
+				buy_back.user_name like  '%$userName$%'		 
+			</isNotEmpty>			
+			<isNotEmpty prepend="and" property="backWay">
+				buy_back.back_way=#backWay#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="dateStart">
+				<![CDATA[  DATE_FORMAT(buy_back.date,'%Y%m%d')>=  DATE_FORMAT(#dateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="dateEnd">
+				<![CDATA[  DATE_FORMAT(buy_back.date,'%Y%m%d')<=  DATE_FORMAT(#dateEnd#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="backDateStart">
+				<![CDATA[  DATE_FORMAT(buy_back.back_date,'%Y%m%d')>=  DATE_FORMAT(#backDateStart#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="backDateEnd">
+				<![CDATA[  DATE_FORMAT(buy_back.back_date,'%Y%m%d')<=  DATE_FORMAT(#backDateEnd#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			
+
+		</dynamic>
+		order by 
+ 			 buy_back.id	desc
+		</select>
+	 	
+	<select id="selectBuyBackLogInfo" parameterClass="java.lang.String" resultClass="buyBackListDto">
+		  SELECT 
+			buy_back.id as id,
+			buy_back.payment_id as paymentId,
+			buy_back.no as no,
+			buy_back.product_type_id as productTypeId,
+			product_type.name as productTypeName,
+			buy_back.supplier_id as supplierId,
+			buy_back.supplier_name as supplierName,
+			buy_back.date as date,
+			buy_back.back_date as backDate,
+			buy_back.back_way as backWay,
+			buy_back.number as number,
+			buy_back.money as money,
+			buy_back.user_id as userId,
+			buy_back.user_name as userName,
+			buy_back.text as text 
+		
+		 from  buy_back left join 
+		product_type on  buy_back.product_type_id=product_type.id
+		where buy_back.id=#buyBackId#
+	
+	
+	
+	</select>
+ 
+</sqlMap>

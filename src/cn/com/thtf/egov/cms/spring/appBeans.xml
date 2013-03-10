@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:dwr="http://www.directwebremoting.org/schema/spring-dwr"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+	<bean id="genericDao"
+		class="cn.com.thtf.egov.cms.application.DaoImpl">
+		<property name="sqlMapClient">
+			<ref bean="sqlMapClient" />
+		</property>
+	</bean>
+
+	<bean id="newgenericDao" class="cn.com.thtf.egov.cms.application.NewDaoImpl">
+	  <constructor-arg ref="sqlMapClient"/>
+      <constructor-arg ref="sqlExecutor"/>
+	</bean>
+
+    <bean id="sqlExecutor" class="cn.com.thtf.egov.cms.ibatis.ext.LimitSqlExecutor">  
+       <property name="dialect">  
+           <bean class="cn.com.thtf.egov.cms.ibatis.ext.MySQLDialect" />  
+       </property>  
+    </bean>
+ 
+</beans>

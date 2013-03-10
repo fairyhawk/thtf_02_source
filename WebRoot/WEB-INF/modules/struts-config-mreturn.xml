@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="appointForm" type="cn.com.thtf.egov.cms.form.MReturnAppointForm">
+		</form-bean>
+		<form-bean name="mreturnArriveForm" type="cn.com.thtf.egov.cms.form.MreturnForm">
+		</form-bean>
+
+		<!--		回款列表Form-->
+		<form-bean name="mreturnform" type="cn.com.thtf.egov.cms.form.MReturnListForm">
+		</form-bean>
+
+		<!--		客户-->
+		<form-bean name="MReturnCustomerForm" type="cn.com.thtf.egov.cms.form.MReturnCustomerForm"></form-bean>
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>
+		<action path="/appoint"
+			type="cn.com.thtf.egov.cms.action.mreturn.MReturnAppointAction"
+			parameter="appointInit"
+			name="appointForm"
+			scope="request"
+			validate="false">
+			<forward name="appointList"
+				path="/jsp/mreturn/mreturnAppoint.jsp" />
+		</action>
+		<action path="/addAppoint"
+			type="cn.com.thtf.egov.cms.action.mreturn.MReturnAppointAction"
+			parameter="addMreturnAppoint"
+			name="appointForm"
+			scope="request"
+			validate="false">
+			<forward name="createSuccess"
+				path="/mreturn.do"/>
+			<forward name="createFail"
+				path="/appoint.do"/>
+			<forward name="submitRepeat"
+				path="/mreturn.do"/>
+		</action>
+		<action path="/getAppointSendGoods"
+			type="cn.com.thtf.egov.cms.action.mreturn.MReturnAppointAction"
+			parameter="getAppointSendGoods"
+			name="appointForm"
+			scope="request"
+			validate="false">
+			<forward name="sendGoods"
+				path="/jsp/mreturn/sendDetailSelect.jsp" />
+		</action>
+		<action path="/getAppointSellContract"
+			type="cn.com.thtf.egov.cms.action.mreturn.MReturnAppointAction"
+			parameter="getAppointSellContract"
+			name="appointForm"
+			scope="request"
+			validate="false">
+			<forward name="sellContract"
+				path="/jsp/mreturn/sellContractSelect.jsp"
+				/>
+		</action>
+
+		<!--	回款列表-->
+		<action path="/mreturn"
+			type="cn.com.thtf.egov.cms.action.mreturn.MReturnListAction"
+			parameter="getMReturnList"
+			name="mreturnform"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/mreturn/mreturnlist.jsp"
+				/>
+		</action>
+
+		<!--	回款删除-->
+		<action path="/deldtemreturn"
+			type="cn.com.thtf.egov.cms.action.mreturn.MReturnListAction"
+			parameter="deldteMReturn"
+			scope="request"
+			validate="false">
+		</action>
+
+		<!-- 回款查看 -->
+		<action path="/getmreturn"
+			type="cn.com.thtf.egov.cms.action.mreturn.MReturnListAction"
+			parameter="getMReturn"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/mreturn/viewreturn.jsp"
+				/>
+		</action>
+
+		<!-- 到帐 -->
+		<action path="/newarrive"
+			type="cn.com.thtf.egov.cms.action.mreturn.MReturnAddAction"
+			parameter="mewarriveMReturn"
+			name="mreturnArriveForm"
+			scope="request"
+			validate="false">
+		</action>
+		
+		<!-- 回款创建初始化 -->
+		<action path="/mreturnCreateInit"
+			type="cn.com.thtf.egov.cms.action.mreturn.MReturnAddAction"
+			parameter="createMReturnInit"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/mreturn/mreturncreate.jsp"
+				/>
+		</action>
+		<!-- 回款创建客户选择小页面 -->
+		<action path="/getMReturnCustomerSelect"
+			type="cn.com.thtf.egov.cms.action.mreturn.MReturnAddAction"
+			parameter="selectCustomer"
+			scope="request"
+			name="MReturnCustomerForm"
+			validate="false">
+			<forward name="success"
+				path="/jsp/mreturn/mrturnselectcustomer.jsp"
+				/>
+		</action>
+		<!-- 回款创建 -->
+		<action path="/createMReturn"
+			type="cn.com.thtf.egov.cms.action.mreturn.MReturnAddAction"
+			parameter="createMReturn"
+			scope="request"
+			name="mreturnArriveForm"
+			validate="false">
+		</action>
+		
+
+		<!-- 到帐初始化页面 -->
+		<action path="/arriveinitialization"
+			type="cn.com.thtf.egov.cms.action.mreturn.MReturnAddAction"
+			parameter="arriveMReturn"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/mreturn/arrive.jsp"
+				/>
+		</action>
+	</action-mappings>
+
+</struts-config>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="custwaybill_sqlMap">
+
+	<typeAlias alias="custwaybillDto" type="cn.com.thtf.egov.cms.dto.CustwaybillDto" />
+	<typeAlias alias="custwayBillViewDto" type="cn.com.thtf.egov.cms.dto.WayBillViewDto" />
+	
+	<!-- 查看运单详情 -->
+ 	<select id="queryWayBillByBoxId" parameterClass="java.lang.String" resultClass="custwayBillViewDto">
+		select 
+			box.id as box_id,
+	        box.send_date as box_date,
+	        box.customer_name as customer_name,
+	        box.company_name as  name,
+	        box.address as customer_address,
+	        
+	        box.linkman as linkman,
+	        box.postcode as customer_postcode,
+	        box.linkman_tel as customer_tel,
+	        box.mobile as customer_mobile,
+	        box.count as box_count,
+	        
+	        box.request_way as request_way,
+	        box.no as no,
+	        box.reality_way as reality_way,
+	        box.estimate_date as estimate_date,
+	        box.tel as box_tel,
+	       
+	        box.info as box_info,
+	        box.arrival_date as arrival_date,
+	        box.signoff_date as signoff_date,
+	        box.signoff_name as signoff_name  
+		from
+			box 
+			left join logistics on box.logistics_id = logistics.id  
+			left join stockroom on box.stockroom_id = stockroom.id
+	    where  
+	        box.id = #boxId# 
+	</select> 	
+	
+	<!-- 发货单列表 -->
+	<select id="queryCustwaybill.date" parameterClass="custwaybillDto" resultClass="custwaybillDto"> 
+		select 
+			send_goods.id as id,
+			product_type.name as productTypeName,
+			sell_contract.product_contract_code as productContractCode,
+			sell_contract.company_contract_code as companyContractCode,
+			customer.name as customerName,
+			send_goods.send_date as sendDate,
+			send_goods.user_name as userName,
+			date_add(send_goods.send_date, interval send_goods.arterm day) as date,
+			box_detail.box_id as boxId
+		from
+			sell_contract,product_type,customer,send_goods
+			left join box_detail on send_goods.id = box_detail.send_goods_id
+		where
+			send_goods.status = 5
+		and	send_goods.sell_contract_id = sell_contract.id
+		and	send_goods.product_type_id = product_type.id
+		and	send_goods.customer_id = customer.id
+		<isNotEmpty prepend="and" property="productContractCode">
+			sell_contract.product_contract_code = #productContractCode#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="companyContractCode">
+			sell_contract.company_contract_code = #companyContractCode#
+		</isNotEmpty>
+		order by send_goods.id desc
+	</select>
+
+	<select id="queryCustwaybill.recordCount" parameterClass="custwaybillDto" resultClass="java.lang.Integer"> 
+		select 
+			count(*)
+		from
+			send_goods,sell_contract,product_type,customer
+		where
+			send_goods.status = 5
+		and	send_goods.sell_contract_id = sell_contract.id
+		and	send_goods.product_type_id = product_type.id
+		and	send_goods.customer_id = customer.id 
+		<isNotEmpty prepend="and" property="productContractCode">
+			sell_contract.product_contract_code = #productContractCode#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="companyContractCode">
+			sell_contract.company_contract_code = #companyContractCode#
+		</isNotEmpty>
+		order by send_goods.id desc
+	</select> 
+</sqlMap>

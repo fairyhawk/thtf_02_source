@@ -1,0 +1,711 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="userManagement">
+	<select id="userSeacher.search" parameterClass="cn.com.thtf.egov.cms.application.ListRange" resultClass="java.util.HashMap">
+		select
+			user.mail,user.msn,user.qq,user.id,user.name,user.tel,user.role_id,user.mobile,role_m.name as role_name,user_dept.name as dept_name,user_area.name as area_name,user.enable,user.online
+		from 
+			user 
+			left join user_area on user.user_area_id = user_area.id 
+			left join user_dept on user.user_dept_id = user_dept.id 
+			,role_m
+		where
+			user.role_id = role_m.id  
+			<isNotEmpty prepend="and" property="query.username">
+				user.id like '%$query.username$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.name">
+				user.name like '%$query.name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.duty">
+				role_m.id = #query.duty#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.regional">
+				user_area.id = #query.regional#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.department">
+				user_dept.id = #query.department#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.enable">
+				user.enable = #query.enable#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.online">
+				user.online = #query.online#
+			</isNotEmpty>
+			order by user.role_id,user.id
+	</select>
+	<select id="userSeacher.recordCount" resultClass="java.lang.Integer">
+		select
+			count(*) 
+		from (select
+			user.mail,user.msn,user.qq,user.id,user.name,user.tel,user.role_id,user.mobile,role_m.name as role_name,user_dept.name as dept_name,user_area.name as area_name,user.enable,user.online
+		from 
+			user 
+			left join user_area on user.user_area_id = user_area.id 
+			left join user_dept on user.user_dept_id = user_dept.id 
+			,role_m
+		where
+			user.role_id = role_m.id
+			<isNotEmpty prepend="and" property="query.username">
+				user.id like '%$query.username$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.name">
+				user.name like '%$query.name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.duty">
+				role_m.id = #query.duty#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.regional">
+				user_area.id = #query.regional#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.department">
+				user_dept.id = #query.department#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.enable">
+				user.enable = #query.enable#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="query.online">
+				user.online = #query.online#
+			</isNotEmpty>) as s
+	</select>
+	<select id="userAll" resultClass="java.util.HashMap">
+		select
+			*
+		from 
+			user
+	</select>
+	<select id="userArea" resultClass="java.util.HashMap">
+		select
+			user_area.id as area_id,user_area.name as area_name
+		from 
+			user_area
+	</select>
+	<select id="userDept" resultClass="java.util.HashMap">
+		select
+			user_dept.id as dept_id,user_dept.name as dept_name
+		from 
+			user_dept
+	</select>
+	<select id="userDuty" resultClass="java.util.HashMap">
+		select
+			*
+		from 
+			role_m
+	</select>
+	<select id="userSeacherBefore.getAll" resultClass="java.util.HashMap">
+		SELECT
+			user.qq,user.mail,user.msn,user.id,user.name,user.tel,user.role_id,user.mobile,role_m.name AS role_name,user_dept.name AS dept_name,user_area.name AS area_name,user.enable,user.online
+		FROM USER LEFT JOIN user_area ON user.user_area_id = user_area.id LEFT JOIN user_dept ON user.user_dept_id = user_dept.id ,role_m
+		WHERE
+			user.role_id = role_m.id 
+		ORDER BY user.role_id,user.id
+	</select>
+	<select id="userSeacherBefore.recordCount" resultClass="java.lang.Integer">
+		select
+			count(*)
+		from user left join user_area on user.user_area_id = user_area.id,role_m,user_dept
+		where
+			user.role_id = role_m.id and  
+			user.user_dept_id = user_dept.id
+		order by user.role_id,user.id
+	</select>
+	<delete id="userRemove" parameterClass="java.lang.String">
+		delete from user where user.id = #id#
+	</delete>
+	<delete id="userRemove1" parameterClass="java.lang.String">
+		delete from user_product where user_product.user_id = #id#
+	</delete>
+	<delete id="userRemove2" parameterClass="java.lang.String">
+		delete from user_customer where user_customer.user_id = #id#
+	</delete>
+	<select id="userView_1" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+		SELECT
+		  user.id,
+		  user.name,
+		  user.tel,
+		  user.mobile,
+		  user.msn,
+		  user.datetime,
+		  user.qq,
+		  user.role_id,
+		  user.mail,
+		  user.password,
+		  user.user_area_id,
+		  user.user_dept_id,
+		  role_m.name       AS role_name,
+		  user_dept.name    AS dept_name,
+		  user.enable,
+		  user.online
+		FROM USER
+		   LEFT JOIN 
+		  user_dept ON user.user_dept_id = user_dept.id
+		  ,role_m
+		WHERE user.role_id = role_m.id
+		    AND user.id = #id#
+	</select>
+	<select id="userView_11" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+		select
+			user.id,user.name,user.tel,user.mobile,user.msn,user.datetime,user.qq,user.role_id,user.mail,user.password,user.user_area_id,user.user_dept_id,role_m.name as role_name,user_dept.name as dept_name,user.enable,user.online,user_area.id as area_id,user_area.name as area_name
+		from 
+			user,role_m,user_dept,user_area
+		where
+			user.role_id = role_m.id and 
+			user.user_dept_id = user_dept.id and
+			user.user_area_id = user_area.id and
+			user.id = #id#
+	</select>
+	<select id="userView_39" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+		select
+			user.id,user.name,user.tel,user.mobile,user.msn,user.datetime,user.qq,user.role_id,user.mail,user.password,user.user_area_id,user.user_dept_id,role_m.name as role_name,user_dept.name as dept_name,user.enable,user.online
+		from 
+			user,role_m,user_dept
+		where
+			user.role_id = role_m.id and 
+			user.user_dept_id = user_dept.id and 
+			user.id = #id#
+	</select>
+	<select id="userView_12" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+		select
+			user.id,user.name,user.tel,user.mobile,user.msn,user.datetime,user.qq,user.role_id,user.mail,user.password,user.user_area_id,user.user_dept_id,role_m.name as role_name,user.enable,user.online,logistics.id as logistics_id,logistics.name as logistics_name
+		from 
+			user,role_m,logistics
+		where
+			user.role_id = role_m.id and 
+			user.logistics_id = logistics.id and
+			user.id = #id#
+	</select>
+	<select id="userView_2" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+		select 	
+			product_type.name,product_type.id
+		from 
+			user_product,product_type
+		where
+			user_product.product_type_id = product_type.id and 
+			user_product.user_id = #id#
+	</select>
+	<select id="userView_3" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+		select 	
+			customer.name,customer.id
+		from 
+			user_customer,customer
+		where
+			user_customer.customer_id = customer.id and 
+			user_customer.user_id= #id#
+	</select>
+	<update id="userChange_1" parameterClass="java.util.HashMap">
+		update 
+			user 
+		set
+			name = #name# , 
+			password = #password# , 
+			tel = #tel# , 
+			mobile = #mobile# , 
+			mail = #mail# , 
+			msn = #msn# , 
+			qq = #qq# , 
+			enable = #enable# , 
+			user_dept_id = $user_dept_id$
+		where
+			id = #id#
+	</update>
+	<select id="userChange_2" resultClass="java.util.HashMap">
+		select 	
+			*
+		from 
+			product_type 
+	</select>
+	<select id="userChange_39" resultClass="java.util.HashMap">
+		select
+			user_area.id as area_id,
+			user_area.name as area_name,
+			ifnull(userAreaMapping.userAreaId,-1) as en
+		from 
+			user_area
+		left join(
+			select 
+				user_area_id as userAreaId 
+			from 
+				user_area_mapping 
+			where 
+				user_id = #id# 
+		) as userAreaMapping on userAreaMapping.userAreaId = user_area.id
+	</select>
+	<delete id="userDelete_39" parameterClass="java.util.HashMap">
+		delete from user_area_mapping where	user_id = #id#  
+	</delete>
+	<delete id="userChange_3" parameterClass="java.util.HashMap">
+		delete from
+			user_product 
+		where
+			user_product.user_id = #id#;
+	</delete>
+	<insert id="userChange_4" parameterClass="java.util.HashMap">
+		insert into user_product 
+		(
+			user_id, 
+			product_type_id
+		)
+		values
+		(
+			#id#, 
+			#product_type_id#
+		)
+	</insert>
+	<update id="userChange_5" parameterClass="java.util.HashMap">
+		update 
+			user 
+		set
+			name = #name# , 
+			password = #password# , 
+			tel = #tel# , 
+			mobile = #mobile# , 
+			mail = #mail# , 
+			msn = #msn# , 
+			qq = #qq# , 
+			enable = #enable# , 
+			user_dept_id = $user_dept_id$ ,
+			user_area_id = $user_area_id$
+		where
+			id = #id#
+	</update>
+	<update id="userUserChange_39" parameterClass="java.util.HashMap">
+		update 
+			user 
+		set
+			name = #name# , 
+			password = #password# , 
+			tel = #tel# , 
+			mobile = #mobile# , 
+			mail = #mail# , 
+			msn = #msn# , 
+			qq = #qq# , 
+			enable = #enable# , 
+			user_dept_id = $user_dept_id$ 
+		where
+			id = #id#
+	</update>
+	<select id="chen12.getCustomerAll" parameterClass="cn.com.thtf.egov.cms.application.ListRange" resultClass="java.util.HashMap">
+		select 	
+			*
+		from 
+			customer 
+		where 
+			1=1
+		<isNotEmpty prepend="and" property="query.name">
+			customer.name like '%$query.name$%'
+		</isNotEmpty>
+	</select>
+	<select id="chen12.recordCount" resultClass="java.lang.Integer">
+		select 	
+			count(*)
+		from 
+			customer 
+		where 
+			1=1
+		<isNotEmpty prepend="and" property="query.name">
+			customer.name like '%$query.name$%'
+		</isNotEmpty>
+	</select>
+	<select id="userChange_6" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		select 	
+			*
+		from 
+			user_customer 
+		where
+			user_customer.user_id = #user_id# and 
+			user_customer.customer_id = #customer_id#
+	</select>
+	<insert id="userChange_7" parameterClass="java.util.HashMap">
+		insert into user_customer 
+		(
+			user_id, 
+			customer_id
+		)
+		values
+		(
+			#user_id#, 
+			#customer_id#
+		)
+	</insert>
+	<delete id="userChange_8" parameterClass="java.util.HashMap">
+		delete from user_customer where user_customer.user_id = #id#
+	</delete>
+	<insert id="userChange_9" parameterClass="java.util.HashMap">
+		insert into user_customer 
+		(
+			user_id, 
+			customer_id
+		)
+		values
+		(
+			#id#, 
+			#customer_id#
+		)
+	</insert>
+	<update id="userChange_10" parameterClass="java.util.HashMap">
+		update 
+			user 
+		set
+			name = #name# , 
+			password = #password# , 
+			tel = #tel# , 
+			mobile = #mobile# , 
+			mail = #mail# , 
+			msn = #msn# , 
+			qq = #qq# , 
+			enable = #enable#
+		where
+			id = #id#
+	</update>
+	<select id="userAdd_1" resultClass="java.util.HashMap">
+		select
+			id,no,name,product_dept_id
+		from 
+			product_type
+
+	</select>
+	<insert id="userAdd_2" parameterClass="java.util.HashMap">
+	insert into user 
+	(
+		id, 
+		name, 
+		password, 
+		tel, 
+		mobile, 
+		mail, 
+		msn, 
+		qq, 
+		datetime, 
+		enable, 
+		online, 
+		role_id
+		<isNotEmpty prepend="," property="user_area_id">
+			user_area_id
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="user_dept_id">
+			user_dept_id
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="logistics_id">
+			logistics_id
+		</isNotEmpty>
+	)
+	values
+	(
+		#id#, 
+		#name#, 
+		#password#, 
+		#tel#, 
+		#mobile#, 
+		#mail#, 
+		#msn#, 
+		#qq#, 
+		#datetime#, 
+		#enable#, 
+		0, 
+		#role_id#
+		<isNotEmpty prepend="," property="user_area_id">
+			#user_area_id#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="user_dept_id">
+			#user_dept_id#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="logistics_id">
+			#logistics_id#
+		</isNotEmpty>
+	)
+	</insert>
+	<insert id="userAdd_3" parameterClass="java.util.HashMap">
+		insert into user_product 
+		(
+			user_id, 
+			product_type_id
+		)
+		values
+		(
+			#id#, 
+			#product#
+		)
+	</insert>
+	<insert id="addUserareaMapp" parameterClass="java.util.HashMap">
+		insert into user_area_mapping 
+		(
+			user_id, 
+			user_area_id
+		)
+		values
+		(
+			#id#, 
+			#areaId#
+		)
+	</insert>
+	
+	<insert id="userAdd_4" parameterClass="java.util.HashMap">
+		insert into user_customer 
+		(
+			user_id, 
+			customer_id
+		)
+		values
+		(
+			#id#, 
+			#customer#
+		)
+	</insert>
+	<select id="userAdd_5" resultClass="java.util.HashMap">
+	select 	id, 
+			name, 
+			area, 
+			province, 
+			city, 
+			address, 
+			postcode, 
+			linkman, 
+			role, 
+			tel, 
+			fax, 
+			mobile, 
+			mail, 
+			msn, 
+			qq, 
+			remit_bank_name, 
+			remit_bank_account, 
+			date
+	from 
+			logistics 
+	</select>
+	<insert id="userAdd_6" parameterClass="java.util.HashMap">
+		insert into user_area_product 
+		(
+			user_id, 
+			product_type_id, 
+			user_area_id
+		)
+		values
+		(
+			#id#, 
+			#chen1#, 
+			#chen2#
+		);
+	</insert>
+	<select id="userView_13" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+		select
+			user.id,user.name,user.tel,user.mobile,user.msn,user.datetime,user.qq,user.role_id,user.mail,user.password,user.user_area_id,user.user_dept_id,role_m.name as role_name,logistics.name as logistics_name,user.enable,user.online
+		from 
+			user,role_m,logistics
+		where
+			user.role_id = role_m.id and 
+			user.logistics_id = logistics.id and
+			user.id = #id#
+	</select>
+	<select id="userView_14" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+		select
+			user.id,user.name,user.tel,user.mobile,user.msn,user.datetime,user.qq,user.role_id,user.mail,user.password,user.user_area_id,user.user_dept_id,role_m.name as role_name,user_dept.name as dept_name,user.enable,user.online,user_area.id as area_id,user_area.name as area_name
+		from 
+			user,role_m,user_dept,user_area
+		where
+			user.role_id = role_m.id and 
+			user.user_dept_id = user_dept.id and
+			user.user_area_id = user_area.id and
+			user.id = #id#
+	</select>
+	<select id="salesAssistantAddBefore_1" resultClass="java.util.HashMap">
+		select id, name from user_area 
+	</select>
+	<select id="salesAssistantAddBefore_2" resultClass="java.util.HashMap">
+		select 	id, no, name, product_dept_id from product_type 
+	</select>
+	<select id="salesAssistantAddBefore_3" resultClass="java.lang.Integer">
+		select 	
+			count(*)
+		from 
+			user_area_product 
+		where 
+			user_area_id = $user_area_id$ and 
+			product_type_id = #product_type_id#
+	</select>
+	<select id="salesAssistantAddBefore_4" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+		select 	
+			user_area_product.id, 
+			user_area_product.user_id, 
+			user_area_product.product_type_id, 
+			user_area_product.user_area_id,
+			user_area.name as area_name,
+			product_type.name as type_name
+		from 
+			user_area_product,user_area,product_type 
+		where
+			user_area_product.product_type_id = product_type.id and 
+			user_area_product.user_area_id = user_area.id and
+			user_id =#id#
+	</select>
+	<delete id="salesAssistantAddBefore_5" parameterClass="java.util.HashMap">
+		delete from user_area_product where user_area_product.user_id = #id#
+	</delete>
+	<select id="chentest" resultClass="java.lang.Integer">
+		select count(*) from user 
+	</select>
+	<select id="sgawega" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+		select 
+			customer.id as id,customer.name as name
+		from 
+			user_customer,customer
+		where 
+			user_customer.customer_id = customer.id and 
+			user_customer.user_id = #id#
+	</select>
+	<select id="salesAssistantAddBefore_6" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+		select 	
+			user_stockroom_product.id, 
+			user_stockroom_product.user_id, 
+			user_stockroom_product.product_type_id, 
+			user_stockroom_product.stockroom_id,
+			stockroom.name as area_name,
+			product_type.name as type_name
+		from 
+			user_stockroom_product,stockroom,product_type 
+		where
+			user_stockroom_product.product_type_id = product_type.id and 
+			user_stockroom_product.stockroom_id = stockroom.id and
+			user_id =#id#
+	</select>
+	<select id="salesAssistantAddBefore_7" resultClass="java.util.HashMap">
+		select 	id, type, name, product_dept_id from stockroom where stockroom.type = 1 OR stockroom.type = 2
+	</select>
+		<select id="salesAssistantAddBefore_8" resultClass="java.lang.Integer">
+		select 	
+			count(*)
+		from 
+			user_stockroom_product 
+		where 
+			stockroom_id = $user_area_id$ and 
+			product_type_id = #product_type_id#
+	</select>
+		<delete id="salesAssistantAddBefore_9" parameterClass="java.util.HashMap">
+		delete from user_stockroom_product where user_stockroom_product.user_id = #id#
+	</delete>
+	<insert id="salesAssistantAddBefore_10" parameterClass="java.util.HashMap">
+		insert into user_area_product 
+		(
+			user_id, 
+			product_type_id, 
+			user_area_id
+		)
+		values
+		(
+			#id#, 
+			#chen1#, 
+			#chen2#
+		);
+	</insert>
+	<insert id="salesAssistantAddBefore_11" parameterClass="java.util.HashMap">
+		insert into user_stockroom_product 
+		(
+			user_id, 
+			product_type_id, 
+			stockroom_id
+		)
+		values
+		(
+			#id#, 
+			#chen1#, 
+			#chen2#
+		);
+	</insert>
+		<select id="salesAssistantAddBefore_12" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+		select 	
+			user_stockroom_product.id, 
+			user_stockroom_product.user_id, 
+			user_stockroom_product.product_type_id, 
+			user_stockroom_product.stockroom_id,
+			stockroom.name as area_name,
+			product_type.name as type_name
+		from 
+			user_stockroom_product,stockroom,product_type 
+		where
+			user_stockroom_product.product_type_id = product_type.id and 
+			user_stockroom_product.stockroom_id = stockroom.id and
+			user_stockroom_product.user_id =#id#
+	</select>
+	<select id="onlyrole" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+		SELECT
+		  COUNT(*)
+		FROM USER
+		WHERE role_id =#role_id# 
+		AND user.enable = 1 
+		<isNotEmpty property="userId">
+			AND user.id != #userId# 
+		</isNotEmpty>
+	</select>
+	<select id="onlytreasurymanager" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+		SELECT
+		  COUNT(*)
+		FROM user_stockroom_product,
+		  USER
+		WHERE user.id = user_stockroom_product.user_id
+		    AND user_stockroom_product.stockroom_id =#stockroomId# 
+		    AND user_stockroom_product.product_type_id=#productTypeId# 
+		    AND user.enable = 1 
+		    <isNotEmpty property="userId">
+				AND user.id != #userId# 
+			</isNotEmpty>
+	</select>
+	<select id="onlysalesassistant" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+		SELECT
+		  COUNT(*)
+		FROM user_area_product,
+		  USER
+		WHERE user.id = user_area_product.user_id
+		    AND user_area_product.user_area_id =#userAreaId# 
+		    AND user_area_product.product_type_id=#productTypeId# 
+		    AND user.enable = 1 
+		    <isNotEmpty property="userId">
+				AND user.id != #userId# 
+			</isNotEmpty> 
+	</select>
+	<select id="onlyproducttype" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+		SELECT 
+			COUNT(*) 
+		FROM 
+			USER ,user_product 
+		WHERE 
+			user.id = user_product.user_id  
+		AND user.role_id =#role_id# 
+		AND user_product.product_type_id = #productTypeId#
+		AND user.enable = 1
+		<isNotEmpty property="userId">
+			AND user.id != #userId# 
+		</isNotEmpty>
+	</select>
+	<select id="userIdSelectUserWork" parameterClass="java.lang.String" resultClass="java.lang.Integer">
+        SELECT ifnull(SUM(COUNT),0) FROM WORK WHERE user_id = #userId#
+    </select>
+    
+    <select id="onlyuserarea" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+		SELECT 
+			COUNT(*) 
+		FROM 
+			USER
+		WHERE 
+			user.role_id =#role_id# 
+		AND user.user_area_id = #userAreaId#
+		AND user.enable = 1
+		<isNotEmpty property="userId">
+			AND user.id != #userId# 
+		</isNotEmpty>
+	</select>
+	<select id="onlyuserareaExtUp" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+		SELECT 
+			COUNT(*) 
+		FROM 
+			USER,user_product
+		WHERE 
+			user.role_id =#role_id# 
+		AND user.user_area_id = #userAreaId#
+		AND user.enable = 1
+		and user.id = user_product.user_id
+		AND user_product.product_type_id = #productTypeId#
+		<isNotEmpty property="userId">
+			AND user.id != #userId# 
+		</isNotEmpty>
+	</select>
+</sqlMap>

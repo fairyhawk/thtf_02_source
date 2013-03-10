@@ -1,0 +1,991 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="buyBackContract_sqlMap">
+
+	<!--采购退货合同类表 By Chenhj @2010-6-11-->
+	<typeAlias alias="buyBackContractDto" type="cn.com.thtf.egov.cms.dto.BuyBackContractDto" />
+    <typeAlias alias="searchCondition" type="cn.com.thtf.egov.cms.form.BuyContractSearchForm"/>
+	
+	<!--采购退货合同 产品选择 By Chenhj @2010-6-18-->
+	<typeAlias alias="prodDto" type="cn.com.thtf.egov.cms.dto.BuyContractProductInfoDto" />    
+	<!-- 供应商地址 By HanHaiyun @2010-6-24-->
+	<typeAlias alias="supplierAddressDto" type="cn.com.thtf.egov.cms.dto.SupplierAddressDto"/>
+	<!-- 采购退货合同信息 By HanHaiyun @2010-6-28-->
+	<typeAlias alias="buyBackContractInfoDto" type="cn.com.thtf.egov.cms.dto.BuyBackContractInfoDto"/>
+	<!-- 采购退货合同实体类 By HanHaiyun @2010-6-24-->
+	<typeAlias alias="buyBackContractEntity" type="cn.com.thtf.egov.cms.entity.BuyBackContractEntity"/>
+	<!-- 采购退货合同明细实体类 By HanHaiyun @2010-6-24-->
+	<typeAlias alias="buyBackContractDetailEntity" type="cn.com.thtf.egov.cms.entity.BuyBackContractDetailEntity"/>
+	<!-- 采购退货合同预览 By HanHaiyun @2010-06-30 -->
+	<typeAlias alias="buyBackContractPreviewDto" type="cn.com.thtf.egov.cms.dto.BuyBackContractPreviewDto"/>
+	<!-- 采购退货合同预览__产品信息 By HanHaiyun @2010-06-30 -->
+	<typeAlias alias="buyBackContractPreviewProdDto" type="cn.com.thtf.egov.cms.dto.BuyBackContractPreviewProdDto"/>
+    <!--采购合同评审 By HanHaiyun @2010-6-11 -->
+    <typeAlias alias="buyContractReviewDto" type="cn.com.thtf.egov.cms.dto.BuyContractReviewDto"/>
+    <!-- 采购退货合同  查看评审表 By HanHaiyun @2010-07-01 -->
+    <typeAlias alias="buyBackContractReviewDto" type="cn.com.thtf.egov.cms.dto.BuyBackContractReviewDto"/>
+    <typeAlias alias="userEntity" type="cn.com.thtf.egov.cms.entity.UserEntity"/>
+    <!-- 采购退货合同列表 By ChenHuajiang @2010-6-11 -->
+	<select id="buyBackContract_sqlMap.selectBuyBackContracts" resultClass="buyBackContractDto" parameterClass="searchCondition">	       
+		SELECT BBC.ID AS BUYBACKCONTRACTID,   <!--合同流水号-->
+		       PT.NAME AS PRODTYPENAME,       <!--产品分类名称-->
+		       BBC.PRODUCT_CONTRACT_CODE AS PRODCONTRACTCODE, <!--产品合同号-->
+		       BBC.COMPANY_CONTRACT_CODE AS COMPCONTRACTCODE, <!--公司合同号-->
+		       SL.NAME AS SUPPLIERNAME,                 <!--供货商名称-->
+		       BBC.MONEY AS BACKCONTRACTMONEY,          <!--退货合同金额-->
+		       BC.CONTRACT_TYPE AS CONTRACTTYPE,        <!--合同类型 -->
+		       BBC.TEMPLATE_TYPE AS TEMPLATETYPE,       <!--模版类型-->
+		       BBC.DATE AS SIGNDATE,                    <!--签订日期-->
+		       BBC.USER_NAME AS USERNAME,               <!--人员名称-->
+		       BBC.STATUS                               <!--合同状态-->
+		FROM   BUY_BACK_CONTRACT BBC
+		       INNER JOIN PRODUCT_TYPE PT
+		         ON BBC.PRODUCT_TYPE_ID = PT.ID
+		       INNER JOIN BUY_CONTRACT BC
+		         ON BBC.BUY_CONTRACT_ID = BC.ID
+		       INNER JOIN SUPPLIER SL
+		         ON BC.SUPPLIER_ID = SL.ID		         
+        <dynamic prepend="WHERE">
+			<!-- 检索条件 -->
+			<isNotEmpty prepend="and" property="productContractCode">
+				BBC.PRODUCT_CONTRACT_CODE LIKE CONCAT('%', #productContractCode#, '%')
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="and" property="companyContractCode">
+				BBC.COMPANY_CONTRACT_CODE LIKE CONCAT('%', #companyContractCode#, '%')
+			</isNotEmpty> 
+			
+			<isNotEmpty prepend="and" property="productTypeId">
+				BBC.PRODUCT_TYPE_ID = #productTypeId# 
+			</isNotEmpty> 
+			
+			<isNotEmpty prepend="and" property="supplierName">
+				SL.NAME LIKE CONCAT('%', #supplierName#, '%')
+			</isNotEmpty>		
+			
+			<isNotEmpty prepend="and" property="contractType">
+				BBC.CONTRACT_TYPE = #contractType#
+			</isNotEmpty> 
+
+			<isNotEmpty prepend="and" property="templateType">
+				BBC.TEMPLATE_TYPE = #templateType#
+			</isNotEmpty> 
+
+			<isNotEmpty prepend="and" property="userName">
+				BBC.USER_NAME LIKE CONCAT('%', #userName#, '%')
+			</isNotEmpty> 
+
+			<isNotEmpty prepend="and" property="status">
+				BBC.STATUS =#status#
+			</isNotEmpty> 
+												
+			<isNotEmpty prepend="and" property="startTime">
+				<![CDATA[STR_TO_DATE(BBC.DATE,'%Y-%m-%d') >= STR_TO_DATE(#startTime#,'%Y-%m-%d') ]]>					 
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="and" property="endTime">
+				<![CDATA[STR_TO_DATE(BBC.DATE,'%Y-%m-%d') <= STR_TO_DATE(#endTime#,'%Y-%m-%d') ]]>					
+			</isNotEmpty>
+			 
+            <!-- 权限判断 -->
+			<!-- 产品总监 -->
+			<isEqual prepend="and" property="roleId" compareValue="10">
+				BBC.USER_ID = #userId#
+			</isEqual>
+
+			<!-- 法务专员 -->
+			<isEqual prepend="and" property="roleId" compareValue="15">
+				<isNotEmpty property="initStr">
+					BBC.STATUS = 2
+				</isNotEmpty> 
+			</isEqual>
+
+			<!-- 采购主管 -->
+			<isEqual prepend="and" property="roleId" compareValue="11">
+				BBC.PRODUCT_TYPE_ID IN 
+				(
+					SELECT  PRODUCT_TYPE_ID 
+					FROM    USER_PRODUCT
+					WHERE   USER_ID = #userId#
+				)
+				<isNotEmpty prepend="and" property="initStr">
+					BBC.STATUS = 4
+				</isNotEmpty>
+			</isEqual>
+
+			<!-- 运营总监 -->
+			<isEqual prepend="and" property="roleId" compareValue="17">
+				<isNotEmpty property="initStr">
+					BBC.STATUS = 6 
+				</isNotEmpty>
+			</isEqual>
+
+			<!-- 采购专员 -->
+			<isEqual prepend="and" property="roleId" compareValue="8">
+				BBC.PRODUCT_TYPE_ID IN 
+				(
+					SELECT  PRODUCT_TYPE_ID 
+					FROM    USER_PRODUCT
+					WHERE   USER_ID = #userId#
+				)
+				<isNotEmpty prepend="and" property="initStr">
+					BBC.STATUS IN (8,9)
+				</isNotEmpty>						
+			</isEqual>															            
+        </dynamic>
+       ORDER BY BBC.ID DESC		         	
+	</select>
+
+    <!-- 采购退货合同列表分页 By ChenHuajiang @2010-6-11 -->
+	<select id="buyBackContract_sqlMap.recordCount" resultClass="java.lang.Integer" parameterClass="searchCondition">	       
+		SELECT COUNT(*)
+		FROM   BUY_BACK_CONTRACT BBC
+		       INNER JOIN PRODUCT_TYPE PT
+		         ON BBC.PRODUCT_TYPE_ID = PT.ID
+		       INNER JOIN BUY_CONTRACT BC
+		         ON BBC.BUY_CONTRACT_ID = BC.ID
+		       INNER JOIN SUPPLIER SL
+		         ON BC.SUPPLIER_ID = SL.ID		         
+        <dynamic prepend="WHERE">
+			<!-- 检索条件 -->
+			<isNotEmpty prepend="and" property="productContractCode">
+				BBC.PRODUCT_CONTRACT_CODE LIKE CONCAT('%', #productContractCode#, '%')
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="and" property="companyContractCode">
+				BBC.COMPANY_CONTRACT_CODE LIKE CONCAT('%', #companyContractCode#, '%')
+			</isNotEmpty> 
+			
+			<isNotEmpty prepend="and" property="productTypeId">
+				BBC.PRODUCT_TYPE_ID = #productTypeId# 
+			</isNotEmpty> 
+			
+			<isNotEmpty prepend="and" property="supplierName">
+				SL.NAME LIKE CONCAT('%', #supplierName#, '%')
+			</isNotEmpty>		
+			
+			<isNotEmpty prepend="and" property="contractType">
+				BBC.CONTRACT_TYPE = #contractType#
+			</isNotEmpty> 
+
+			<isNotEmpty prepend="and" property="templateType">
+				BBC.TEMPLATE_TYPE = #templateType#
+			</isNotEmpty> 
+
+			<isNotEmpty prepend="and" property="userName">
+				BBC.USER_NAME LIKE CONCAT('%', #userName#, '%')
+			</isNotEmpty> 
+
+			<isNotEmpty prepend="and" property="status">
+				BBC.STATUS =#status#
+			</isNotEmpty> 
+												
+			<isNotEmpty prepend="and" property="startTime">
+				<![CDATA[STR_TO_DATE(BBC.DATE,'%Y-%m-%d') >= STR_TO_DATE(#startTime#,'%Y-%m-%d') ]]>					 
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="and" property="endTime">
+				<![CDATA[STR_TO_DATE(BBC.DATE,'%Y-%m-%d') <= STR_TO_DATE(#endTime#,'%Y-%m-%d') ]]>					
+			</isNotEmpty>
+			 
+            <!-- 权限判断 -->
+			<!-- 产品总监 -->
+			<isEqual prepend="and" property="roleId" compareValue="10">
+				BBC.USER_ID = #userId#
+			</isEqual>
+
+			<!-- 法务专员 -->
+			<isEqual prepend="and" property="roleId" compareValue="15">
+				<isNotEmpty property="initStr">
+					BBC.STATUS = 2
+				</isNotEmpty> 
+			</isEqual>
+
+			<!-- 采购主管 -->
+			<isEqual prepend="and" property="roleId" compareValue="11">
+				BBC.PRODUCT_TYPE_ID IN 
+				(
+					SELECT  PRODUCT_TYPE_ID 
+					FROM    USER_PRODUCT
+					WHERE   USER_ID = #userId#
+				)
+				<isNotEmpty prepend="and" property="initStr">
+					BBC.STATUS = 4
+				</isNotEmpty>
+			</isEqual>
+
+			<!-- 运营总监 -->
+			<isEqual prepend="and" property="roleId" compareValue="17">
+				<isNotEmpty property="initStr">
+					BBC.STATUS = 6 
+				</isNotEmpty>
+			</isEqual>
+
+			<!-- 采购专员 -->
+			<isEqual prepend="and" property="roleId" compareValue="8">
+				BBC.PRODUCT_TYPE_ID IN 
+				(
+					SELECT  PRODUCT_TYPE_ID 
+					FROM    USER_PRODUCT
+					WHERE   USER_ID = #userId#
+				)
+				<isNotEmpty prepend="and" property="initStr">
+					BBC.STATUS IN (8,9)
+				</isNotEmpty>						
+			</isEqual>															            
+        </dynamic>
+</select>
+	
+    <!-- 新建、修改采购退货合同-采购合同信息 By ChenHuajiang @2010-6-12 -->
+	<select id="buyBackContract_sqlMap.selectBuyContractsInfoById" resultClass="buyBackContractDto" parameterClass="java.lang.String">	
+		SELECT BC.DATE AS SIGNDATE,                          <!--签订日期-->
+		       PT.NAME AS PRODTYPENAME,                      <!--产品分类名称-->
+		       PT.ID   AS PRODTYPEID,						 <!--产品类型id-->
+		       BC.PRODUCT_CONTRACT_CODE AS PRODCONTRACTCODE, <!--产品合同号-->
+		       BC.COMPANY_CONTRACT_CODE COMPCONTRACTCODE,    <!--公司合同号-->
+		       BC.MONEY AS CONTRACTMONEY,                    <!--合同金额-->
+		       BC.PREPAY_MONEY AS PREPAYMONEY,               <!--预付金额-->
+		       S.NAME AS SUPPLIERNAME,             			 <!--供货商名称-->
+		       BC.CONTRACT_TYPE AS CONTRACTTYPE,             <!--合同类型-->
+		       BC.PLACE,                                     <!--签订地点--> 
+		       S.PROVINCE,                                   <!--省份-->
+		       S.CITY,                                       <!--城市-->
+		       S.REMIT_BANK_NAME AS REMITBANKNAME,           <!--汇款银行名称-->
+		       S.REMIT_BANK_ACCOUNT AS REMITBANKACCOUNT,     <!--汇款银行帐号-->
+		       S.INVOICE_TYPE AS INVOICETYPE,                <!--发票类型-->
+		       BC.TAX_RATE AS TAXRATE,                       <!--增值税税率-->
+		       SL.NAME LINKMAN,                              <!--联系人-->
+		       SL.TEL,                                       <!--电话-->
+		       SL.FAX                                        <!--传真-->
+		FROM   BUY_CONTRACT BC,
+		       PRODUCT_TYPE PT,
+		       SUPPLIER S,
+		       SUPPLIER_LINKMAN SL
+		WHERE  BC.ID = #buyContractId#
+		       AND BC.PRODUCT_TYPE_ID = PT.ID
+		       AND BC.SUPPLIER_ID = S.ID
+		       AND BC.SUPPLIER_LINKMAN_ID = SL.ID
+	</select>
+
+    <!-- 新建采购退货合同-产品选择 By ChenHuajiang @2010-6-17 -->
+	<select id="buyBackCon_SqlMap.selectProdInfoById" resultClass="prodDto" parameterClass="java.util.HashMap">	
+		SELECT BCD.PRODID,                                    <!--产品ID-->
+		       BCD.PRODCODE,                                  <!--产品编码-->
+		       BCD.PRODNAME,                                  <!--产品名称-->
+		       BCD.PRODTYPE,                                  <!--规格型号-->
+		       BCD.PRODUNIT,                                  <!--单位-->
+		       BCD.COUNT AS BUYCOUNT,                         <!--采购数-->
+		       BCD.PRICE AS BUYPRICE,                         <!--采购单价-->
+		       BCD.COUNT
+		         * BCD.PRICE AS BUYMONEY,                     <!--采购金额-->
+		       IFNULL(INK.INSTOCKMONEY,0) AS INSTOCKMONEY,    <!--入库金额-->
+		       IFNULL(PD.MONEY,0) AS APPOINTMONEY,            <!--指定金额-->
+		       IFNULL(TMPINV.MONEY,0) AS RECEIVEINVOICEMONEY, <!--收票金额-->
+		       IFNULL(TMPBK.COUNT,0) AS BACKCONTRACTCOUNT,    <!--退货合同数-->
+		       IFNULL(TMPRE.COUNT,0) AS BACKCOUNT,            <!--返厂数-->
+		       IFNULL(TMPRE.COUNT,0)
+		         * IFNULL(BCD.PRICE,0) AS RETURNMONEY,        <!--返厂金额-->
+		       IFNULL(VST.TOTALNUM,0) AS STOCKTOTALNUM        <!--库存总数-->
+		FROM   (SELECT BCD.BUY_CONTRACT_ID,
+		               BCD.PRODUCT_ID,
+		               BCD.COUNT,
+		               BCD.PRICE,
+		               P.ID AS PRODID,
+		               P.CODE AS PRODCODE,
+		               P.NAME AS PRODNAME,
+		               P.TYPE AS PRODTYPE,
+		               P.UNIT AS PRODUNIT
+		        FROM   BUY_CONTRACT_DETAIL BCD,
+		               BUY_CONTRACT BC,
+		               PRODUCT P
+		        WHERE  BC.ID = #buyContractId#
+		               AND BC.ID = BCD.BUY_CONTRACT_ID
+		               AND BCD.PRODUCT_ID = P.ID
+						) BCD
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+							         ISD.PRODUCT_ID,
+							         ISD.PRICE,
+							         SUM(ISD.COUNT)
+							           * ISD.PRICE AS INSTOCKMONEY
+							FROM     IN_STOCK ISK,
+							         IN_STOCK_DETAIL ISD
+							WHERE    ISK.BUY_CONTRACT_ID = #buyContractId#
+									 AND ISK.STATUS=6
+							         AND ISK.ID = ISD.IN_STOCK_ID
+							GROUP BY ISK.BUY_CONTRACT_ID,ISD.PRODUCT_ID) AS INK
+		         ON INK.BUY_CONTRACT_ID = BCD.BUY_CONTRACT_ID
+		            AND INK.PRODUCT_ID = BCD.PRODUCT_ID
+		       LEFT JOIN (SELECT     ISK.BUY_CONTRACT_ID,
+							         PD.IN_STOCK_ID,
+							         PD.PRODUCT_ID,
+							         SUM(PD.MONEY) MONEY
+							FROM     IN_STOCK ISK,
+							         PAYMENT_DETAIL PD,
+							         PAYMENT P
+							WHERE    PD.APPOINT_TYPE = 1
+							         AND P.STATUS = 13
+							         AND P.ID = PD.PAYMENT_ID
+							         AND ISK.ID = PD.IN_STOCK_ID
+							         AND ISK.BUY_CONTRACT_ID = #buyContractId#
+							GROUP BY PD.BUY_CONTRACT_ID,PD.PRODUCT_ID) PD
+		         ON PD.BUY_CONTRACT_ID = BCD.BUY_CONTRACT_ID
+		            AND PD.PRODUCT_ID = BCD.PRODUCT_ID
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+		                           RID.PRODUCT_ID,
+		                           SUM(RID.MONEY) MONEY
+		                  FROM     IN_STOCK ISK,
+		                           RECEIVE_INVOICE_DETAIL RID,
+		                           RECEIVE_INVOICE RI
+		                  WHERE    ISK.BUY_CONTRACT_ID = #buyContractId#
+		                           AND ISK.ID = RID.IN_STOCK_ID
+		                           AND RID.RECEIVE_INVOICE_ID = RI.ID
+		                           AND RI.STATUS = 1
+		                  GROUP BY ISK.BUY_CONTRACT_ID,RID.PRODUCT_ID) TMPINV
+		         ON BCD.BUY_CONTRACT_ID = TMPINV.BUY_CONTRACT_ID
+		            AND BCD.PRODUCT_ID = TMPINV.PRODUCT_ID
+		       LEFT JOIN (SELECT BBC.BUY_CONTRACT_ID,
+		                         BBCD.PRODUCT_ID,
+		                         SUM(BBCD.COUNT) AS COUNT
+		                  FROM   BUY_BACK_CONTRACT BBC,
+		                         BUY_BACK_CONTRACT_DETAIL BBCD
+		                  WHERE  BBC.STATUS IN (2,4,6,8,9,11)
+		                         AND BBC.BUY_CONTRACT_ID = #buyContractId#
+		                         AND BBC.ID = BBCD.BUY_BACK_CONTRACT_ID
+		                  GROUP BY BBC.BUY_CONTRACT_ID,BBCD.PRODUCT_ID ) TMPBK
+		         ON BCD.BUY_CONTRACT_ID = TMPBK.BUY_CONTRACT_ID
+		            AND BCD.PRODUCT_ID = TMPBK.PRODUCT_ID
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+		                           BBGD.PRODUCT_ID,
+		                           SUM(BBGD.COUNT) COUNT
+		                  FROM     IN_STOCK ISK,
+		                           BUY_BACK_GOODS_DETAIL BBGD,
+		                           BUY_BACK_GOODS BBG
+		                  WHERE    ISK.BUY_CONTRACT_ID = #buyContractId#
+		                           AND ISK.ID = BBG.IN_STOCK_ID
+		                           AND BBGD.BUY_BACK_GOODS_ID = BBG.ID
+		                           AND BBG.STATUS = 11
+		                  GROUP BY ISK.BUY_CONTRACT_ID,BBGD.PRODUCT_ID) TMPRE
+		         ON BCD.BUY_CONTRACT_ID = TMPRE.BUY_CONTRACT_ID
+		            AND BCD.PRODUCT_ID = TMPRE.PRODUCT_ID
+		       LEFT JOIN VIEW_STOCK_TOTALNUM VST
+		         ON BCD.PRODUCT_ID = VST.PRODUCT_ID
+		  WHERE BCD.COUNT > IFNULL(TMPBK.COUNT,0)
+		  ORDER BY BCD.PRODCODE ASC
+	</select>
+    <!-- 新建采购退货合同-产品选择分页 By ChenHuajiang @2010-6-17 -->
+	<select id="buyBackCon_SqlMap.recordCount" resultClass="java.lang.Integer" parameterClass="java.util.HashMap">	
+		SELECT COUNT(*)
+		FROM   (SELECT BCD.BUY_CONTRACT_ID,
+		               BCD.PRODUCT_ID,
+		               BCD.COUNT,
+		               BCD.PRICE,
+		               P.ID AS PRODID,
+		               P.CODE AS PRODCODE,
+		               P.NAME AS PRODNAME,
+		               P.TYPE AS PRODTYPE,
+		               P.UNIT AS PRODUNIT
+		        FROM   BUY_CONTRACT_DETAIL BCD,
+		               BUY_CONTRACT BC,
+		               PRODUCT P
+		        WHERE  BC.ID = #buyContractId#
+		               AND BC.ID = BCD.BUY_CONTRACT_ID
+		               AND BCD.PRODUCT_ID = P.ID
+						) BCD
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+							         ISD.PRODUCT_ID,
+							         ISD.PRICE,
+							         SUM(ISD.COUNT)
+							           * ISD.PRICE AS INSTOCKMONEY
+							FROM     IN_STOCK ISK,
+							         IN_STOCK_DETAIL ISD
+							WHERE    ISK.BUY_CONTRACT_ID = #buyContractId#
+									 AND ISK.STATUS=6
+							         AND ISK.ID = ISD.IN_STOCK_ID
+							GROUP BY ISK.BUY_CONTRACT_ID,ISD.PRODUCT_ID) AS INK
+		         ON INK.BUY_CONTRACT_ID = BCD.BUY_CONTRACT_ID
+		            AND INK.PRODUCT_ID = BCD.PRODUCT_ID
+		       LEFT JOIN (SELECT     ISK.BUY_CONTRACT_ID,
+							         PD.IN_STOCK_ID,
+							         PD.PRODUCT_ID,
+							         SUM(PD.MONEY) MONEY
+							FROM     IN_STOCK ISK,
+							         PAYMENT_DETAIL PD,
+							         PAYMENT P
+							WHERE    PD.APPOINT_TYPE = 1
+							         AND P.STATUS = 13
+							         AND P.ID = PD.PAYMENT_ID
+							         AND ISK.ID = PD.IN_STOCK_ID
+							         AND ISK.BUY_CONTRACT_ID = #buyContractId#
+							GROUP BY PD.BUY_CONTRACT_ID,PD.PRODUCT_ID) PD
+		         ON PD.BUY_CONTRACT_ID = BCD.BUY_CONTRACT_ID
+		            AND PD.PRODUCT_ID = BCD.PRODUCT_ID
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+		                           RID.PRODUCT_ID,
+		                           SUM(RID.MONEY) MONEY
+		                  FROM     IN_STOCK ISK,
+		                           RECEIVE_INVOICE_DETAIL RID,
+		                           RECEIVE_INVOICE RI
+		                  WHERE    ISK.BUY_CONTRACT_ID = #buyContractId#
+		                           AND ISK.ID = RID.IN_STOCK_ID
+		                           AND RID.RECEIVE_INVOICE_ID = RI.ID
+		                           AND RI.STATUS = 1
+		                  GROUP BY ISK.BUY_CONTRACT_ID,RID.PRODUCT_ID) TMPINV
+		         ON BCD.BUY_CONTRACT_ID = TMPINV.BUY_CONTRACT_ID
+		            AND BCD.PRODUCT_ID = TMPINV.PRODUCT_ID
+		       LEFT JOIN (SELECT BBC.BUY_CONTRACT_ID,
+		                         BBCD.PRODUCT_ID,
+		                         SUM(BBCD.COUNT) AS COUNT
+		                  FROM   BUY_BACK_CONTRACT BBC,
+		                         BUY_BACK_CONTRACT_DETAIL BBCD
+		                  WHERE  BBC.STATUS IN (2,4,6,8,9,11)
+		                         AND BBC.BUY_CONTRACT_ID = #buyContractId#
+		                         AND BBC.ID = BBCD.BUY_BACK_CONTRACT_ID
+		                  GROUP BY BBC.BUY_CONTRACT_ID,BBCD.PRODUCT_ID ) TMPBK
+		         ON BCD.BUY_CONTRACT_ID = TMPBK.BUY_CONTRACT_ID
+		            AND BCD.PRODUCT_ID = TMPBK.PRODUCT_ID
+		       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+		                           BBGD.PRODUCT_ID,
+		                           SUM(BBGD.COUNT) COUNT
+		                  FROM     IN_STOCK ISK,
+		                           BUY_BACK_GOODS_DETAIL BBGD,
+		                           BUY_BACK_GOODS BBG
+		                  WHERE    ISK.BUY_CONTRACT_ID = #buyContractId#
+		                           AND ISK.ID = BBG.IN_STOCK_ID
+		                           AND BBGD.BUY_BACK_GOODS_ID = BBG.ID
+		                           AND BBG.STATUS = 11
+		                  GROUP BY ISK.BUY_CONTRACT_ID,BBGD.PRODUCT_ID) TMPRE
+		         ON BCD.BUY_CONTRACT_ID = TMPRE.BUY_CONTRACT_ID
+		            AND BCD.PRODUCT_ID = TMPRE.PRODUCT_ID
+		       LEFT JOIN VIEW_STOCK_TOTALNUM VST
+		         ON BCD.PRODUCT_ID = VST.PRODUCT_ID
+         WHERE BCD.COUNT >  IFNULL(TMPBK.COUNT,0)		         
+	</select>	
+	<!-- 供应商地址选择 HanHaiyun @2010-07-06 -->	
+	<select id="buyBackCon_SqlMapSup.selectSuppliersAddress" resultClass="supplierAddressDto" parameterClass="java.util.HashMap">
+		SELECT SA.ID,
+		       SA.SUPPLIER_ID AS SUPPLIERID,
+		       S.NAME AS SUPPLIERNAME,
+		       SA.NAME,
+		       SA.ADDRESS,
+		       SA.POSTCODE,
+		       SA.LINKMAN,
+		       SA.TEL,
+		       SA.MOBILE
+		FROM   SUPPLIER AS S,
+		       SUPPLIER_ADDRESS AS SA,
+		       BUY_CONTRACT BC
+		WHERE  S.ID = SA.SUPPLIER_ID
+			   AND S.ID=BC.SUPPLIER_ID
+			   AND BC.ID=#buyContractId#
+ 		<isNotEmpty prepend="and" property="supplierName">
+	        	S.NAME LIKE CONCAT('%', #supplierName#, '%')
+		</isNotEmpty>		
+		ORDER BY S.NAME
+	</select>
+	<select id="buyBackCon_SqlMapSup.recordCount" resultClass="java.lang.Integer" parameterClass="java.util.HashMap">
+		SELECT COUNT(*)
+			FROM (SELECT SA.ID,
+		       SA.SUPPLIER_ID AS SUPPLIERID,
+		       S.NAME AS SUPPLIERNAME,
+		       SA.NAME,
+		       SA.ADDRESS,
+		       SA.POSTCODE,
+		       SA.LINKMAN,
+		       SA.TEL,
+		       SA.MOBILE
+		FROM   SUPPLIER AS S,
+		       SUPPLIER_ADDRESS AS SA,
+		       BUY_CONTRACT BC
+		WHERE  S.ID = SA.SUPPLIER_ID
+			   AND S.ID=BC.SUPPLIER_ID
+			   AND BC.ID=#buyContractId#
+ 		<isNotEmpty prepend="and" property="supplierName">
+	        	S.NAME LIKE CONCAT('%', #supplierName#, '%')
+		</isNotEmpty>		
+		ORDER BY S.NAME) c
+			
+	</select>
+		<!-- 单个供应商地址 HanHaiyun @2010-06-28 -->	
+	<select id="suppliers.selectSuppliersAddressById" resultClass="supplierAddressDto" parameterClass="java.lang.String">
+		SELECT SA.ID,
+		       SA.SUPPLIER_ID AS SUPPLIERID,
+		       S.NAME AS SUPPLIERNAME,
+		       SA.NAME,
+		       SA.ADDRESS,
+		       SA.POSTCODE,
+		       SA.LINKMAN,
+		       SA.TEL,
+		       SA.MOBILE
+		FROM   SUPPLIER AS S,
+		       SUPPLIER_ADDRESS AS SA
+		WHERE  S.ID = SA.SUPPLIER_ID
+			AND SA.ID=#supplierId#
+	</select>
+	 <!-- 修改采购退货合同-采购退货合同信息 By HanHaiyun @2010-6-28 -->
+	<select id="buyBackCon_SqlMap.selectBuyBackContract" resultClass="buyBackContractInfoDto" parameterClass="java.lang.String">
+		SELECT BBC.ID AS BUYBACKCONTRACTID,
+		       BBC.BUY_CONTRACT_ID AS BUYCONTRACTID,
+		       BBC.TEMPLATE_TYPE AS TEMPLATETYPE,
+		       BBC.PLACE,
+		       BBC.FILE,
+		       BBC.REQUEST_SEND_DATE AS REQUESTSENDDATE,
+		       BBC.MONEY  ,
+		       BBC.product_contract_code  AS backProdContractCode,
+		       BBC.company_contract_code  AS backCompContractCode,
+		       BBC.BACK_WAY AS BACKWAY,
+		       BBC.SUPPLIER_ADDRESS_ID AS SUPPLIERADDRESSID,
+		       BBC.TEXT,
+		       BBC.LEGAL_ID			     AS LEGALID,
+		       BBC.LEGAL_NAME            AS LEGALNAME,
+		       BBC.LEGAL_DATE            AS LEGALDATE,
+		       BBC.LEGAL_IDEA            AS LEGALIDEA,
+		       BBC.LEGAL_TEXT            AS LEGALTEXT,
+		       BBC.BUY_MAN_ID			 AS BUYMANID,
+		       BBC.BUY_MAN_NAME          AS BUYMANNAME,
+		       BBC.BUY_MAN_DATE          AS BUYMANDATE,
+		       BBC.BUY_MAN_IDEA          AS BUYMANIDEA,
+		       BBC.BUY_MAN_TEXT          AS BUYMANTEXT,
+		       BBC.OPE_MAJ_ID 		     AS OPEMAJID,
+		       BBC.OPE_MAJ_NAME          AS OPEMAJNAME,
+		       BBC.OPE_MAJ_DATE          AS OPEMAJDATE,
+		       BBC.OPE_MAJ_IDEA          AS OPEMAJIDEA,
+		       BBC.OPE_MAJ_TEXT          AS OPEMAJTEXT,
+		       BBC.STATUS				 AS STATUS,
+		       BC.PRODUCT_TYPE_ID	 AS PRODUCTTYPEID
+		FROM   BUY_BACK_CONTRACT BBC,
+			   BUY_CONTRACT BC
+		WHERE 	BC.ID=BBC.BUY_CONTRACT_ID
+				AND  BBC.ID = #buyBackContractId#
+	</select>
+	<!-- 修改采购退货合同-采购退货合同产品信息 By HanHaiyun @2010-6-28 -->
+	<select id="buyBackCon_SqlMap.selectBuyBackContractProduct" resultClass="prodDto" parameterClass="java.util.HashMap">
+		SELECT 
+			Z.PRODID,                                   
+	        Z.PRODCODE,                               
+	        Z.PRODNAME,                                
+	        Z.PRODTYPE,                                
+	        Z.PRODUNIT,                                
+	        Z.BUYCOUNT ,                         
+	        Z.BUYPRICE ,                      
+	        Z.BUYMONEY,                   
+		    Z.INSTOCKMONEY,   
+		    Z.APPOINTMONEY,            
+		    Z.RECEIVEINVOICEMONEY, 
+		    Z.BACKCONTRACTCOUNT,    
+		    Z.BACKCOUNT,           
+		    Z.RETURNMONEY,       
+		    Z.STOCKTOTALNUM ,
+		    BBCD.COUNT AS BUYBACKCONTRACTCOUNT
+		FROM (SELECT BCD.PRODID as PRODID,                                   
+				       BCD.PRODCODE,                               
+				       BCD.PRODNAME,                                
+				       BCD.PRODTYPE,                                
+				       BCD.PRODUNIT,                                
+				       BCD.COUNT AS BUYCOUNT,                         
+				       BCD.PRICE AS BUYPRICE,                      
+				       BCD.COUNT
+				         * BCD.PRICE AS BUYMONEY,                   
+				       IFNULL(INK.INSTOCKMONEY,0) AS INSTOCKMONEY,   
+				       IFNULL(PD.MONEY,0) AS APPOINTMONEY,            
+				       IFNULL(TMPINV.MONEY,0) AS RECEIVEINVOICEMONEY, 
+				       IFNULL(TMPBK.COUNT,0) AS BACKCONTRACTCOUNT,    
+				       IFNULL(TMPRE.COUNT,0) AS BACKCOUNT,           
+				       IFNULL(TMPRE.COUNT,0)
+				         * IFNULL(BCD.PRICE,0) AS RETURNMONEY,       
+				       IFNULL(VST.TOTALNUM,0) AS STOCKTOTALNUM      
+				FROM   (SELECT BCD.BUY_CONTRACT_ID,
+				               BCD.PRODUCT_ID,
+				               BCD.COUNT,
+				               BCD.PRICE,
+				               P.ID AS PRODID,
+				               P.CODE AS PRODCODE,
+				               P.NAME AS PRODNAME,
+				               P.TYPE AS PRODTYPE,
+				               P.UNIT AS PRODUNIT
+				        FROM   BUY_CONTRACT_DETAIL BCD,
+				               BUY_CONTRACT BC,
+				               PRODUCT P
+				        WHERE  BC.ID = #buyContractId#
+				               AND BC.ID = BCD.BUY_CONTRACT_ID
+				               AND BCD.PRODUCT_ID = P.ID
+								) BCD
+				       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+									         ISD.PRODUCT_ID,
+									         ISD.PRICE,
+									         SUM(ISD.COUNT)
+									           * ISD.PRICE AS INSTOCKMONEY
+									FROM     IN_STOCK ISK,
+									         IN_STOCK_DETAIL ISD
+									WHERE    ISK.BUY_CONTRACT_ID = #buyContractId#
+											 AND ISK.STATUS=6
+									         AND ISK.ID = ISD.IN_STOCK_ID
+									GROUP BY ISK.BUY_CONTRACT_ID,ISD.PRODUCT_ID) AS INK
+				         ON INK.BUY_CONTRACT_ID = BCD.BUY_CONTRACT_ID
+				            AND INK.PRODUCT_ID = BCD.PRODUCT_ID
+				       LEFT JOIN (SELECT     ISK.BUY_CONTRACT_ID,
+									         PD.IN_STOCK_ID,
+									         PD.PRODUCT_ID,
+									         SUM(PD.MONEY) MONEY
+									FROM     IN_STOCK ISK,
+									         PAYMENT_DETAIL PD,
+									         PAYMENT P
+									WHERE    PD.APPOINT_TYPE = 1
+									         AND P.STATUS = 13
+									         AND P.ID = PD.PAYMENT_ID
+									         AND ISK.ID = PD.IN_STOCK_ID
+									         AND ISK.BUY_CONTRACT_ID = #buyContractId#
+									GROUP BY PD.BUY_CONTRACT_ID,PD.PRODUCT_ID) PD
+				         ON PD.BUY_CONTRACT_ID = BCD.BUY_CONTRACT_ID
+				            AND PD.PRODUCT_ID = BCD.PRODUCT_ID
+				       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+				                           RID.PRODUCT_ID,
+				                           SUM(RID.MONEY) MONEY
+				                  FROM     IN_STOCK ISK,
+				                           RECEIVE_INVOICE_DETAIL RID,
+				                           RECEIVE_INVOICE RI
+				                  WHERE    ISK.BUY_CONTRACT_ID = #buyContractId#
+				                           AND ISK.ID = RID.IN_STOCK_ID
+				                           AND RID.RECEIVE_INVOICE_ID = RI.ID
+				                           AND RI.STATUS = 1
+				                  GROUP BY ISK.BUY_CONTRACT_ID,RID.PRODUCT_ID) TMPINV
+				         ON BCD.BUY_CONTRACT_ID = TMPINV.BUY_CONTRACT_ID
+				            AND BCD.PRODUCT_ID = TMPINV.PRODUCT_ID
+				       LEFT JOIN (SELECT BBC.BUY_CONTRACT_ID,
+				                         BBCD.PRODUCT_ID,
+				                         SUM(BBCD.COUNT) AS COUNT
+				                  FROM   BUY_BACK_CONTRACT BBC,
+				                         BUY_BACK_CONTRACT_DETAIL BBCD
+				                  WHERE  BBC.STATUS IN (2,4,6,8,9,11)
+				                         AND BBC.BUY_CONTRACT_ID = #buyContractId#
+				                         AND BBC.ID = BBCD.BUY_BACK_CONTRACT_ID
+				                         AND BBC.ID != #buyBackContractId#
+				                  GROUP BY BBC.BUY_CONTRACT_ID,BBCD.PRODUCT_ID ) TMPBK
+				         ON BCD.BUY_CONTRACT_ID = TMPBK.BUY_CONTRACT_ID
+				            AND BCD.PRODUCT_ID = TMPBK.PRODUCT_ID
+				       LEFT JOIN (SELECT   ISK.BUY_CONTRACT_ID,
+				                           BBGD.PRODUCT_ID,
+				                           SUM(BBGD.COUNT) COUNT
+				                  FROM     IN_STOCK ISK,
+				                           BUY_BACK_GOODS_DETAIL BBGD,
+				                           BUY_BACK_GOODS BBG
+				                  WHERE    ISK.BUY_CONTRACT_ID = #buyContractId#
+				                           AND ISK.ID = BBG.IN_STOCK_ID
+				                           AND BBGD.BUY_BACK_GOODS_ID = BBG.ID
+				                           AND BBG.STATUS = 11
+				                  GROUP BY ISK.BUY_CONTRACT_ID,BBGD.PRODUCT_ID) TMPRE
+				         ON BCD.BUY_CONTRACT_ID = TMPRE.BUY_CONTRACT_ID
+				            AND BCD.PRODUCT_ID = TMPRE.PRODUCT_ID
+				       LEFT JOIN VIEW_STOCK_TOTALNUM VST
+				         ON BCD.PRODUCT_ID = VST.PRODUCT_ID
+		)  Z,BUY_BACK_CONTRACT_DETAIL BBCD
+		WHERE BBCD.PRODUCT_ID=Z.PRODID AND BBCD.BUY_BACK_CONTRACT_ID=#buyBackContractId#
+		</select>
+	<!-- 采购退货合同预览 @HanHaiyun 2010-06-30 -->
+	<select id="buyBackCon_SqlMap.getBuyBackPreview" resultClass="buyBackContractPreviewDto" parameterClass="java.lang.String">
+		SELECT BBC.ID                 AS BUYBACKCONTRACTID,
+		       BBC.DATE               AS BUYBACKCONTRACTDATE,
+		       BBC.PLACE              AS BUYBACKCONTRACTPLACE,
+		       BBC.BACK_WAY           AS BACKWAY,
+		       BBC.REQUEST_SEND_DATE  AS REQUESTSENDDATE,
+		       BC.ID                  AS BUYCONTRACTID,
+		       BC.MONEY               AS BUYCONTRACTMONEY,
+		       BC.DATE                AS BUYCONTRACTDATE,
+		       S.NAME       AS SUPPLIERNAME,
+		       PT.NAME                AS BUYCONTRACTNAME,
+		       S.INVOICE_BANK_NAME    AS SUPINVOICEBANKNAME,
+		       S.INVOICE_BANK_ACCOUNT AS SUPINVOICEBANKACCOUNT,
+		       SL.FAX                 AS SUPLINKMANFAX,
+		       SL.TEL                 AS SUPLINKMANTEL,
+		       SL.NAME				  AS SUPLINKMANNAME,
+		       PD.FAX                 AS PRODDEPTFAX,
+		       U.TEL                  AS PRODSUPERINTENDENTTEL,
+		       U.NAME				  AS PRODSUPERINTENDENTNAME,
+		       C.NAME                 AS COMPNAME,
+		       C.REMIT_BANK_NAME      AS COMREMITBANKNAME,
+		       PD.ACCOUNT   AS COMPREMITBANKACCOUNT,
+			   SA.ADDRESS AS SUPADDRESS,
+			   BBC.product_contract_code as productContractCode,
+			   BBC.company_contract_code as companyContractCode,
+			   BC.product_contract_code as productContractCodeOfBuy
+		FROM   BUY_BACK_CONTRACT BBC,
+		       BUY_CONTRACT BC,
+		       PRODUCT_TYPE PT,
+		       SUPPLIER S,
+		       SUPPLIER_LINKMAN SL,
+		       PRODUCT_DEPT PD,
+		       USER_PRODUCT UP,
+		       USER U,
+		       COMPANY C,
+		       SUPPLIER_ADDRESS SA
+		WHERE  BC.ID = BBC.BUY_CONTRACT_ID
+		       AND BC.PRODUCT_TYPE_ID = PT.ID
+		       AND BC.SUPPLIER_ID = S.ID
+		       AND BC.SUPPLIER_LINKMAN_ID = SL.ID
+		       AND PT.PRODUCT_DEPT_ID = PD.ID
+		       AND UP.PRODUCT_TYPE_ID = PT.ID
+		       AND UP.USER_ID = U.ID
+			   AND SA.ID=BBC.SUPPLIER_ADDRESS_ID
+		       AND U.ROLE_ID = 10
+		       AND BBC.ID = #buyBackContractId#
+		       AND C.ID = 1
+	</select>
+	<!-- 采购退货合同预览__产品信息  @HanHaiyun 2010-06-30 -->
+	<select id="buyBackCon_SqlMap.getBuyBackPreview_prods" resultClass="buyBackContractPreviewProdDto" parameterClass="java.lang.String">
+		SELECT P.NAME AS PRODNAME,
+		       P.TYPE AS PRODTYPE,
+		       P.UNIT AS PRODUNIT,
+		       BBCD.COUNT AS BACKCONTRACTPRODCOUNT,
+		       BCD.PRICE AS BUYCONTRACTPRICE,
+		       IFNULL(BBCD.COUNT,0)*IFNULL(BCD.PRICE,0) AS MONEY
+		FROM   PRODUCT P,
+		       BUY_BACK_CONTRACT_DETAIL BBCD,
+		       BUY_BACK_CONTRACT BBC,
+		       BUY_CONTRACT_DETAIL BCD
+		WHERE  BBCD.PRODUCT_ID = P.ID
+		       AND BBCD.BUY_BACK_CONTRACT_ID = #buyBackContractId#
+		       AND BBCD.BUY_BACK_CONTRACT_ID = BBC.ID
+		       AND BCD.BUY_CONTRACT_ID = BBC.BUY_CONTRACT_ID
+		       AND BCD.PRODUCT_ID = P.ID
+	</select>
+	 <!--根据采购合同产品类型查询出该类型的负责人 By HanHaiyun @2010-6-12-->
+     <select id="buyBackCon_SqlMap.selectBuyContractUserProduct" resultClass="userEntity" parameterClass="java.lang.String">
+	    SELECT U.NAME AS NAME,
+	      	   U.ID   AS ID,
+	      	   U.ROLE_ID AS ROLEID
+		FROM   USER_PRODUCT AS UP,
+		       USER AS U,
+		       BUY_CONTRACT AS B,
+		       BUY_BACK_CONTRACT AS BBC
+		WHERE  B.PRODUCT_TYPE_ID = UP.PRODUCT_TYPE_ID
+		       AND U.ID = UP.USER_ID
+		       AND U.ROLE_ID=8
+		       AND B.ID = BBC.BUY_CONTRACT_ID
+		       AND BBC.ID=#buyBackContractId#
+     </select>
+     <select id="buyBackCon_SqlMap.getBuyBackReview_prods" resultClass="buyBackContractPreviewProdDto" parameterClass="java.lang.String">
+     	SELECT P.NAME                                     AS PRODNAME,
+		       P.TYPE                                     AS PRODTYPE,
+		       P.UNIT                                     AS PRODUNIT,
+		       BBCD.COUNT                                 AS BACKCONTRACTPRODCOUNT,
+		       BCD.PRICE                                  AS BUYCONTRACTPRICE,
+		       IFNULL(BBCD.COUNT,0) * IFNULL(BCD.PRICE,0) AS MONEY,
+		       SEL.PRODCOUNT							  AS buyContractCount,
+		       IFNULL(STOCKROOM.TOTALNUM,0)				  AS prodCount
+		FROM   PRODUCT P,
+		       BUY_BACK_CONTRACT BBC,
+		       BUY_CONTRACT_DETAIL BCD,
+		       (SELECT   COUNT           AS PRODCOUNT,
+		                 PRODUCT_ID,
+		                 BUY_CONTRACT_ID
+		        FROM     BUY_CONTRACT_DETAIL
+		        GROUP BY BUY_CONTRACT_ID,PRODUCT_ID) SEL,
+		        BUY_BACK_CONTRACT_DETAIL BBCD
+		        LEFT JOIN 
+		       (SELECT TOTALNUM,
+		               PRODUCT_ID AS PRODID
+		        FROM   VIEW_STOCK_TOTALNUM) STOCKROOM
+		        ON STOCKROOM.PRODID = BBCD.PRODUCT_ID
+		WHERE  BBCD.PRODUCT_ID = P.ID
+		       AND BBCD.BUY_BACK_CONTRACT_ID = #buyBackContractId#
+		       AND BBCD.BUY_BACK_CONTRACT_ID = BBC.ID
+		       AND SEL.PRODUCT_ID = BCD.PRODUCT_ID
+		       AND SEL.BUY_CONTRACT_ID = BBC.BUY_CONTRACT_ID
+		       AND BCD.BUY_CONTRACT_ID = BBC.BUY_CONTRACT_ID
+		       AND BCD.PRODUCT_ID = P.ID
+     </select>
+     <!-- 采购退货合同审批查看 By HanHaiyun @2010-07-01 -->
+     <select id="buyBackCon_SqlMap.selBackContractReview" resultClass="buyBackContractReviewDto" parameterClass="java.lang.String">
+     	SELECT BBC.ID					 AS buyBackContractId,
+     		   BC.PRODUCT_CONTRACT_CODE  AS buyProdContractCode,
+		       BC.MONEY                  AS buyContractMoney,
+		       BC.CONTRACT_TYPE          AS contractType,
+		       BC.INVOICE_TYPE           AS invoiceType,
+		       S.NAME                   AS supplierName,
+		       BBC.PRODUCT_CONTRACT_CODE AS buyBackProdContractCode,
+		       BBC.COMPANY_CONTRACT_CODE AS compContractCode,
+		       BBC.TEMPLATE_TYPE         AS templateType,
+		       PD.NAME                   AS deptName,
+		       PT.NAME                   AS prodTypeName,
+		       CONCAT(PD.NO,PT.NO)       AS prodSerialNumber,
+		       BBC.BACK_WAY              AS backWay,
+		       BBC.REQUEST_SEND_DATE     AS requestSendDate,
+		       BBC.USER_NAME             AS userName,
+		       BBC.DATETIME              AS dateTime,
+		       BBC.TEXT                  AS text,
+		       BBC.STATUS				 AS status,
+		       BBC.LEGAL_ID 			 AS legalId,
+		       BBC.LEGAL_NAME   		 AS legalName,	
+		       BBC.LEGAL_DATE			 AS legalDate,
+		       BBC.LEGAL_IDEA			 AS legalIdea,
+		       BBC.LEGAL_TEXT			 AS legalText,
+		       BBC.BUY_MAN_ID			 AS buyManId,
+		       BBC.BUY_MAN_NAME			 AS buyManName,
+		       BBC.BUY_MAN_IDEA			 AS buyManIdea,
+		       BBC.BUY_MAN_TEXT			 AS buyManText,
+		       BBC.BUY_MAN_DATE			 AS buyManDate,
+		       BBC.OPE_MAJ_ID			 AS opeMajId,
+		       BBC.OPE_MAJ_NAME			 AS opeMajName,
+		       BBC.OPE_MAJ_DATE			 AS opeMajDate,
+		       BBC.OPE_MAJ_IDEA			 AS opeMajIdea,
+		       BBC.OPE_MAJ_TEXT			 AS opeMajText
+		FROM   BUY_BACK_CONTRACT BBC,
+		       BUY_CONTRACT BC,
+		       PRODUCT_DEPT PD,
+		       PRODUCT_TYPE PT,
+		       SUPPLIER_ADDRESS SA,
+		       SUPPLIER S
+		WHERE  BBC.BUY_CONTRACT_ID = BC.ID
+		       AND SA.ID = BBC.SUPPLIER_ADDRESS_ID
+		       AND PT.ID = BC.PRODUCT_TYPE_ID
+		       AND PD.ID = PT.PRODUCT_DEPT_ID
+		       AND S.ID=SA.SUPPLIER_ID
+		       AND BBC.ID = #buyBackContractId#
+     </select>
+     <!-- 查询与传入的公司合同号相同的采购退货合同个数 @HanHaiyun 2010-07-02 -->
+     <select id="buyBackCon_SqlMap.selBuyBackContractCount" resultClass="java.lang.Integer" parameterClass="java.lang.String">
+     	SELECT COUNT(*) FROM BUY_BACK_CONTRACT WHERE COMPANY_CONTRACT_CODE=#companyContractCode#
+     </select>
+     
+	<!-- 新增采购退货合同  @HanHaiyun 2010-06-28-->
+	<insert id="buyBackCon_SqlMap.insertBuyBack" parameterClass="buyBackContractEntity">
+		INSERT INTO BUY_BACK_CONTRACT
+		(
+			ID,						<!--采购退货合同编号-->
+			FILE,					<!-- 文件名称-->
+			BUY_CONTRACT_ID,		<!--采购合同流水号   -->
+			STATUS,					<!--合同状态   -->
+			PRODUCT_TYPE_ID,		<!--产品类型编号-->
+			TEMPLATE_TYPE,			<!--模板类型   -->
+			PLACE,				 	<!--签订地点   -->
+			SUPPLIER_ADDRESS_ID,	<!--供货商发货地址编号   -->
+			BACK_WAY,				<!--退款退货方式   -->
+			REQUEST_SEND_DATE,		<!--要求发货日期  -->
+			USER_ID,				<!--登录名   -->
+			USER_NAME,				<!--人员名称   -->
+			TEXT,					<!--特殊说明   -->
+			MONEY,					<!--合同金额   -->
+			DATETIME,				<!-- 新建日期  -->
+			LEGAL_ID,
+	  		BUY_MAN_ID
+		)
+		VALUES
+		(
+			#id#,
+			#file#,
+			#buyContractId#,
+			#status#,
+			#productTypeId#,
+			#templateType#,
+			#place#,
+			#supplierAddressId#,
+			#backWay#,
+			#requestSendDate#,
+			#userId#,
+			#userName#,
+			#text#,
+			#money#,
+			#datetime#,
+			#legalId#,
+			#buyManId#
+		)
+	</insert>
+	<!-- 新增采购退货合同明细  @HanHaiyun 2010-06-28-->
+	<insert id="buyBackCon_SqlMap.insertBuyBackDetail" parameterClass="buyBackContractDetailEntity">
+		INSERT INTO BUY_BACK_CONTRACT_DETAIL
+		(
+			BUY_BACK_CONTRACT_ID,
+			PRODUCT_ID,
+			COUNT
+		)
+		VALUES
+		(
+			#buyBackContractId#,
+			#productId#,
+			#count#
+		)
+	</insert>
+	<!-- 修改采购退货合同 @HanHaiyun 2010-06-28 -->
+	<update id="buyBackCon_SqlMap.updateBuyBackContract" parameterClass="buyBackContractEntity">
+	  UPDATE BUY_BACK_CONTRACT
+	  	SET FILE=#file#,
+	  		PLACE=#place#,
+	  		STATUS=#status#,
+	  		TEMPLATE_TYPE=#templateType#,
+	  		SUPPLIER_ADDRESS_ID=#supplierAddressId#,
+	  		BACK_WAY=#backWay#,
+	  		REQUEST_SEND_DATE=#requestSendDate#,
+	  		TEXT=#text#,
+	  		LEGAL_ID=#legalId#,
+	  		BUY_MAN_ID=#buyManId#,
+	  	<isNotEqual prepend=" " property="status" compareValue="1">
+	  		PRODUCT_CONTRACT_CODE=NULL,
+	  		DATE=NULL,
+	  		LEGAL_NAME=NULL,
+	  		LEGAL_DATE=NULL,
+	  		LEGAL_IDEA=NULL,
+	  		LEGAL_TEXT=NULL,
+	  		BUY_MAN_NAME=NULL,
+	  		BUY_MAN_DATE=NULL,
+	  		BUY_MAN_IDEA=NULL,
+	  		BUY_MAN_TEXT=NULL,
+	  		OPE_MAJ_ID=NULL,
+	  		OPE_MAJ_DATE=NULL,
+	  		OPE_MAJ_IDEA=NULL,
+	  		OPE_MAJ_NAME=NULL,
+	  		OPE_MAJ_TEXT=NULL,
+	  	</isNotEqual>
+	  		MONEY=#money#
+	  WHERE ID=#id#
+	</update>
+	<!--采购退货合同评审 By HanHaiyun @2010-6-12-->
+     <update id="buyBackCon_SqlMap.review" parameterClass="buyContractReviewDto">
+     	UPDATE BUY_BACK_CONTRACT 
+     	SET    STATUS = #status#
+     	<isNotEmpty prepend="," property="legalName">
+		       LEGAL_ID = #legalId#,
+		       LEGAL_NAME = #legalName#,
+		       LEGAL_DATE = #legalDate#,
+		       LEGAL_IDEA = #legalIdea#,
+		       LEGAL_TEXT = #legalText#,
+		       BUY_MAN_ID = #buyManId#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="buyManName">
+		  	   BUY_MAN_ID = #buyManId#,
+		  	   OPE_MAJ_ID = #opeMajId#,
+		       BUY_MAN_NAME = #buyManName#,
+		       BUY_MAN_DATE = #buyManDate#,
+		       BUY_MAN_IDEA = #buyManIdea#,
+		       BUY_MAN_TEXT = #buyManText#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="opeMajName">
+		 	   OPE_MAJ_ID = #opeMajId#,
+		 	   	<isEqual prepend="" property="opeMajIdea" compareValue="1">
+		 	  		 DATE = DATE_FORMAT(NOW(),'%Y-%m-%d'),
+		 	   </isEqual>
+		 	   PRODUCT_CONTRACT_CODE =#prodContractCode#,
+		       OPE_MAJ_NAME = #opeMajName#,
+		       OPE_MAJ_DATE = #opeMajDate#,
+		       OPE_MAJ_IDEA = #opeMajIdea#,
+		       OPE_MAJ_TEXT = #opeMajText#
+		</isNotEmpty>
+		WHERE  ID = #id#
+     </update>
+     <!-- 更改采购退货合同状态,公司合同号 @Haiyun 2010-07-02-->
+     <update id="buyBackCon_SqlMap.upBuyBackContractStatus"  parameterClass="java.util.HashMap">
+     	UPDATE BUY_BACK_CONTRACT SET STATUS=#status#
+     		<isNotEmpty prepend="," property="companyContractCode">
+     			COMPANY_CONTRACT_CODE=#companyContractCode#
+     		</isNotEmpty>
+     	 WHERE ID=#buyBackContractId# 
+     </update>
+    <!-- 删除采购退货合同 @HanHaiyun 2010-07-01 -->
+    <delete id="buyBackCon_SqlMap.delBuyBackContract" parameterClass="java.lang.String">
+    	DELETE FROM BUY_BACK_CONTRACT WHERE ID=#id#
+    </delete>
+	<!-- 删除采购退货合同明细  @HanHaiyun 2010-06-28 -->
+	<delete id="buyBackCon_SqlMap.delBuyBackDetail" parameterClass="java.lang.String">
+		DELETE FROM BUY_BACK_CONTRACT_DETAIL WHERE BUY_BACK_CONTRACT_ID=#buyBackContractId#
+	</delete>
+</sqlMap>

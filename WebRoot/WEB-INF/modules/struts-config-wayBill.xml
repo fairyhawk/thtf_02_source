@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources/>
+	<form-beans>
+		<form-bean name="searchWayBillForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="searchWayBill" type="cn.com.thtf.egov.cms.dto.WayBillSearchDto"/>	 
+		</form-bean>
+		
+		<form-bean name="wayBillModifyForm" type="cn.com.thtf.egov.cms.form.WayBillModifyForm">
+			 
+		</form-bean>
+		
+	</form-beans>
+	<global-exceptions/>
+	<global-forwards> 
+	</global-forwards>
+	
+	<action-mappings> 
+	
+		<!-- 运单查看一览  by liuqg--> 
+		<action path="/wayBillAll" type="cn.com.thtf.egov.cms.action.wayBill.WayBillAllAction" parameter="getWayBillList" scope="request"> 
+		   <forward name="success" path="/jsp/wayBill/wayBillList.jsp"/> 
+		</action>
+		
+		<!-- 运单检索  by liuqg-->
+		<action path="/searchWayBill" type="cn.com.thtf.egov.cms.action.wayBill.WayBillAllAction" parameter="getWayBillByCondition" scope="request" name="searchWayBillForm"> 
+		   <forward name="success" path="/jsp/wayBill/wayBillList.jsp"/> 
+		</action>
+		 
+		<!-- 运单修改 _查看跳转-->
+		<action path="/wayBillModifyView" type="cn.com.thtf.egov.cms.action.wayBill.WayBillAllAction" parameter="wayBillModifyView" scope="request"> 
+		  <forward name="success" path="/jsp/wayBill/wayBillModify.jsp"/> 
+		  <forward name="failure" path="/wayBillAll.do"/> 
+		</action>	
+		
+		<!-- 运单修改-->
+		<action path="/wayBillModify" type="cn.com.thtf.egov.cms.action.wayBill.WayBillAllAction" parameter="modifyWayBill" name="wayBillModifyForm" scope="request"> 
+		  <forward name="success" path="/wayBillAll.do"/> 
+		  <forward name="failure" path="/jsp/wayBill/wayBillModify.jsp"/> 
+		</action>	
+		 	
+		<!-- 运单查看 -->
+		<action path="/wayBillView" type="cn.com.thtf.egov.cms.action.wayBill.WayBillViewAction" parameter="wayBillView" scope="request"> 
+		  <forward name="success" path="/jsp/wayBill/wayBillView.jsp"/> 
+		  <forward name="failure" path="/wayBillAll.do"/>
+		  <forward name="failureSend" path="/getSendGoodsList.do"/>
+		  
+		</action> 
+		 
+	</action-mappings>
+
+	<message-resources parameter="com.tsinghua.mp.web.conf.i18n.ApplicationResources"/>
+</struts-config>

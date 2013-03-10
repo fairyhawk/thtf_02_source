@@ -1,0 +1,733 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="moveStock_sqlMap">           
+    <typeAlias alias="moveStockAssessDto" type="cn.com.thtf.egov.cms.dto.MoveStockAssessDto"/>
+	<typeAlias alias="productTypeEntity" type="cn.com.thtf.egov.cms.entity.ProductTypeEntity" />
+	<typeAlias alias="stockroomEntity" type="cn.com.thtf.egov.cms.entity.StockroomEntity"/> 
+	<typeAlias alias="userEntity" type="cn.com.thtf.egov.cms.entity.UserEntity"/>
+	<typeAlias alias="moveStockListDto" type="cn.com.thtf.egov.cms.dto.MoveStockListDto"/>
+	<typeAlias alias="moveStockSearchDto" type="cn.com.thtf.egov.cms.dto.MoveStockSearchDto"/>
+	<typeAlias alias="stockroomAddressEntity" type="cn.com.thtf.egov.cms.entity.StockroomAddressEntity"/>
+	<typeAlias alias="moveEntity" type="cn.com.thtf.egov.cms.entity.MoveEntity"/>
+	
+	<!-- 产品检索   By LiuQingGang -->
+	<typeAlias alias="moveStockProductDto" type="cn.com.thtf.egov.cms.dto.MoveStockProductDto" />
+	<!-- 产品显示   By LiuQingGang --> 
+	<typeAlias alias="moveOutStockDto" type="cn.com.thtf.egov.cms.dto.MoveOutStockDto" />	
+ 
+	<!-- 移库单明细 -->
+	<typeAlias alias="moveDetailEntity" type="cn.com.thtf.egov.cms.entity.MoveDetailEntity" />			
+			
+	<!-- 库存 -->
+	<typeAlias alias="stockEntity" type="cn.com.thtf.egov.cms.entity.StockEntity" />	
+	
+			<!-- 查询移库表信息  jiangmx-->
+			<select id="selectMoveStockInfo" parameterClass="java.lang.String" resultClass="moveStockAssessDto">
+               select move.id    as   id,
+                      move.product_type_id   as  productTypeId,
+                      move.date  as    date,
+                      move.type  as    type,
+                      move.out_stockroom_id  as  outStockroomId,
+                      move.in_stockroom_id   as  inStockroomId,
+                      move.stockroom_address_id   as  stockroomAddressId,
+			          move.send_date         as     sendDate,
+			          move.status         as        status,
+			          move.user_id        as        userId,
+			          move.user_name      as        userName,
+			          s1.name as moveOutName,
+                      product_type.name   as productTypeName,
+                      s2.name as moveInName,
+                      stockroom_address.name as goodsReceiveUnitName,
+                      stockroom_address.address as address,
+                      stockroom_address.postcode as  postcode,
+                      stockroom_address.linkman as   linkman,
+                      stockroom_address.tel as  tel,
+                      stockroom_address.mobile as  mobile,
+                      transport_way as   transportWay,
+                      request_date as   requestDate,
+                      text as text,
+                      buy_man_id as buyManId ,
+                      buy_man_name as buyManName,
+                      buy_man_date as buyManDate,
+                      buy_man_idea as buyManIdea,
+                      buy_man_text as buyManText,
+                      stk_adm_id as  stkAdmId,
+                      stk_adm_name as  stkAdmName,
+                      stk_adm_date as  stkAdmDate,
+                      stk_adm_idea as  stkAdmIdea,
+                      stk_adm_text as  stkAdmText,
+                      in_adm_id   as inAdmId,
+                      in_adm_name as inAdmName,
+                      in_adm_date as inAdmDate,
+                      in_adm_idea as inAdmIdea,
+                      in_adm_text as inAdmText
+               from   move 
+	           left join stockroom as s1
+               on s1.id = move.out_stockroom_id
+               left join stockroom as s2
+               on s2.id = move.in_stockroom_id
+               left join product_type
+               on move.product_type_id = product_type.id
+               left join stockroom_address
+               on move.stockroom_address_id = stockroom_address.id    
+                      
+			   where  move.id = #moveStockId# 
+			</select>
+			
+	       <!--移库评审  jiangmx-->
+	    <update id="updateMoveStockAssess"  parameterClass="moveStockAssessDto">
+		update move
+	      set  status=#status#
+	
+	   
+	    <!--采购主管-->
+	   <isEqual compareValue="11" property="roleId">
+	          ,buy_man_date = date_format(now(),'%Y-%m-%d'),
+	           buy_man_name = #buyManName#,
+	           buy_man_idea = #buyManIdea#,  
+			   buy_man_text = #buyManText#
+	   
+	   </isEqual>
+	   
+	      where move.id = #id#
+	   
+	   </update>
+	   
+	    <!-- 显示移出库房信息 By jiangmx -->
+	   <select id="selectOutStockInfo" parameterClass="moveStockAssessDto" resultClass="moveOutStockDto">
+	   	      select product.id as id,
+	                 product.code as code,
+	                 product.name as productName,
+	                 product.type as type,
+	                 product.unit as unit,
+                     Round(move_detail.price*(1+company.tax_rate/100),2)  as price,
+                     move_detail.count as count,
+                     IFNULL(stock.num,0) -
+                     IFNULL(stock.send_lock,0)-
+                     IFNULL(stock.prepared,0) as useCount,
+	                 stock.time_stamp as timeStamp
+ 
+	           from  move_detail
+                   
+               left join product
+                   on move_detail.product_id = product.id 
+
+               left join stock
+                   on move_detail.product_id = stock.product_id  
+                   and stock.stockroom_id = #outStockroomId#
+               ,company
+                
+                  where move_detail.move_id= #id#
+	      
+	   </select>
+	   
+	    <!-- 更新冻结数  By jiangmx -->
+    <update id="updateLockNum" parameterClass="stockEntity">
+		update stock
+		set  stock.send_lock = stock.send_lock -#sendLock#
+		where stock.stockroom_id=#stockroomId# and stock.product_id=#productId# and 
+		stock.time_stamp=#timeStamp#
+		    
+    </update>
+
+	 <!-- 根据用户ID和权限获取移库一览  by zzx-->
+	<select id="selectMoveStockList.selectMoveStockList" parameterClass="userEntity" resultClass="moveStockListDto">
+	SELECT MOVE.ID,
+	       move.PRODUCT_TYPE_ID        AS PRODUCTTYPEID,
+		   PRODUCT_TYPE.name      as PRODUCTTYPENAME,
+	       DATE,
+	       MOVE.TYPE,
+	       OUT_STOCKROOM_ID       AS OUTSTOCKROOMID,
+	       IN_STOCKROOM_ID        AS INSTOCKROOMID,
+	       STOCKROOM_ADDRESS_ID   AS STOCKROOMADDRESSID,
+	       STOCKROOM_ADDRESS.NAME AS STOCKROOMADDRESSNAME,
+	       TRANSPORT_WAY          AS TRANSPORTWAY,
+	       REQUEST_DATE           AS REQUESTDATE,
+	       SEND_DATE              AS SENDDATE,
+		   move.in_adm_date       AS INADMDATE,
+	       STATUS,
+	       move.USER_ID                AS USERID,
+	       move.USER_NAME              AS USERNAME,
+	       TEXT,
+	       DATETIME,
+	       S1.NAME                AS OUTSTOCKROOMNAME,
+	       S2.NAME                AS INSTOCKROOMNAME
+	FROM   MOVE
+	       LEFT JOIN STOCKROOM AS S1
+	         ON S1.ID = MOVE.OUT_STOCKROOM_ID
+	       LEFT JOIN STOCKROOM AS S2
+	         ON S2.ID = MOVE.IN_STOCKROOM_ID
+	       LEFT JOIN PRODUCT_TYPE
+	         ON PRODUCT_TYPE.ID = MOVE.PRODUCT_TYPE_ID
+	       LEFT JOIN STOCKROOM_ADDRESS
+	         ON STOCKROOM_ADDRESS.ID = MOVE.STOCKROOM_ADDRESS_ID		
+		<!-- 采购主管 -->
+		<isEqual prepend="," property="roleId" compareValue="11">
+				user_product
+		</isEqual>
+		<dynamic prepend="WHERE">			
+
+			<!-- 采购专员 (自己新建)-->
+			<isEqual prepend="" property="roleId" compareValue="8">
+				MOVE.user_id = #id#					
+			</isEqual>
+
+			<!-- 产品总监(自己新建) -->
+			<isEqual prepend="" property="roleId" compareValue="10">
+				MOVE.user_id = #id#	
+			</isEqual>
+
+			<!-- 采购主管(负责产品分类，返厂单状态采购主管待评审)-->
+			<isEqual prepend="" property="roleId" compareValue="11">
+				user_product.user_id=#id# and user_product.product_type_id = move.product_type_id
+					and move.status=2			
+			</isEqual>			
+		</dynamic>
+		order by 
+ 			 move.id desc
+	</select>
+	
+	<!-- 根据用户ID和权限获取移库一览（分页）  by zzx-->
+	<select id="selectMoveStockList.recordCount" parameterClass="userEntity" resultClass="java.lang.Integer">
+	SELECT count(MOVE.ID)	       
+	FROM   MOVE
+	       LEFT JOIN STOCKROOM AS S1
+	         ON S1.ID = MOVE.OUT_STOCKROOM_ID
+	       LEFT JOIN STOCKROOM AS S2
+	         ON S2.ID = MOVE.IN_STOCKROOM_ID
+	       LEFT JOIN PRODUCT_TYPE
+	         ON PRODUCT_TYPE.ID = MOVE.PRODUCT_TYPE_ID
+	       LEFT JOIN STOCKROOM_ADDRESS
+	         ON STOCKROOM_ADDRESS.ID = MOVE.STOCKROOM_ADDRESS_ID		
+		<!-- 采购主管 -->
+		<isEqual prepend="," property="roleId" compareValue="11">
+				user_product
+		</isEqual>
+		<dynamic prepend="WHERE">	
+			<!-- 采购专员 (自己新建)-->
+			<isEqual prepend="" property="roleId" compareValue="8">
+				MOVE.user_id = #id#					
+			</isEqual>
+
+			<!-- 产品总监(自己新建) -->
+			<isEqual prepend="" property="roleId" compareValue="10">
+				MOVE.user_id = #id#	
+			</isEqual>
+
+			<!-- 采购主管(负责产品分类，返厂单状态采购主管待评审)-->
+			<isEqual prepend="" property="roleId" compareValue="11">
+				user_product.user_id=#id# and user_product.product_type_id = move.product_type_id
+					and move.status=2			
+			</isEqual>			
+		</dynamic>
+		order by 
+ 			 move.id desc
+	</select>		
+	
+	<!--根据条件查询移库单 by zzx-->
+	<select id="selectMoveStockListByCondition.selectMoveStockListByCondition" parameterClass="moveStockSearchDto" resultClass="moveStockListDto">
+	SELECT MOVE.ID,
+	       move.PRODUCT_TYPE_ID        AS PRODUCTTYPEID,
+		   PRODUCT_TYPE.name      as PRODUCTTYPENAME,
+	       DATE,
+	       MOVE.TYPE,
+	       OUT_STOCKROOM_ID       AS OUTSTOCKROOMID,
+	       IN_STOCKROOM_ID        AS INSTOCKROOMID,
+	       STOCKROOM_ADDRESS_ID   AS STOCKROOMADDRESSID,
+	       STOCKROOM_ADDRESS.NAME AS STOCKROOMADDRESSNAME,
+	       TRANSPORT_WAY          AS TRANSPORTWAY,
+	       REQUEST_DATE           AS REQUESTDATE,
+	       SEND_DATE              AS SENDDATE,
+		   move.in_adm_date       AS INADMDATE,
+	       STATUS,
+	       move.USER_ID                AS USERID,
+	       move.USER_NAME              AS USERNAME,
+	       TEXT,
+	       DATETIME,
+	       S1.NAME                AS OUTSTOCKROOMNAME,
+	       S2.NAME                AS INSTOCKROOMNAME
+	 FROM  MOVE
+	       LEFT JOIN STOCKROOM AS S1
+	         ON S1.ID = MOVE.OUT_STOCKROOM_ID
+	       LEFT JOIN STOCKROOM AS S2
+	         ON S2.ID = MOVE.IN_STOCKROOM_ID
+	       LEFT JOIN PRODUCT_TYPE
+	         ON PRODUCT_TYPE.ID = MOVE.PRODUCT_TYPE_ID
+	       LEFT JOIN STOCKROOM_ADDRESS
+	         ON STOCKROOM_ADDRESS.ID = MOVE.STOCKROOM_ADDRESS_ID		
+		<!-- 采购主管 -->
+		<isEqual prepend="," property="roleId" compareValue="11">
+				user_product
+		</isEqual>
+		<dynamic prepend="WHERE">			
+
+			<!-- 采购专员 (自己新建)-->
+			<isEqual prepend="and" property="roleId" compareValue="8">
+				MOVE.user_id = #loginId#					
+			</isEqual>
+
+			<!-- 产品总监(自己新建) -->
+			<isEqual prepend="and" property="roleId" compareValue="10">
+				MOVE.user_id = #loginId#	
+			</isEqual>
+
+			<!-- 采购主管(负责产品分类)-->
+			<isEqual prepend="and" property="roleId" compareValue="11">
+				user_product.user_id=#loginId# and user_product.product_type_id = move.product_type_id								
+			</isEqual>	
+			
+			<!-- 画面条件 -->		
+			<isNotEmpty prepend="and" property="id">
+				move.id = #id#
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="productTypeId">
+				move.product_type_id=#productTypeId#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="outStockroomId">
+				move.out_stockroom_id=#outStockroomId# 
+			</isNotEmpty>	
+			<isNotEmpty prepend="and" property="inStockroomId">
+				move.in_stockroom_id=#inStockroomId# 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="stockroomAddressName">
+				STOCKROOM_ADDRESS.NAME like '%$stockroomAddressName$%'		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="transportWay">
+				move.TRANSPORT_WAY =#transportWay# 
+			</isNotEmpty>
+		    <isNotEmpty prepend="and" property="dateStart">
+				<![CDATA[  DATE_FORMAT(move.date,'%Y%m%d')>=  DATE_FORMAT(#dateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="dateEnd">
+				<![CDATA[  DATE_FORMAT(move.date,'%Y%m%d')<=  DATE_FORMAT(#dateEnd#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="requestDateStart">
+				<![CDATA[  DATE_FORMAT(move.request_date,'%Y%m%d')>=  DATE_FORMAT(#requestDateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="requestDateEnd">
+				<![CDATA[  DATE_FORMAT(move.request_date,'%Y%m%d')<=  DATE_FORMAT(#requestDateEnd#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="sendDateStart">
+				<![CDATA[  DATE_FORMAT(move.SEND_DATE,'%Y%m%d')>=  DATE_FORMAT(#sendDateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="sendDateEnd">
+				<![CDATA[  DATE_FORMAT(move.SEND_DATE,'%Y%m%d')<=  DATE_FORMAT(#sendDateEnd#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="inAdmDateStart">
+				<![CDATA[  DATE_FORMAT(move.in_adm_date,'%Y%m%d')>=  DATE_FORMAT(#inAdmDateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="inAdmDateEnd">
+				<![CDATA[  DATE_FORMAT(move.in_adm_date,'%Y%m%d')<=  DATE_FORMAT(#inAdmDateEnd#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>			
+			<isNotEmpty prepend="and" property="userName">
+				move.user_name like  '%$userName$%'		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="status">
+				move.status=#status#	 
+			</isNotEmpty>					
+		</dynamic>
+		order by 
+ 			 move.id desc
+	</select>	
+	
+	
+	<!--根据条件查询返厂单(分页) by zzx-->
+	<select id="selectMoveStockListByCondition.recordCount" parameterClass="moveStockSearchDto" resultClass="java.lang.Integer">
+	SELECT count(MOVE.ID)
+	 FROM  MOVE
+	       LEFT JOIN STOCKROOM AS S1
+	         ON S1.ID = MOVE.OUT_STOCKROOM_ID
+	       LEFT JOIN STOCKROOM AS S2
+	         ON S2.ID = MOVE.IN_STOCKROOM_ID
+	       LEFT JOIN PRODUCT_TYPE
+	         ON PRODUCT_TYPE.ID = MOVE.PRODUCT_TYPE_ID
+	       LEFT JOIN STOCKROOM_ADDRESS
+	         ON STOCKROOM_ADDRESS.ID = MOVE.STOCKROOM_ADDRESS_ID		
+		<!-- 采购主管 -->
+		<isEqual prepend="," property="roleId" compareValue="11">
+				user_product
+		</isEqual>
+		<dynamic prepend="WHERE">			
+
+			<!-- 采购专员 (自己新建)-->
+			<isEqual prepend="and" property="roleId" compareValue="8">
+				MOVE.user_id = #loginId#					
+			</isEqual>
+
+			<!-- 产品总监(自己新建) -->
+			<isEqual prepend="and" property="roleId" compareValue="10">
+				MOVE.user_id = #loginId#	
+			</isEqual>
+
+			<!-- 采购主管(负责产品分类)-->
+			<isEqual prepend="and" property="roleId" compareValue="11">
+				user_product.user_id=#loginId# and user_product.product_type_id = move.product_type_id								
+			</isEqual>	
+			
+			<!-- 画面条件 -->		
+			<isNotEmpty prepend="and" property="id">
+				move.id = #id#
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="productTypeId">
+				move.product_type_id=#productTypeId#	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="outStockroomId">
+				move.out_stockroom_id=#outStockroomId# 
+			</isNotEmpty>	
+			<isNotEmpty prepend="and" property="inStockroomId">
+				move.in_stockroom_id=#inStockroomId# 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="stockroomAddressName">
+				STOCKROOM_ADDRESS.NAME like '%$stockroomAddressName$%'	
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="transportWay">
+				move.TRANSPORT_WAY =#transportWay# 
+			</isNotEmpty>
+		    <isNotEmpty prepend="and" property="dateStart">
+				<![CDATA[  DATE_FORMAT(move.date,'%Y%m%d')>=  DATE_FORMAT(#dateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="dateEnd">
+				<![CDATA[  DATE_FORMAT(move.date,'%Y%m%d')<=  DATE_FORMAT(#dateEnd#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="requestDateStart">
+				<![CDATA[  DATE_FORMAT(move.request_date,'%Y%m%d')>=  DATE_FORMAT(#requestDateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="requestDateEnd">
+				<![CDATA[  DATE_FORMAT(move.request_date,'%Y%m%d')<=  DATE_FORMAT(#requestDateEnd#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="sendDateStart">
+				<![CDATA[  DATE_FORMAT(move.SEND_DATE,'%Y%m%d')>=  DATE_FORMAT(#dateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="sendDateEnd">
+				<![CDATA[  DATE_FORMAT(move.SEND_DATE,'%Y%m%d')<=  DATE_FORMAT(#dateEnd#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="inAdmDateStart">
+				<![CDATA[  DATE_FORMAT(move.in_adm_date,'%Y%m%d')>=  DATE_FORMAT(#inAdmDateStart#,'%Y%m%d')  ]]>	 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="inAdmDateEnd">
+				<![CDATA[  DATE_FORMAT(move.in_adm_date,'%Y%m%d')<=  DATE_FORMAT(#inAdmDateEnd#,'%Y%m%d')  ]]>		 
+			</isNotEmpty>			
+			<isNotEmpty prepend="and" property="userName">
+				move.user_name like  '%$userName$%'		 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="status">
+				move.status=#status#	 
+			</isNotEmpty>					
+		</dynamic>
+		order by 
+ 			 move.id desc
+	</select>	
+	
+	<!--获得所有的产品分类 By zzx--> 
+	<select id="selectProductTypeList" resultClass="productTypeEntity">
+			SELECT   PRODUCT_TYPE.ID,
+			         PRODUCT_TYPE.NO,
+			         PRODUCT_TYPE.NAME,
+			         PRODUCT_TYPE.PRODUCT_DEPT_ID,
+			         PRODUCT_TYPE.CLIMIT
+			FROM     PRODUCT_TYPE
+			ORDER BY PRODUCT_TYPE.PRODUCT_DEPT_ID
+	</select>
+	
+	<!-- 获取库房  By zzx -->
+	<select id="selectStockroom" resultClass="stockroomEntity">
+		SELECT   STOCKROOM.ID              AS ID,
+		         STOCKROOM.NAME            AS NAME,
+		         STOCKROOM.TYPE            AS TYPE,
+		         STOCKROOM.SHORT_NAME      AS SHORTNAME,
+		         STOCKROOM.PRODUCT_DEPT_ID AS PRODUCTDEPTID
+		FROM     STOCKROOM
+		WHERE    STOCKROOM.TYPE <![CDATA[ <>  ]]>	 0
+		ORDER BY STOCKROOM.ID
+	</select>
+	
+	<!-- 获取库房  By zzx -->
+	<select id="selectSendGoodsAddressByStockroomId.selectSendGoodsAddressByStockroomId" parameterClass="java.lang.String" resultClass="stockroomAddressEntity">
+		SELECT ID,
+		       STOCKROOM_ID,
+		       NAME,
+		       ADDRESS,
+		       POSTCODE,
+		       LINKMAN,
+		       TEL,
+		       MOBILE
+		FROM   STOCKROOM_ADDRESS
+		WHERE  STOCKROOM_ID = #stockroomId#
+	</select>
+	
+	<!-- 获取库房(分页) By zzx -->
+	<select id="selectSendGoodsAddressByStockroomId.recordCount" parameterClass="java.lang.String" resultClass="java.lang.Integer">
+		SELECT count(ID)
+		FROM   STOCKROOM_ADDRESS
+		WHERE  STOCKROOM_ID = #stockroomId#
+	</select>
+	
+	<!-- 修改-保存 By zhangzx-->
+	<update id="updateMoveStockSave" parameterClass="moveEntity">		
+		update  move 
+		set	   	product_type_id = #productTypeId# , 
+				date = date_format(now(),'%Y-%m-%d'), 				
+				out_stockroom_id = #outStockroomId# , 
+				in_stockroom_id = #inStockroomId# , 
+				stockroom_address_id = #stockroomAddressId# , 
+				transport_way = #transportWay# , 
+				request_date = #requestDate# ,				
+				status = #status# , 				
+				text = #text# , 
+				buy_man_id = #buyManId# ,
+				stk_adm_id = #stkAdmId# , 
+				in_adm_id = #inAdmId# 
+		where	id = #id# 
+	</update>
+	
+	<!-- 修改-提交 By zhangzx-->
+	<update id="updateMoveStock" parameterClass="moveEntity">		
+		update  move 
+		set	   	product_type_id = #productTypeId# , 
+				date = date_format(now(),'%Y-%m-%d'), 				
+				out_stockroom_id = #outStockroomId# , 
+				in_stockroom_id = #inStockroomId# , 
+				stockroom_address_id = #stockroomAddressId# , 
+				transport_way = #transportWay# , 
+				request_date = #requestDate# ,				
+				status = #status# , 				
+				text = #text# , 
+				buy_man_id = #buyManId# ,
+				buy_man_name = '' , 
+				buy_man_date = '' , 
+				buy_man_idea = '' , 
+				buy_man_text = '' ,
+				stk_adm_id = #stkAdmId# , 
+				stk_adm_name = '' , 
+				stk_adm_date = '' , 
+				stk_adm_idea = '' , 
+				stk_adm_text = '' , 
+				in_adm_id = #inAdmId# , 
+				in_adm_name = '' , 
+				in_adm_date = '' , 
+				in_adm_idea = '' , 
+				in_adm_text = ''  
+		where	id = #id# 
+	</update>
+	
+	<!-- 修改移库删除初始移库明细  By zhangzx-->
+	<delete id="deleteMoveStockDetail" parameterClass="java.lang.String">
+		DELETE FROM move_detail
+		WHERE       move_id = #moveStockId#
+	</delete>
+	
+  	
+	<!-- 新建修改时显示产品信息 检索  By LiuQingGang -->
+    <select id="selectMoveProducts.selectInfo" parameterClass="moveStockProductDto" resultClass="moveOutStockDto">
+		    SELECT 
+			products.id as id,
+			IFNULL(products.code,'') as code,
+			IFNULL(products.name,'') as productName,
+			IFNULL(products.type,'') as type,
+			IFNULL(products.unit,0) as unit, 
+    		IFNULL(ROUND(stockMoney.averageprice,2),0) as price,
+			IFNULL(Round(stockMoney.averageprice*(1+company.tax_rate/100),2),0) as priceTax,
+			products.useCount as useCount,
+			products.timeStamp as timeStamp
+		from
+			
+			(SELECT PRODUCT.ID                    AS ID,
+			       PRODUCT.NAME                  AS NAME,
+			       PRODUCT.TYPE                  AS TYPE,
+			       PRODUCT.UNIT                  AS UNIT,
+			       PRODUCT.CODE                  AS CODE ,
+			       product.money as money ,
+				IFNULL(stock.num,0)-
+				IFNULL(stock.send_lock,0)-
+				IFNULL(stock.prepared,0) as useCount,
+			stock.time_stamp as timeStamp
+
+			FROM   PRODUCT
+			       INNER JOIN PRODUCT_SERIE PROSERIE
+				 ON PRODUCT.PRODUCT_SERIES_ID = PROSERIE.ID
+			       INNER JOIN PRODUCT_TYPE PRODUCT_TYPE
+				 ON PRODUCT_TYPE.ID = PROSERIE.PRODUCT_TYPE_ID
+				and PRODUCT_TYPE.id=#proTypeId#
+				INNER JOIN stock on 
+					stock.product_id= PRODUCT.id
+				and stock.stockroom_id=#outStockroomId#  
+			<dynamic prepend="">
+				<isNotEmpty prepend="and" property="proSerieId">
+					PROSERIE.id=#proSerieId#   
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="productCode">
+					PRODUCT.code like '%$productCode$%' 
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="productName">
+					PRODUCT.name  like '%$productName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="productType">
+					PRODUCT.type like '%$productType$%'
+				</isNotEmpty>  
+			</dynamic> 
+			
+			 
+			) as products  
+			left JOIN VIEW_RESULT_STOCK_AVEPRICE as stockMoney   on
+			products.id=stockMoney.prodid ,company
+		    where  products.useCount>0
+
+    </select>
+    
+    <!-- 新建修改时显示产品信息 检索  分页  By LiuQingGang -->
+    <select id="selectMoveProducts.recordCount" parameterClass="moveStockProductDto" resultClass="java.lang.Integer">
+		    SELECT 
+			count(*)
+		from
+			
+			(SELECT PRODUCT.ID                    AS ID,
+			       PRODUCT.NAME                  AS NAME,
+			       PRODUCT.TYPE                  AS TYPE,
+			       PRODUCT.UNIT                  AS UNIT,
+			       PRODUCT.CODE                  AS CODE ,
+			       product.money as money ,
+				IFNULL(stock.num,0)-
+				IFNULL(stock.send_lock,0)-
+				IFNULL(stock.prepared,0) as useCount,
+			stock.time_stamp as timeStamp
+
+			FROM   PRODUCT
+			       INNER JOIN PRODUCT_SERIE PROSERIE
+				 ON PRODUCT.PRODUCT_SERIES_ID = PROSERIE.ID
+			       INNER JOIN PRODUCT_TYPE PRODUCT_TYPE
+				 ON PRODUCT_TYPE.ID = PROSERIE.PRODUCT_TYPE_ID
+				and PRODUCT_TYPE.id=#proTypeId#
+				INNER JOIN stock on 
+					stock.product_id= PRODUCT.id
+				and stock.stockroom_id=#outStockroomId#  
+			<dynamic prepend="">
+				<isNotEmpty prepend="and" property="proSerieId">
+					PROSERIE.id=#proSerieId#   
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="productCode">
+					PRODUCT.code like '%$productCode$%' 
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="productName">
+					PRODUCT.name  like '%$productName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="productType">
+					PRODUCT.type like '%$productType$%'
+				</isNotEmpty>  
+			</dynamic> 
+			
+			 
+			) as products  
+			left JOIN VIEW_RESULT_STOCK_AVEPRICE as stockMoney   on
+			products.id=stockMoney.prodid ,company
+		    where  products.useCount>0
+
+
+    </select>
+    
+    
+    
+    <!-- 评审查看时显示产品信息 By LiuQingGang -->
+        <select id="selectMoveProductsView"  parameterClass="moveStockAssessDto" resultClass="moveOutStockDto">
+			 select product.id as id,
+	                 product.code as code,
+	                 product.name as productName,
+	                 product.type as type,
+	                 product.unit as unit, 
+					 IFNULL(Round(move_detail.price*(1+company.tax_rate/100),2),0) as price,
+                     move_detail.count as count,
+                     IFNULL(stock.num,0) -
+                     IFNULL(stock.send_lock,0)-
+                     IFNULL(stock.prepared,0) as useCount,
+	                 stock.time_stamp as timeStamp
+ 
+	           from  move_detail
+                   
+               left join product
+                   on move_detail.product_id = product.id 
+	            
+               left join stock
+                   on move_detail.product_id = stock.product_id  
+                   and stock.stockroom_id = #outStockroomId#
+                ,company
+                  where move_detail.move_id= #id#
+                 
+    </select>  
+    
+    <!--  移库单插入 BY LiuQingGang -->
+    <insert id="insertMoveStock" parameterClass="moveStockAssessDto" >
+		insert into move(
+			id,
+			product_type_id,
+			date,
+			type,
+			out_stockroom_id,
+			in_stockroom_id,
+			stockroom_address_id,
+			transport_way,
+			request_date,
+			send_date,
+			status,
+			user_id,
+			user_name,
+			text,
+			buy_man_id,
+			stk_adm_id,
+			in_adm_id,
+			datetime)values(
+			#id#,
+			#productTypeId#,
+			DATE_FORMAT(NOW(),'%Y-%m-%d'),
+			#type#,
+			#outStockroomId#,
+			#inStockroomId#,
+			#stockroomAddressId#,
+			#transportWay#,
+			#requestDate#,
+			#sendDate#,
+			#status#,
+			#userId#,
+			#userName#,
+			#text#,
+			#buyManId#,
+			#stkAdmId#,
+			#inAdmId#,
+			DATE_FORMAT(NOW(),'%Y-%m-%d')
+		)    
+    
+    </insert>
+    
+    <!--  移库单明细插入 By LiuQingGang  -->
+    <insert id="insertMoveStockDetail" parameterClass="moveDetailEntity">
+    	insert into move_detail (move_id,product_id,count,price
+    	)values(#moveId#,#productId#,#count#,#price#)
+     
+    </insert>
+    
+    <!-- 更新库存冻结数  By LiuQingGang  -->
+    <update id="updateStockLockNum" parameterClass="stockEntity">
+		update stock
+		set  stock.send_lock = stock.send_lock +#sendLock#
+		where stock.stockroom_id=#stockroomId# and stock.product_id=#productId# and 
+		stock.time_stamp=#timeStamp#
+		    
+    </update>
+    <!-- 删除移库明细  By LiuQingGang  -->
+    	<delete id="deleteMoveStock" parameterClass="java.lang.String">
+		DELETE FROM move
+		WHERE       id = #moveStockId#
+	</delete>
+	
+	<!-- 查看产品库存信息  -->
+    <select id="getStockByStockRoomAndProduct" parameterClass="moveStockProductDto" resultClass="moveOutStockDto">
+     SELECT 
+				IFNULL(stock.num,0)-
+				IFNULL(stock.send_lock,0)-
+				IFNULL(stock.prepared,0) as useCount,<!-- 移库可用数  -->
+			stock.time_stamp as timeStamp <!-- 时间戳  -->
+
+			FROM    stock where stock.stockroom_id=#outStockroomId# and  stock.product_id=#proTypeId#
+    </select>
+    
+</sqlMap>

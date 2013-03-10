@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="searchForm" type="cn.com.thtf.egov.cms.form.BuyContractSearchForm"/>
+		<form-bean name="prodSearchForm" type="cn.com.thtf.egov.cms.form.ProductSearchForm"/>
+		<form-bean name="buyContractOfAddForm" type="cn.com.thtf.egov.cms.form.BuyContractOfAddForm"/>
+		<form-bean name="buyContractReviewForm" type="cn.com.thtf.egov.cms.form.BuyContractReviewForm"/>
+	</form-beans>
+	<global-exceptions />
+	<global-forwards >
+		<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+	</global-forwards>
+	<action-mappings>
+		<!-- 采购合同列表 -->
+		<action path="/buyContractList"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="getBuyContracts"
+			name="searchForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/purchase/buyContractManage.jsp" />
+		</action>
+		<!-- 添加采购合同 显示-->
+		<action path="/addBuyContract"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="addBuyContract"
+			name="buyContractOfAddForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/purchase/buyContractOfAdd.jsp?type=add" />
+		</action>
+		<action path="/getBuyContractsReview"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="getBuyContractsReview"
+			name="buyContractReviewForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/buyContractList.do" />
+		</action>
+		<!-- 采购合同详情 -->
+		<action path="/getBuyContract"
+		type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+		parameter="getBuyContract"
+		name=""
+		scope="request"
+		validate="false">
+		<forward name="success" path="/jsp/purchase/buyContractView.jsp" />
+		<forward name="reviewpage" path="/jsp/purchase/buyContractReview.jsp"/>
+		</action>
+		<!-- 采购合同预览 -->
+		<action path="/getBuyContractPreview"
+		type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+		parameter="getBuyContractPreview"
+		name=""
+		scope="request"
+		validate="false">
+		<forward name="success" path="/jsp/purchase/buyContractPreview.jsp" />
+		</action>
+		<!-- 供应商选择 -->
+		<action path="/supplierList"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="getSuppliers"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/purchase/supplierSelectSub.jsp" />
+		</action>
+
+		<!-- 供应商联系人选择 -->
+		<action path="/getLinkmanBySuppplierId"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="getLinkmanBySupplierId"
+			name=""
+			scope="request"
+			validate="false">
+		</action>
+
+		<!-- 联系人信息 -->
+		<action path="/getLinkmanById"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="getLinkmanById"
+			name=""
+			scope="request"
+			validate="false">
+		</action>
+
+		<!-- 产品信息 -->
+		<action path="/getProdInfoByCondition"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="getProdInfoByCondition"
+			name="prodSearchForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/purchase/productSelectSub.jsp" />
+		</action>
+
+		<!-- 库房地址选择 -->
+		<action path="/getStockroomAddressList"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="getStockroomAddressList"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/purchase/stockroomAddressSelectSub.jsp" />
+		</action>
+
+		<!-- 客户地址选择 -->
+		<action path="/getCustomerAddressList"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="getCustomerAddressList"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/purchase/customerAddressSelectSub.jsp" />
+		</action>
+
+		<!-- 公司地址选择 -->
+		<action path="/getCompanyAddressList"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="getCompanyAddressList"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/purchase/companyAddressSelectSub.jsp" />
+		</action>
+
+		<!-- 收获地址添加 -->
+		<action path="/goReceiveDetailAddSub"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="goReceiveDetailAddSub"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/purchase/receiveDetailAddSub.jsp" />
+		</action>
+		
+		<!-- 需求管理列表 -->
+		<action path="/getDemandProductsList"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="getDemandProductsList"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/purchase/demandManage.jsp" />
+		</action>	
+		<!-- 添加采购合同 执行-->
+		<action path="/addBuyContractOfTransact"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="addBuyContractOfTransact"
+			name="buyContractOfAddForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/buyContractList.do?init=true" />
+			<forward name="sendInfo" path="/getReceiceInfoModify.do?typeOflook=add" />
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>	
+		<!-- 获取联系人信息-->
+		<action path="/getLinkman"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="getLinkman"
+			name="buyContractOfAddForm"
+			scope="request"
+			validate="false">
+		</action>
+		<!-- 添加收获地址-->
+		<action path="/addReceiveOfBuyContract"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="addReceiveOfBuyContract"
+			name="buyContractOfAddForm"
+			scope="request"
+			validate="false">
+		</action>	
+		<!-- 删除收获地址-->
+		<action path="/deleteReceiveOfBuyContract"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="deleteReceiveOfBuyContract"
+			name="buyContractOfAddForm"
+			scope="request"
+			validate="false">
+		</action>
+		<!-- 修改采购合同 显示-->
+		<action path="/modifyBuyContractOfShow"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="modifyBuyContractOfShow"
+			name="buyContractOfAddForm"
+			scope="request"
+			validate="false">
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+			<forward name="success" path="/jsp/purchase/buyContractOfAdd.jsp?type=modify" />
+		</action>
+		<!-- 采购合同 收货信息修列表-->
+		<action path="/getReceiceInfoModify"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="getReceiceInfoModify"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/purchase/receiceInfoModify.jsp" />
+		</action>
+		<!-- 采购合同 修改执行-->
+		<action path="/modifyBuyContractOfTransact"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="modifyBuyContractOfTransact"
+			name="buyContractOfAddForm"
+			scope="request"
+			validate="false">
+		<forward name="success" path="/buyContractList.do?init=true" />
+		<forward name="sendInfo" path="/getReceiceInfoModify.do?typeOflook=modify" />
+		<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>
+		<!-- 合同确认 显示-->
+		<action path="/getBuyContractDecideOfShow"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="getBuyContractDecideOfShow"
+			name="buyContractOfAddForm"
+			scope="request"
+			validate="false">
+		<forward name="success" path="/jsp/purchase/buyContractView.jsp?decide=true" />
+		</action>		
+		<!-- 合同确认 执行-->
+		<action path="/getBuyContractDecideOfTransact"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="getBuyContractDecideOfTransact"
+			name="buyContractOfAddForm"
+			scope="request"
+			validate="false">
+		<forward name="success" path="/buyContractList.do?init=true" redirect="true"/>
+		<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>		
+		<!-- 采购合同文件下载-->
+		<action path="/downloadBuyContractFile"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="downloadBuyContractFile"
+			name=""
+			scope="request"
+			validate="false">
+		<forward name="fail" path="/jsp/invoice/redirect.jsp" />	
+		</action>
+		<!-- 查看评审表-->
+		<action path="/lookBuyContractCommentTable"
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			parameter="lookBuyContractCommentTable"
+			name=""
+			scope="request"
+			validate="false">
+		<forward name="success" path="/jsp/purchase/auditPreview.jsp" />
+		</action>		
+		<!-- 查看评审表 执行-->
+		<action path="/printBuyContractCommentTable" 		 
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			name="saleBackContractOfAddForm"
+			parameter="printBuyContractCommentTable"			
+			scope="request"
+			validate="false">	
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>	
+		<!-- 删除采购合同 执行-->
+		<action path="/deleteBuyContract" 		 
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			name=""
+			parameter="deleteBuyContract"			
+			scope="request"
+			validate="false">	
+			<forward name="success" path="/buyContractList.do?init=true" />
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>
+		<!-- 显示打印多个发货地址 9.15 新加-->
+	<action path="/printBuyContractOfSendAddress" 		 
+			type="cn.com.thtf.egov.cms.action.purchase.BuyContractAction"
+			name=""
+			parameter="printBuyContractOfSendAddress"			
+			scope="request"
+			validate="false">	
+			<forward name="success" path="/jsp/purchase/printBuyContractOfSendAddress.jsp" />
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>
+	</action-mappings>
+	
+</struts-config>

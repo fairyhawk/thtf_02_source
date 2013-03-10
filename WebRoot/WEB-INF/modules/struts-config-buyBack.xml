@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources/>
+	<form-beans>
+		<!-- 添加采购退款 -->
+		<form-bean name="addBuyBackForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="addBuyBackForm" type="cn.com.thtf.egov.cms.dto.AddBuyBackListDto"></form-property>
+		</form-bean>
+		<form-bean name="searchBuyBackForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="searchBuyBack" type="cn.com.thtf.egov.cms.dto.BuyBackSearchDto"/>
+		</form-bean>
+
+	</form-beans>
+	<global-exceptions/>
+	<global-forwards>
+	</global-forwards>
+
+	<action-mappings>
+
+		<!--采购退款一览  by zzx-->
+		<action path="/getBuyBackList" type="cn.com.thtf.egov.cms.action.purchase.BuyBackAction"
+			parameter="getBuyBackList"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/buyBack/buyBackManager.jsp"/>
+		</action>
+
+		<!--采购退款检索  by zzx-->
+		<action path="/searchBuyBack" type="cn.com.thtf.egov.cms.action.purchase.BuyBackAction"
+			parameter="searchBuyBack"
+			scope="request"
+			name="searchBuyBackForm" validate="false">
+			<forward name="success" path="/jsp/buyBack/buyBackManager.jsp"/>
+		</action>
+
+		<!-- 添加采购退款 By LiuQingGang -->
+		<action path="/addBuyBack" type="cn.com.thtf.egov.cms.action.purchase.BuyBackAction"
+			parameter="addBuyBack" scope="request" name="addBuyBackForm" >
+			<forward name="success" path="/buyPayment.do"></forward>
+			<forward name="failure" path="/jsp/buyBack/buyBackAdd.jsp"></forward>
+		</action>
+
+		<!-- 查看采购退款   by jiangmx -->
+		<action path="/getBuyBackView" type="cn.com.thtf.egov.cms.action.purchase.BuyBackAction"
+			parameter="getBuyBackView" scope="request">
+			<forward name="success" path="/jsp/buyBack/buyBackView.jsp"/>
+			<forward name="failure" path="/jsp/buyBack/buyBackManager.jsp"/>
+		</action>
+		
+		<!-- 删除退款信息   by jiangmx   -->
+		<action path="/removeBuyBack" type="cn.com.thtf.egov.cms.action.purchase.BuyBackAction"
+				parameter="removeBuyBack"
+			    scope="request"
+			    validate="false">
+			<forward name="success" path="/getBuyBackList.do"/>
+			<forward name="failure" path="/getBuyBackList.do"/>
+		</action>
+ 
+		<!-- 录入退款时显示信息  By LiuQingGang-->
+ 
+	    <action path="/getPaymentInfoForAdd" type="cn.com.thtf.egov.cms.action.purchase.BuyBackAction"
+	    parameter="getPaymentInfoForAdd" scope="request" name="addBuyBackForm"
+	    >
+		    <forward name="failure" path="/getBuyBackList.do"></forward>
+		    <forward name="success" path="/jsp/buyBack/buyBackAdd.jsp"></forward>
+		    
+	    </action>
+	    <!-- 修改退款时显示信息  By LiuQingGang-->
+	    <action path="/getPaymentInfoForUpdate" type="cn.com.thtf.egov.cms.action.purchase.BuyBackAction"
+	    parameter="getPaymentInfoForUpdate" scope="request" name="addBuyBackForm"
+	    >
+		    <forward name="failure" path="/getBuyBackList.do"></forward>
+		    <forward name="success" path="/jsp/buyBack/buyBackModify.jsp"></forward>
+	    
+	    </action>
+	    
+ 		<!-- 修改采购退款 By LiuQingGang -->
+		<action path="/modifyBuyBack" type="cn.com.thtf.egov.cms.action.purchase.BuyBackAction"
+			parameter="modifyBuyBack" scope="request" name="addBuyBackForm" >
+			<forward name="success" path="/getBuyBackList.do"></forward>
+			<forward name="failure" path="/jsp/buyBack/buyBackModify.jsp"></forward>
+		</action>
+
+
+	</action-mappings>
+
+	<message-resources parameter="com.tsinghua.mp.web.conf.i18n.ApplicationResources"/>
+</struts-config>

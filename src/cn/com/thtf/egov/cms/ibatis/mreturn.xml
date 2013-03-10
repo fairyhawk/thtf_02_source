@@ -1,0 +1,1251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="mreturn_sqlMap">
+
+	<typeAlias alias="mreturnEntity" type="cn.com.thtf.egov.cms.entity.MreturnEntity" />
+	<typeAlias alias="mreturnDto" type="cn.com.thtf.egov.cms.dto.MreturnDto" />
+	<typeAlias alias="appointSellDetail" type="cn.com.thtf.egov.cms.dto.AppointSellDetailDto" />
+	<typeAlias alias="mreturnAppoint" type="cn.com.thtf.egov.cms.dto.MreturnAppointDto" />
+	<typeAlias alias="appointSendGoodsDetail" type="cn.com.thtf.egov.cms.dto.AppointSendGoodsDetailDto" />
+	<typeAlias alias="returnDetailEntity" type="cn.com.thtf.egov.cms.entity.ReturnDetailEntity" />
+	<typeAlias alias="returnDetailDto" type="cn.com.thtf.egov.cms.dto.ReturnDetailDto" /> 
+	<!--   回款列表   -->
+	<typeAlias alias="mReturnListDto" type="cn.com.thtf.egov.cms.dto.MReturnListDto" />
+	<!--  回款到账   -->
+	<typeAlias alias="MReturnInfoDto" type="cn.com.thtf.egov.cms.dto.MReturnInfoDto" />
+	<!--   回款列表检索   -->
+	<typeAlias alias="mReturnListQueryDto" type="cn.com.thtf.egov.cms.dto.MReturnListQueryDto" />
+	<!--   客户   -->
+	<typeAlias alias="mReturnCustomer" type="cn.com.thtf.egov.cms.entity.CustomerEntity" />
+	<!--   查询到帐更新所用信息   -->
+	<typeAlias alias="MreturnArriveInfoDto" type="cn.com.thtf.egov.cms.dto.MreturnArriveInfoDto" />
+
+	<!-- 查询回款信息 -->
+	<select id="selectMreturnListDetail" parameterClass="java.lang.String" resultClass="mReturnListDto"> 
+		select
+			mr.id              as id,
+			mr.no              as NO, 
+			product_type.name  as productTyepName, 
+			customer.name      as customerName,
+			mr.money		   as money, 
+			
+			ifnull(pm.money,0) as pointMoney,
+			ifnull(pcm.money,0) as pointContractMoney,
+			ifnull((ifnull(mr.money,0)-ifnull(pm.money,0)-ifnull(pcm.money,0)-ifnull(bm.money,0)),0) as pointProductTypeMoney,
+			ifnull(bm.money,0) as backMoney,
+			mr.return_type     as retrunType,
+				
+			mr.return_way      as returnWay, 
+			mr.date            as DATE, 
+			mr.return_date     as returnDate,
+			mr.number          as number,
+			mr.user_name       as userName
+		from 
+			customer,product_type,mreturn mr  
+			 
+			left join view_mreturn_point_money as pm on mr.id = pm.mrid
+			left join view_mreturn_point_contract_money as pcm on mr.id = pcm.mrid 
+			left join view_mreturn_back_money as bm on mr.id = bm.mrid
+		where
+			mr.product_type_id = product_type.id
+		and	mr.customer_id  = customer.id
+		and	mr.id =#id#  
+	</select>
+	
+	<!--   回款列表查询   -->
+	<select id="selectMreturnList.search" parameterClass="mReturnListQueryDto" resultClass="mReturnListDto"> 
+		select
+			  mr.id              AS id,
+			  mr.no              AS NO,
+			  mr.product_type_id AS ptoductTypeId,
+			  pt.name            AS productTyepName,
+			  mr.customer_id     AS customerId,
+			  c.name             AS customerName,
+			  mr.return_date     AS returnDate,
+			  IFNULL(mr.money,0) AS money,
+			  IFNULL(pm.money,0) AS pointMoney,
+			  IFNULL(pcm.money,0) AS pointContractMoney,
+			  IFNULL((IFNULL(mr.money,0)-IFNULL(pcm.money,0)-IFNULL(pm.money,0)-IFNULL(bm.money,0)),0) AS pointProductTypeMoney,
+			  mr.return_way      AS returnWay,
+			  mr.user_id         AS userId,
+			  mr.user_name       AS userName,
+			  IFNULL(bm.money,0) AS backMoney,
+			  mr.return_type     AS retrunType,
+			  mr.date            AS DATE,
+			  mr.number          AS number,
+			  sellB.status       AS STATUS
+
+		from 
+		mreturn mr
+			  LEFT JOIN product_type AS pt
+			    ON mr.product_type_id = pt.id
+			  LEFT JOIN customer AS c
+			    ON mr.customer_id = c.id
+			 
+			  LEFT JOIN (
+				select 
+					return_id as returnId,
+					status as status
+				from 
+					sell_back 
+				where 
+					status=2 or status=4 or status=6 or status=7
+				)  AS sellB ON mr.id = sellB.returnId
+			  LEFT JOIN (select return_id as return_id,sum(money) as money from  return_detail where appoint_type = 4  group by  return_id ) AS pm ON  mr.id = pm.return_id    
+			  LEFT JOIN (select return_id as return_id,sum(money) as money from  return_detail where appoint_type = 2   group by  return_id )  AS pcm ON   mr.id = pcm.return_id    
+
+			  LEFT JOIN (SELECT *
+				     FROM view_mreturn_back_money) AS bm
+			    ON mr.id = bm.mrid
+		where mr.id=mr.id
+		<!--   回款流水号   -->
+		<isNotEmpty prepend="and" property="id">
+			mr.id like '%$id$%' 
+		</isNotEmpty>
+		<!--   回款编号   -->
+		<isNotEmpty prepend="and" property="no">
+			mr.no like '%$no$%'
+		</isNotEmpty>
+		<!--   产品分类名称   -->
+		<isNotEmpty prepend="and" property="ptoductTypeId">
+			mr.product_type_id=#ptoductTypeId#
+		</isNotEmpty>
+		<!--   客户名称   -->
+		<isNotEmpty prepend="and" property="customerName">
+			c.name  like '%$customerName$%'
+		</isNotEmpty>
+		<!--   回款金额   -->
+		<isNotEmpty prepend="and" property="money">
+			mr.money=#money#
+		</isNotEmpty>
+		<!--   回款方式   -->
+		<isNotEmpty prepend="and" property="returnWay">
+			mr.return_way=#returnWay#
+		</isNotEmpty>
+		<!--   >=录入起始日期  <=录入终止日期   -->
+		<isNotEmpty prepend="and" property="startDate">
+			<![CDATA[ mr.date >= #startDate# ]]>
+		</isNotEmpty>
+		 <isNotEmpty prepend="and" property="endDate">
+			<![CDATA[ mr.date <= #endDate# ]]>
+		</isNotEmpty>
+		<!--   >=回款起始日期  <=回款终止日期   -->
+		<isNotEmpty prepend="and" property="startReturnDate">
+			<![CDATA[ mr.return_date >= #startReturnDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="endReturnDate">
+			<![CDATA[ mr.return_date <= #endReturnDate# ]]>
+		</isNotEmpty>
+		<!--   凭证号   -->
+		<isNotEmpty prepend="and" property="number">
+			mr.number like '%$number$%'
+		</isNotEmpty>
+		<!--   录入人   -->
+		<isNotEmpty prepend="and" property="userName">
+			mr.user_name like '%$userName$%'
+		</isNotEmpty>
+		<!--   回款类型  -->
+		<dynamic prepend="and" open="(" close=")">   
+			<isNotNull property="returnType0" prepend="or" removeFirstPrepend="false">
+			 mr.return_type = #returnType0#
+			</isNotNull>
+			<isNotNull property="returnType1" prepend="or">
+			 mr.return_type = #returnType1#
+			</isNotNull>
+			<isNotNull property="returnType2" prepend="or">
+			 mr.return_type = #returnType2#
+			</isNotNull>
+		</dynamic>
+<!--		产品合同号 -->
+		<isNotEmpty prepend="and" property="productContractCode">
+		mr.id in (
+		SELECT 	
+			rd.return_id as id
+			FROM 
+			send_goods AS sg
+			,sell_contract sc
+			,return_detail rd
+			WHERE sg.sell_contract_id  = sc.id
+			AND sc.product_contract_code = #productContractCode#
+			AND rd.send_goods_id = sg.id)
+		</isNotEmpty>
+<!--		发货单号 -->
+		<isNotEmpty prepend="and" property="sendGoodId">
+		mr.id in (
+		SELECT 	
+			rd.return_id as id
+			FROM 
+			return_detail rd
+			WHERE rd.send_goods_id = #sendGoodId#)
+		</isNotEmpty>
+		<!--   权限判断   -->
+		<isNotEmpty prepend="and" property="nowUserId">
+			<!--   销售助理   -->
+			<isEqual compareValue="3" property="userRole"> 
+				mr.product_type_id IN (SELECT
+                                uapTemp.product_type_id
+                              FROM user_area_product uapTemp
+                              WHERE uapTemp.user_id = #nowUserId#)  
+			</isEqual>
+			<!--   销售总监、信用专员   -->
+			<isEqual compareValue="5" property="userRole">
+				mr.product_type_id IN (SELECT
+                                upTemp.product_type_id
+                              FROM user_product upTemp
+                              WHERE upTemp.user_id = #nowUserId#)
+			</isEqual>
+			<isEqual compareValue="6" property="userRole"> 
+				mr.product_type_id IN (SELECT
+                                upTemp.product_type_id
+                              FROM user_product upTemp
+                              WHERE upTemp.user_id = #nowUserId#)
+			</isEqual>
+		</isNotEmpty>
+		group by mr.id desc
+	</select>
+	<select id="selectMreturnList.recordCount"  parameterClass="mReturnListQueryDto"  resultClass="java.lang.Integer">
+		select count(*) from(
+			select mr.id
+			from 
+			mreturn mr
+			  LEFT JOIN customer AS c
+			    ON mr.customer_id = c.id
+			where mr.id=mr.id
+			<!--   回款流水号   -->
+			<isNotEmpty prepend="and" property="id">
+				mr.id like '%$id$%'
+			</isNotEmpty>
+			<!--   回款编号   -->
+			<isNotEmpty prepend="and" property="no">
+				mr.no like '%$no$%'
+			</isNotEmpty>
+			<!--   产品分类名称   -->
+			<isNotEmpty prepend="and" property="ptoductTypeId">
+				mr.product_type_id=#ptoductTypeId#
+			</isNotEmpty>
+			<!--   客户名称   -->
+			<isNotEmpty prepend="and" property="customerName">
+				c.name  like '%$customerName$%'
+			</isNotEmpty>
+			<!--   回款金额   -->
+			<isNotEmpty prepend="and" property="money">
+				mr.money=#money#
+			</isNotEmpty>
+			<!--   回款方式   -->
+			<isNotEmpty prepend="and" property="returnWay">
+				mr.return_way=#returnWay#
+			</isNotEmpty>
+			<!--   >=录入起始日期  <=录入终止日期   -->
+			<isNotEmpty prepend="and" property="startDate">
+				<![CDATA[ mr.date >= #startDate# ]]>
+			</isNotEmpty>
+			 <isNotEmpty prepend="and" property="endDate">
+				<![CDATA[ mr.date <= #endDate# ]]>
+			</isNotEmpty>
+			<!--   >=回款起始日期  <=回款终止日期   -->
+			<isNotEmpty prepend="and" property="startReturnDate">
+				<![CDATA[ mr.return_date >= #startReturnDate# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="endReturnDate">
+				<![CDATA[ mr.return_date <= #endReturnDate# ]]>
+			</isNotEmpty>
+			<!--   凭证号   -->
+			<isNotEmpty prepend="and" property="number">
+				mr.number like '%$number$%'
+			</isNotEmpty>
+			<!--   录入人   -->
+			<isNotEmpty prepend="and" property="userId">
+				mr.user_id = #userId#
+			</isNotEmpty>
+			<!--   回款类型  -->
+			<dynamic prepend="and" open="(" close=")">   
+				<isNotNull property="returnType0" prepend="or" removeFirstPrepend="false">
+				 mr.return_type = #returnType0#
+				</isNotNull>
+				<isNotNull property="returnType1" prepend="or">
+				 mr.return_type = #returnType1#
+				</isNotNull>
+				<isNotNull property="returnType2" prepend="or">
+				 mr.return_type = #returnType2#
+				</isNotNull>
+			</dynamic>
+			<!--		产品合同号 -->
+		<isNotEmpty prepend="and" property="productContractCode">
+		mr.id in (
+		SELECT 	
+			rd.return_id as id
+			FROM 
+			send_goods AS sg
+			,sell_contract sc
+			,return_detail rd
+			WHERE sg.sell_contract_id  = sc.id
+			AND sc.product_contract_code = #productContractCode#
+			AND rd.send_goods_id = sg.id)
+		</isNotEmpty>
+<!--		发货单号 -->
+		<isNotEmpty prepend="and" property="sendGoodId">
+		mr.id in (
+		SELECT 	
+			rd.return_id as id
+			FROM 
+			return_detail rd
+			WHERE rd.send_goods_id = #sendGoodId#)
+		</isNotEmpty>
+			<!--   权限判断   -->
+			<isNotEmpty prepend="and" property="nowUserId">
+				<!--   销售助理   -->
+				<isEqual compareValue="3" property="userRole"> 
+					mr.product_type_id IN (SELECT
+	                                uapTemp.product_type_id
+	                              FROM user_area_product uapTemp
+	                              WHERE uapTemp.user_id = #nowUserId#)  
+				</isEqual>
+				<!--   销售总监、信用专员   -->
+				<isEqual compareValue="5" property="userRole">
+					mr.product_type_id IN (SELECT
+	                                upTemp.product_type_id
+	                              FROM user_product upTemp
+	                              WHERE upTemp.user_id = #nowUserId#)
+				</isEqual>
+				<isEqual compareValue="6" property="userRole"> 
+					mr.product_type_id IN (SELECT
+	                                upTemp.product_type_id
+	                              FROM user_product upTemp
+	                              WHERE upTemp.user_id = #nowUserId#)
+				</isEqual>
+			</isNotEmpty>
+			group by mr.id
+		) as mreturnc 
+	</select>
+
+	<!--   根据回款ID检索回款   -->
+	<select id="selectMreturnById" parameterClass="java.lang.String" resultClass="mreturnDto">
+		select 
+			mreturn.id as id,
+			mreturn.return_type  as returnType,
+			mreturn.no	as no,
+			mreturn.return_way as returnWay,
+			mreturn.number as number,
+			
+			product_type.name as productName,
+			customer.name as customerName,
+			mreturn.date as date,
+			mreturn.return_date as returnDate,
+			mreturn.money as money,
+			IFNULL(sb.sumMoney,0)    as backMoney,
+
+			mreturn.product_type_id as productTypeId,
+			mreturn.customer_id as customerId,
+			mreturn.user_id as userId,
+			mreturn.time_stamp as timeStamp,
+			mreturn.user_name as userName,
+			mreturn.text as text
+
+			FROM mreturn
+			  LEFT JOIN (
+				SELECT
+				  sell_back.return_id       AS returnId,
+				  sell_back.product_type_id AS productTypeId,
+				  SUM(sell_back.money)      AS sumMoney
+				FROM sell_back
+				WHERE sell_back.status = 8
+				GROUP BY sell_back.return_id,sell_back.product_type_id
+				) AS sb 
+			      ON sb.productTypeId = mreturn.product_type_id AND sb.returnId = mreturn.id
+			  ,customer,
+			  product_type
+			WHERE mreturn.id = #id#
+			    AND mreturn.customer_id = customer.id
+			    AND mreturn.product_type_id = product_type.id
+	</select> 
+
+
+	<!--   更新回款表时间戳   -->
+	<update id="updateMReturnTimestamp" parameterClass="mreturnDto">	
+		update 
+			mreturn 
+		set 
+			time_stamp = now()
+		where
+				time_stamp = #timeStamp# 
+			and id = #id#
+	</update>
+	<!--   更新回款明细表指定金额   -->
+	<update id="updateReturnDetailMoney" parameterClass="mreturnDto">	
+		update 
+			return_detail 
+		set 
+			money = #money#
+		where
+			id = #detailId#
+	</update>
+	<!--   更新回款明细表指定金额   -->
+	<update id="updateMoneyBySellIdAndReturnId" parameterClass="mreturnDto">	
+		update 
+			return_detail 
+		set 
+			money = money + #money#
+		where
+			return_id = #id#
+		and sell_contract_id = #sellContractId#
+	</update>
+	<!--   删除回款明细   -->
+	<delete id="deleteReturnDetail" parameterClass="mreturnDto">	
+		delete from return_detail where id = #detailId#
+	</delete>
+	<!--   删除回款明细   -->
+	<delete id="deleteReturnDetailBySendgoodsId" parameterClass="mreturnDto">	
+		delete from return_detail where send_goods_id = #sendGoodsId# and return_id = #id#
+	</delete>
+	<!--   新增回款明细 指定到发货单   -->
+	<insert id="insertReturnDetail" parameterClass="mreturnDto">
+		insert into
+			 return_detail(return_id,appoint_type,sell_contract_id,send_goods_id,product_id,money)
+		values 
+			(#id#,#appointType#,#sellContractId#,#sendGoodsId#,#productId#,#money#) 
+	</insert>
+
+	<!--   根据合同ID检索在途款   -->
+	<select id="selectMreturn" parameterClass="java.lang.String" resultClass="mreturnDto">
+		select 
+			mreturn.id as id, 
+
+			mreturn.time_Stamp as timeStamp
+		from 
+			mreturn,return_detail
+		where
+				return_detail.sell_contract_id = #sellContractId# 
+			and	mreturn.id = return_detail.return_id
+		group by mreturn.id 
+	</select> 
+
+	<!--   根据合同ID检索检索在途款明细 回款   -->
+	<select id="selectMreturnDetail" parameterClass="java.lang.String" resultClass="mreturnDto">
+		select 
+			mreturn.id as id,
+			return_detail.id as detailId,
+			return_detail.money as money,
+			mreturn.time_Stamp as timeStamp
+		from 
+			mreturn,return_detail
+		where
+				return_detail.appoint_Type = 2
+			and mreturn.return_type != 1
+			and return_detail.sell_contract_id = #sellContractId# 
+			and	mreturn.id = return_detail.return_id
+		order by id
+	</select>
+
+	<!-- 根据发货单ID检索回款明细 -->
+	<select id="selectMreturnDetailBySendgoodsId" parameterClass="java.lang.String" resultClass="mreturnDto">
+		select 
+			mreturn.id as id,
+			mreturn.time_Stamp as timeStamp,
+			return_detail.send_goods_id as sendGoodsId
+		from 
+			mreturn,return_detail
+		where 
+				return_detail.send_goods_id = #sendGoodsId# 
+			and	mreturn.id = return_detail.return_id
+		group by mreturn.id
+	</select>
+
+	<!-- 根据发货单ID,回款ID检索指定金额 -->
+	<select id="selectBySendgoodsIdAndMreturnId" parameterClass="mreturnDto" resultClass="mreturnDto">
+		select  
+			ifnull(sum(return_detail.money),0) as appointMoney
+		from 
+			return_detail
+		where 
+				return_detail.send_goods_id = #sendGoodsId# 
+			and	return_detail.return_id = #id#
+		group by return_detail.return_id
+	</select>
+
+	<!-- 根据回款ID,合同ID,检索是否存在回款明细 -->
+	<select id="selectBySendgoodsIdAndSellId" parameterClass="mreturnDto" resultClass="java.lang.Integer">
+		select  
+			count(*)
+		from 
+			return_detail
+		where 
+				return_detail.sell_contract_id = #sellContractId# 
+			and	return_detail.return_id = #id#
+	</select>
+
+	<!--   根据合同ID检索检索在途款明细 在途款   -->
+	<select id="selectMreturnDetailInRransit" parameterClass="java.lang.String" resultClass="mreturnDto">
+		select 
+			mreturn.id as id,
+			return_detail.id as detailId,
+			return_detail.money as money,
+			mreturn.time_Stamp as timeStamp
+		from 
+			mreturn,return_detail
+		where 
+				return_detail.appoint_Type = 2
+			and mreturn.return_type = 1
+			and return_detail.sell_contract_id = #sellContractId# 
+			and	mreturn.id = return_detail.return_id
+		order by id
+	</select>
+
+	<!--   根据回款ID和指定类型检索回款明细   -->
+	<select id="selectMreturnAndCustomerCredit" parameterClass="returnDetailEntity" resultClass="returnDetailDto">
+		 select 
+			return_detail.id as id,
+			return_detail.return_id as returnId, 
+			return_detail.appoint_type as appointType, 
+			return_detail.sell_contract_id as sellContractId,
+			return_detail.send_goods_id as sendGoodsId,
+			return_detail.product_id as productId,
+			return_detail.money as money,
+			sell_contract.customer_credit_id as customerCreditId,
+			
+			send_goods.credit_type_id as creditTypeId,
+			send_goods.customer_id as customerId,
+			send_goods.product_type_id as productTypeId
+		from 
+			return_detail,send_goods,sell_contract
+		where
+				return_detail.appoint_Type = #appointType#
+			and	return_detail.return_id = #returnId#
+			and	send_goods.id = return_detail.send_goods_id
+			and	send_goods.sell_contract_id = sell_contract.id 
+	</select>
+
+	<!--   根据回款ID和指定类型检索回款明细   -->
+	<select id="selectMreturnDetailByAppointType" parameterClass="returnDetailEntity" resultClass="returnDetailDto">
+		select 
+			return_detail.id as id,
+			return_detail.return_id as returnId, 
+			return_detail.appoint_type as appointType, 
+			return_detail.sell_contract_id as sellContractId,
+			return_detail.send_goods_id as sendGoodsId,
+			return_detail.product_id as productId,
+			return_detail.money as money 
+		from 
+			return_detail
+		where
+				return_detail.appoint_Type = #appointType#
+			and	return_detail.return_id = #returnId# 
+	</select>
+
+	<!--   指定销售合同小页面   -->
+	<select id="selectSellContractDetail.date" parameterClass="mreturnAppoint" resultClass="appointSellDetail">
+		select 
+			sell_contract.id as id ,
+			sell_contract.product_type_id as productTypeId,
+			product_type.name as productTypeName,
+			sell_contract.product_contract_code as productContractCode,
+			sell_contract.company_contract_code as companyContractCode,
+			sell_contract.money as money,
+
+			ifnull(fhData.fhMoney,0) as fhMoney,
+			ifnull(bhData.bhMoney,0) as bhMoney,
+			ifnull(zdmxData.zdMoney,0) as sendGoodsMoney,
+			ifnull(zdhtData.zdMoney,0) as sellMoney,
+			ifnull(kphtData.kpMoney,0) as kpMoney,
+			ifnull(sbData.sbMoney,0) as sbMoney,
+			ifnull(thData.thMoney,0) as thMoney,
+			ifnull(sell_contract.cash_money,0)as cashMoney,
+
+			sell_contract.user_name  as userName,
+
+			hkdetile.mreturnDetileId as mreturnDetileId,
+			hkdetile.appointMoney as appointMoney,
+
+			sell_contract.customer_credit_id as customerCreditId
+		from sell_contract 
+			left join (
+			select  
+				return_detail.id as mreturnDetileId,
+				return_detail.money as appointMoney,
+				return_detail.sell_contract_id as sellContractId
+				from return_detail 
+				where	return_detail.return_id=#mreturnId#
+					and return_detail.appoint_type = 2 
+			) as hkdetile on hkdetile.sellContractId = sell_contract.id
+		
+			left join (
+			select
+				send_goods.sell_contract_id as sellContractId,
+				sum(send_goods.money) as fhMoney               
+				from send_goods,sell_contract
+				where send_goods.status = 5 
+				and send_goods.sell_contract_id = sell_contract.id
+				group by send_goods.sell_contract_id
+			) as fhData on fhData.sellContractId = sell_contract.id
+			 
+			left join (
+			select
+				send_goods.sell_contract_id as sellContractId,
+				sum(send_goods.money) as bhMoney               
+				from send_goods,sell_contract
+				where send_goods.status = 8 
+				and send_goods.sell_contract_id = sell_contract.id
+				group by send_goods.sell_contract_id
+			) as bhData on bhData.sellContractId = sell_contract.id
+
+			left join (
+			select send_goods.sell_contract_id as sellContractId,sum(return_detail.money) as zdMoney                
+			from send_goods,return_detail
+			where return_detail.appoint_type = 4
+			  and return_detail.send_goods_id = send_goods.id 
+			  group by send_goods.sell_contract_id
+			) as zdmxData on zdmxData.sellContractId = sell_contract.id
+
+			left join (
+			select return_detail.sell_contract_id as sellContractId,sum(return_detail.money) as zdMoney                
+			from  return_detail
+			where return_detail.appoint_type = 2 
+			  group by return_detail.sell_contract_id
+			) as zdhtData on zdhtData.sellContractId = sell_contract.id
+
+			left join (
+			select send_goods.sell_contract_id as sellContractId,sum(sell_invoice_detail.money) as kpMoney 
+			from send_goods,sell_invoice_detail,sell_invoice 
+			where sell_invoice.status != 7
+			and sell_invoice_detail.send_goods_id = send_goods.id
+			and sell_invoice_detail.sell_invoice_id = sell_invoice.id 
+			  group by send_goods.sell_contract_id
+			) as kphtData on kphtData.sellContractId = sell_contract.id
+
+			left join (
+			select sell_contract.id as sellContractId, sum(sell_back_contract.money) as sbMoney  
+			from sell_contract left join sell_back_contract on sell_back_contract.sell_contract_id = sell_contract.id  
+			where sell_back_contract.status = 11  
+			  group by sell_contract.id
+			) as sbData on sbData.sellContractId = sell_contract.id 
+
+
+			left join (
+			select 
+				sell_contract.id as sellContractId,sum(sell_back_goods.money) as thMoney  
+			from    sell_contract,sell_back_goods,send_goods  
+			where 	send_goods.sell_contract_id = sell_contract.id 
+				and sell_back_goods.send_goods_id = send_goods.id 
+				and (sell_back_goods.status = 2 or sell_back_goods.status = 4 
+				or sell_back_goods.status = 6 or sell_back_goods.status = 8)
+			  group by sell_contract.id
+			) as thData on thData.sellContractId = sell_contract.id  
+			 
+		,product_type 
+
+		where
+		    sell_contract.status = 14
+		and sell_contract.product_type_id = #productTypeId#
+		and sell_contract.customer_id = #customerId#
+		
+		and	sell_contract.product_type_id = product_type.id 
+		<isNotEmpty prepend="and" property="userAreaProductList">
+			<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+					(sell_contract.product_type_id = $userAreaProductList[].productTypeId$ 
+				and sell_contract.user_area_id = $userAreaProductList[].userAreaId$)
+			</iterate>
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="productContractCode">
+			sell_contract.product_contract_code like '%$productContractCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="companyContractCode">
+			sell_contract.company_contract_code like '%$companyContractCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="appointMoney">
+			hkdetile.appointMoney != ''
+		</isNotEmpty>
+		<isEmpty prepend="and" property="appointMoney">
+			(sell_contract.money-ifnull(fhData.fhMoney,0)-ifnull(zdhtData.zdMoney,0)+ifnull(thData.thMoney,0)) > 0  
+			and ifnull(hkdetile.appointMoney,0) = 0
+		</isEmpty> 
+		
+		order by sell_contract.id 
+	</select>
+
+	<select id="selectSellContractDetail.recordCount" parameterClass="mreturnAppoint" resultClass="java.lang.Integer">
+		select 
+			count(*) 
+		from sell_contract 
+			left join (
+			select  
+				return_detail.id as mreturnDetileId,
+				return_detail.money as appointMoney,
+				return_detail.sell_contract_id as sellContractId
+				from return_detail 
+				where	return_detail.return_id=#mreturnId#
+					and return_detail.appoint_type = 2
+			) as hkdetile on hkdetile.sellContractId = sell_contract.id
+		
+			left join (
+			select
+				send_goods.sell_contract_id as sellContractId,
+				sum(send_goods.money) as fhMoney               
+				from send_goods,sell_contract
+				where send_goods.status = 5 
+				and send_goods.sell_contract_id = sell_contract.id
+				group by send_goods.sell_contract_id
+			) as fhData on fhData.sellContractId = sell_contract.id
+		 
+			left join (
+			select return_detail.sell_contract_id as sellContractId,sum(return_detail.money) as zdMoney                
+			from  return_detail
+			where return_detail.appoint_type = 2 
+			  group by return_detail.sell_contract_id
+			) as zdhtData on zdhtData.sellContractId = sell_contract.id 
+			 left join (
+			select 
+				sell_contract.id as sellContractId,sum(sell_back_goods.money) as thMoney  
+			from    sell_contract,sell_back_goods,send_goods  
+			where 	send_goods.sell_contract_id = sell_contract.id 
+				and sell_back_goods.send_goods_id = send_goods.id 
+				and (sell_back_goods.status = 2 or sell_back_goods.status = 4 
+				or sell_back_goods.status = 6 or sell_back_goods.status = 8)
+			  group by sell_contract.id
+			) as thData on thData.sellContractId = sell_contract.id  
+		,product_type 
+
+		where
+		    sell_contract.status = 14
+		and sell_contract.product_type_id = #productTypeId#
+		and sell_contract.customer_id = #customerId#
+		 
+		and	sell_contract.product_type_id = product_type.id
+		<isNotEmpty prepend="and" property="userAreaProductList">
+			<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+					(sell_contract.product_type_id = $userAreaProductList[].productTypeId$ 
+				and sell_contract.user_area_id = $userAreaProductList[].userAreaId$)
+			</iterate>
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productContractCode">
+			sell_contract.product_contract_code like '%$productContractCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="companyContractCode">
+			sell_contract.company_contract_code like '%$companyContractCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="appointMoney">
+			hkdetile.appointMoney != ''
+		</isNotEmpty>
+		<isEmpty prepend="and" property="appointMoney">
+			(sell_contract.money-ifnull(fhData.fhMoney,0)-ifnull(zdhtData.zdMoney,0)+ifnull(thData.thMoney,0)) > 0  
+			and ifnull(hkdetile.appointMoney,0) = 0
+		</isEmpty>
+		order by sell_contract.id
+	</select>
+
+	<!-- 指定发货明细小页面 -->
+	<select id="selectSendGoodsDetail.date" parameterClass="mreturnAppoint" resultClass="appointSendGoodsDetail">
+		 select
+			send_goods.status as status,
+			send_goods.id as sendGoodsId,
+			sell_contract.product_contract_code as productContractCode,
+			sell_contract.company_contract_code as companyContractCode,
+			product.id as productId,
+			product.code as productCode,
+			product.name as productName,
+			product.type as productType,
+			product.unit as productUnit,
+			fhData.productPrice as sellContractDetailPrice,
+			send_goods.user_name as userName, 
+
+			ifnull(fhData.fhMoney,0) as fhMoney, 
+			ifnull(zdData.zdMoney,0) as sendGoodsMoney,
+			ifnull(kpData.kpMoney,0) as kpMoney,
+			ifnull(thData.thcount*fhData.productPrice,0) as thMoney,
+
+			hkdetile.mreturnDetileId as mreturnDetileId,
+			hkdetile.appointMoney as appointMoney,
+
+			sell_contract.customer_credit_id as customerCreditId,
+	
+			DATE_ADD(send_goods.send_date,INTERVAL send_goods.arterm DAY) as sgrqartermdate
+		from 
+			send_goods_detail
+
+			left join (
+				select  
+					return_detail.id as mreturnDetileId,
+					return_detail.money as appointMoney, 
+					return_detail.send_goods_id as sendGoodsId,
+					return_detail.product_id as productId
+				from	return_detail
+				where 
+						return_detail.return_id=#mreturnId#
+					and return_detail.appoint_type = 4 
+			) as hkdetile 
+			
+			on hkdetile.sendGoodsId = send_goods_detail.send_goods_id
+			and hkdetile.productId = send_goods_detail.product_id
+			
+			left join (
+				select 
+					send_goods_detail.send_goods_id as sendGoodsId,
+					send_goods_detail.product_id as productId,
+                    sell_contract_detail.price as productPrice,
+					sum(send_goods_detail.count*sell_contract_detail.price) as fhMoney
+				from 	send_goods,send_goods_detail,sell_contract_detail
+				where
+					send_goods_detail.send_goods_id = send_goods.id
+				<isEmpty prepend="and" property="isFreeze">
+					send_goods.status = 5
+				</isEmpty>
+				<isNotEmpty prepend="and" property="isFreeze">
+					(send_goods.status = 2 or send_goods.status = 3 or send_goods.status = 5)
+				</isNotEmpty> 
+				and send_goods.sell_contract_id = sell_contract_detail.sell_contract_id
+				and send_goods_detail.product_id = sell_contract_detail.product_id
+				group by  send_goods_detail.send_goods_id,send_goods_detail.product_id
+			) as fhData 
+			
+			on send_goods_detail.send_goods_id = fhData.sendGoodsId 
+			and send_goods_detail.product_id = fhData.productId 
+
+			left join (
+				select 
+					send_goods_detail.send_goods_id as sendGoodsId,
+					send_goods_detail.product_id as productId,
+					sum(return_detail.money) as zdMoney                
+				from send_goods_detail,return_detail
+				where 
+					return_detail.appoint_type = 4
+				and 	return_detail.send_goods_id = send_goods_detail.send_goods_id
+				and		send_goods_detail.product_id = return_detail.product_id
+				group by send_goods_detail.send_goods_id,send_goods_detail.product_id
+			) as zdData 
+
+			on send_goods_detail.send_goods_id= zdData.sendGoodsId
+			and send_goods_detail.product_id = zdData.productId
+
+			left join (
+				select 
+					send_goods_detail.send_goods_id as sendGoodsId,
+					send_goods_detail.product_id as productId,
+					sum(sell_invoice_detail.money) as kpMoney 
+				from send_goods_detail,sell_invoice_detail,sell_invoice 
+				where 
+					sell_invoice.status != 7
+				and 	sell_invoice_detail.send_goods_id = send_goods_detail.send_goods_id
+				and 	sell_invoice_detail.sell_invoice_id = sell_invoice.id 
+				and	sell_invoice_detail.product_id = send_goods_detail.product_id
+				group by send_goods_detail.send_goods_id,send_goods_detail.product_id
+			) as kpData 
+
+			on send_goods_detail.send_goods_id= kpData.sendGoodsId
+			and send_goods_detail.product_id = kpData.productId
+
+			left join(
+				select 
+					send_goods_detail.send_goods_id as sendGoodsId,
+					send_goods_detail.product_id as productId,
+					sum(sell_back_goods_detail.count) as thcount 
+				from sell_back_goods,sell_back_goods_detail,send_goods_detail
+				where 
+					(sell_back_goods.status = 2 or sell_back_goods.status = 4 
+				or sell_back_goods.status = 6 or sell_back_goods.status = 8)
+				and	sell_back_goods.id = sell_back_goods_detail.sell_back_goods_id
+				and	sell_back_goods_detail.product_id = send_goods_detail.product_id
+				and	sell_back_goods.send_goods_id = send_goods_detail.send_goods_id
+
+				group by send_goods_detail.send_goods_id,send_goods_detail.product_id
+			) as thData 
+
+			on send_goods_detail.send_goods_id= thData.sendGoodsId
+			and send_goods_detail.product_id = thData.productId
+
+			,send_goods,sell_contract,sell_contract_detail,product
+		where 
+			send_goods.product_type_id = #productTypeId#
+		and send_goods.customer_id = #customerId# 
+		and	send_goods_detail.send_goods_id = send_goods.id
+		and	send_goods_detail.product_id = 	product.id
+		and	send_goods.sell_contract_id = sell_contract.id
+		and	sell_contract_detail.sell_contract_id = sell_contract.id
+		and fhData.fhMoney > ifnull(thData.thcount*fhData.productPrice,0)
+		<isEmpty prepend="and" property="isFreeze">
+			send_goods.status = 5
+		</isEmpty>
+		<isNotEmpty prepend="and" property="isFreeze">
+			(send_goods.status = 2 or send_goods.status = 3 or send_goods.status = 5)
+		</isNotEmpty> 
+		<isNotEmpty prepend="and" property="userAreaProductList">
+			<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+					(send_goods.product_type_id = $userAreaProductList[].productTypeId$ 
+				and send_goods.user_area_id = $userAreaProductList[].userAreaId$)
+			</iterate>
+		</isNotEmpty>
+
+		<isNotEmpty prepend="and" property="sendGoodsId">
+			send_goods.id like '%$sendGoodsId$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productContractCode">
+			sell_contract.product_contract_code like '%$productContractCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="companyContractCode">
+			sell_contract.company_contract_code like '%$companyContractCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productCode">
+			product.code like '%$productCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productName">
+			product.name like '%$productName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productType">
+			product.type like '%$productType$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="userName">
+			send_goods.user_name like '%$userName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="appointMoney">
+			hkdetile.appointMoney != ''
+		</isNotEmpty>
+		<isEmpty prepend="and" property="appointMoney">
+			(ifnull(fhData.fhMoney,0)-ifnull(zdData.zdMoney,0)) > 0 and ifnull(hkdetile.appointMoney,0) = ''
+		</isEmpty> 
+		<!-- 根据要求到账起始日期 -->
+		<isNotEmpty prepend="and" property="startSgrqartermdate">
+			<![CDATA[ (DATE_ADD(send_goods.send_date,INTERVAL send_goods.arterm DAY)) >= #startSgrqartermdate# ]]>
+		</isNotEmpty>
+		<!-- 根据要求到账终止日期 -->
+		<isNotEmpty prepend="and" property="endSgrqartermdate">
+			<![CDATA[ (DATE_ADD(send_goods.send_date,INTERVAL send_goods.arterm DAY)) <= #endSgrqartermdate# ]]>
+		</isNotEmpty>
+
+		group by send_goods.id,send_goods_detail.product_id
+		order by DATE_ADD(send_goods.send_date,INTERVAL send_goods.arterm DAY)  
+	</select>
+
+	<select id="selectSendGoodsDetail.recordCount" parameterClass="mreturnAppoint" resultClass="java.lang.Integer">
+		select count(*) from 
+		(select 
+			send_goods.id as sendGoodsId 
+		from 
+			send_goods_detail 
+
+			left join (
+				select  
+					return_detail.id as mreturnDetileId,
+					return_detail.money as appointMoney, 
+					return_detail.send_goods_id as sendGoodsId,
+					return_detail.product_id as productId
+				from	return_detail
+				where 
+						return_detail.return_id=#mreturnId#
+					and return_detail.appoint_type = 4 
+			) as hkdetile 
+			
+			on hkdetile.sendGoodsId = send_goods_detail.send_goods_id
+			and hkdetile.productId = send_goods_detail.product_id
+			
+			left join (
+				select 
+					send_goods_detail.send_goods_id as sendGoodsId,
+					send_goods_detail.product_id as productId,
+                    sell_contract_detail.price as productPrice,
+					sum(send_goods_detail.count*sell_contract_detail.price) as fhMoney
+				from 	send_goods,send_goods_detail,sell_contract_detail
+				where
+					send_goods_detail.send_goods_id = send_goods.id
+				<isEmpty prepend="and" property="isFreeze">
+					send_goods.status = 5
+				</isEmpty>
+				<isNotEmpty prepend="and" property="isFreeze">
+					(send_goods.status = 2 or send_goods.status = 3 or send_goods.status = 5)
+				</isNotEmpty> 
+				and send_goods.sell_contract_id = sell_contract_detail.sell_contract_id
+				and send_goods_detail.product_id = sell_contract_detail.product_id
+				group by  send_goods_detail.send_goods_id,send_goods_detail.product_id
+			) as fhData 
+			
+			on send_goods_detail.send_goods_id = fhData.sendGoodsId 
+			and send_goods_detail.product_id = fhData.productId 
+
+			left join (
+				select 
+					send_goods_detail.send_goods_id as sendGoodsId,
+					send_goods_detail.product_id as productId,
+					sum(return_detail.money) as zdMoney                
+				from send_goods_detail,return_detail
+				where 
+					return_detail.appoint_type = 4
+				and 	return_detail.send_goods_id = send_goods_detail.send_goods_id
+				and		send_goods_detail.product_id = return_detail.product_id
+				group by send_goods_detail.send_goods_id,send_goods_detail.product_id
+			) as zdData 
+
+			on send_goods_detail.send_goods_id= zdData.sendGoodsId
+			and send_goods_detail.product_id = zdData.productId 
+
+			left join(
+				select 
+					send_goods_detail.send_goods_id as sendGoodsId,
+					send_goods_detail.product_id as productId,
+					sum(sell_back_goods_detail.count) as thcount 
+				from sell_back_goods,sell_back_goods_detail,send_goods_detail
+				where 
+					(sell_back_goods.status = 2 or sell_back_goods.status = 4 
+				or sell_back_goods.status = 6 or sell_back_goods.status = 8)
+				and	sell_back_goods.id = sell_back_goods_detail.sell_back_goods_id
+				and	sell_back_goods_detail.product_id = send_goods_detail.product_id
+				and	sell_back_goods.send_goods_id = send_goods_detail.send_goods_id
+
+				group by send_goods_detail.send_goods_id,send_goods_detail.product_id
+			) as thData 
+
+			on send_goods_detail.send_goods_id= thData.sendGoodsId
+			and send_goods_detail.product_id = thData.productId 
+
+			,send_goods,sell_contract,sell_contract_detail,product
+		where  
+			send_goods.product_type_id = #productTypeId#
+		and send_goods.customer_id = #customerId# 
+
+		and	send_goods_detail.send_goods_id = send_goods.id
+		and	send_goods_detail.product_id = 	product.id
+		and	send_goods.sell_contract_id = sell_contract.id
+		and	sell_contract_detail.sell_contract_id = sell_contract.id
+		and fhData.fhMoney > ifnull(thData.thcount*fhData.productPrice,0)
+		<isEmpty prepend="and" property="isFreeze">
+			send_goods.status = 5
+		</isEmpty>
+		<isNotEmpty prepend="and" property="isFreeze">
+			(send_goods.status = 2 or send_goods.status = 3 or send_goods.status = 5)
+		</isNotEmpty> 
+
+		<isNotEmpty prepend="and" property="userAreaProductList">
+			<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+					(send_goods.product_type_id = $userAreaProductList[].productTypeId$ 
+				and send_goods.user_area_id = $userAreaProductList[].userAreaId$)
+			</iterate>
+		</isNotEmpty> 
+
+		<isNotEmpty prepend="and" property="sendGoodsId">
+			send_goods.id like '%$sendGoodsId$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productContractCode">
+			sell_contract.product_contract_code like '%$productContractCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="companyContractCode">
+			sell_contract.company_contract_code like '%$companyContractCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productCode">
+			product.code like '%$productCode$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productName">
+			product.name like '%$productName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="productType">
+			product.type like '%$productType$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="userName">
+			send_goods.user_name like '%$userName$%'
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="appointMoney">
+			hkdetile.appointMoney != ''
+		</isNotEmpty>
+		<isEmpty prepend="and" property="appointMoney">
+			(ifnull(fhData.fhMoney,0)-ifnull(zdData.zdMoney,0)) > 0 and ifnull(hkdetile.appointMoney,0) = ''
+		</isEmpty> 
+		<!-- 根据要求到账起始日期 -->
+		<isNotEmpty prepend="and" property="startSgrqartermdate">
+			<![CDATA[ (DATE_ADD(send_goods.send_date,INTERVAL send_goods.arterm DAY)) >= #startSgrqartermdate# ]]>
+		</isNotEmpty>
+		<!-- 根据要求到账终止日期 -->
+		<isNotEmpty prepend="and" property="endSgrqartermdate">
+			<![CDATA[ (DATE_ADD(send_goods.send_date,INTERVAL send_goods.arterm DAY)) <= #endSgrqartermdate# ]]>
+		</isNotEmpty>
+
+		group by send_goods.id,send_goods_detail.product_id
+		order by send_goods.id ) as data
+	</select> 
+	
+	<!--   根据回款ID检索回款及产品分类信息   -->
+	<select id="selectArriveInitialization" parameterClass="java.lang.String" resultClass="MReturnInfoDto">
+		SELECT
+		  mreturn.id              AS id,
+		  mreturn.no              AS mrno,
+		  mreturn.return_type     AS mrreturntype,
+		  mreturn.product_type_id AS mrproducttypeid,
+		  mreturn.customer_id     AS mrcustomerid,
+		  customer.name           AS mrcustomername,
+		  mreturn.date            AS mrdate,
+		  mreturn.return_date     AS mrreturndate,
+		  mreturn.return_way      AS mrreturnway,
+		  mreturn.number          AS mrnumber,
+		  mreturn.money           AS mrmoney,
+		  mreturn.user_id         AS mruserid,
+		  mreturn.user_name       AS mrusername,
+		  mreturn.text            AS mrtest,
+		  mreturn.time_stamp      AS mrtimestamp,
+		  product_type.name       AS productname
+		FROM mreturn
+		  LEFT JOIN product_type
+		    ON product_type.id = mreturn.product_type_id
+		  LEFT JOIN customer
+		    ON customer.id = mreturn.customer_id
+		WHERE mreturn.id = #mrid#
+	</select> 
+	<!--   回款表时间戳         -->
+	<select id="selectmreturntimestamp" parameterClass="java.lang.String" resultClass="java.lang.String">
+		 SELECT
+			  time_stamp
+			FROM mreturn
+			WHERE ID =#id# 
+	</select> 
+	  
+	<select id="mRetrunQueryAllProductTypeByUserId" parameterClass="java.lang.String" resultClass="cn.com.thtf.egov.cms.entity.ProductTypeEntity">
+		select pt.id as id,pt.name as name
+		from user_area_product uap,
+		  product_type pt
+		where uap.user_id = #userId#
+		    and uap.product_type_id = pt.id
+		GROUP BY pt.id
+	</select> 
+	<!--   更新到帐   -->
+	<update id="updateMewarriveMReturn" parameterClass="mreturnEntity">
+		UPDATE  mreturn 
+		SET NO=#no# , return_way= #returnWay# , number = #number#, 
+			 return_date =#returnDate#,TEXT =#text# ,return_type = 2
+		where id =#id# and time_stamp =#timestamp#
+	</update>
+	<!--   根据回款ID检索查询是否有回款明细   -->
+	<select id="mreturnSelectDetail" parameterClass="java.lang.String" resultClass="java.lang.Integer">
+		select count(*) from return_detail where return_id = #mrid#
+	</select> 
+	<!--   删除回款  -->
+	<delete id="deleteMReturn" parameterClass="java.lang.String">	
+		DELETE from mreturn where id = #mrid#
+	</delete>
+
+	<!--   查询客户  -->
+	<select id="getMReturnAllCustomer.search" resultClass="mReturnCustomer"
+		parameterClass="mReturnCustomer">
+		select c.id as id,c.name as name from customer c
+			<isNotEmpty prepend="where" property="name">
+				c.name like '%$name$%'
+			</isNotEmpty>
+		order by c.id
+	</select>
+	
+
+	<!--   回款指定总额查询  -->
+	<select id="selectSumMoney" parameterClass="returnDetailEntity" resultClass="java.math.BigDecimal">
+		select ifnull(SUM(money),0)
+		from return_detail 
+		where return_id =#returnId# and appoint_type =#appointType#
+	</select> 
+
+	<select id="getMReturnAllCustomer.recordCount" resultClass="java.lang.Integer"
+		parameterClass="mReturnCustomer">
+		select count(*) from
+		(
+			select c.id as id,c.name as name from customer c
+			<isNotEmpty prepend="where" property="name">
+				c.name like '%$name$%'
+			</isNotEmpty>
+			order by c.id
+		) as c
+	</select>
+	
+	<!--   客户信用表时间戳
+	<select id="selectcustomertimestamp" parameterClass="java.lang.String" resultClass="java.lang.String">
+		select cc.time_stamp
+		from return_detail rd ,customer_credit cc ,customer_credit_detail ccd 
+		where rd.send_goods_id = ccd.send_goods_id and rd.product_id = ccd.product_id
+			and cc.id = ccd.customer_credit_id and rd.return_id=#id#
+	</select> 
+	  -->
+	
+	<!--   查询到帐更新所用信息  -->
+	<select id="selectarriveinfodto" parameterClass="java.lang.String" resultClass="MreturnArriveInfoDto">
+		SELECT
+		  customerCredit.id           AS customerdetailid,
+		  customerCredit.timeStamp    AS customertimestamp,
+		  IFNULL(customerCredit.money,0) AS customerdetailmoney,
+		  return_detail.id            AS returndetailid,
+		  IFNULL(return_detail.money,0) AS returndetailmoney,
+		  mreturn.time_stamp          AS returntimestamp,
+		  mreturn.id                  AS returnid,
+		  return_detail.send_goods_id AS sendgoodsid,
+		  return_detail.product_id    AS productid
+		FROM mreturn
+		  LEFT JOIN return_detail ON mreturn.id = return_detail.return_id
+		  LEFT JOIN (SELECT
+			       customer_credit_detail.money         AS money,
+			       customer_credit_detail.id            AS id,
+			       customer_credit_detail.product_id    AS productId,
+			       customer_credit_detail.send_goods_id AS sendGoodsId,
+			       customer_credit.time_stamp           AS TIMESTAMP
+			     FROM customer_credit_detail,
+			       customer_credit
+			     WHERE customer_credit.id = customer_credit_detail.customer_credit_id) AS customerCredit
+		    ON return_detail.product_id = customerCredit.productId
+		      AND return_detail.send_goods_id = customerCredit.sendGoodsId
+		WHERE mreturn.id = #id#
+	</select> 
+	
+	<!-- 更新客户信用明细表 -->
+	<update id="updatecustomercreditdetail" parameterClass="MreturnArriveInfoDto">
+		UPDATE customer_credit_detail ccd ,customer_credit cc, return_detail rd 
+		SET ccd.money= ccd.money - rd.money 
+		where rd.send_goods_id = ccd.send_goods_id and rd.product_id = ccd.product_id
+			and cc.id = ccd.customer_credit_id and rd.send_goods_id=#sendgoodsid#
+			and rd.product_id=#productid# and cc.time_stamp = #customertimestamp#
+	        and rd.return_id =#returnid#
+	</update>
+	<!--   更新客户信用表    -->
+	<update id="updatecustomercredittimestamp" parameterClass="java.util.Map">
+		UPDATE customer_credit cc,
+		  customer_credit_detail ccd,
+		  return_detail rd
+		SET cc.time_stamp = NOW()
+		WHERE rd.send_goods_id = ccd.send_goods_id
+		    AND rd.product_id = ccd.product_id
+		    AND cc.id = ccd.customer_credit_id
+		    AND rd.send_goods_id =#sendgoodsid#
+		    AND rd.product_id =#productid# and cc.time_stamp = #customertimestamp#  
+	</update>
+	<!--   删除回款明细  -->
+	<delete id="deletemreturnarrive" parameterClass="java.lang.Integer">	
+		DELETE from return_detail where id=#id#
+	</delete>
+	<!--   删除客户信用明细  -->
+	<delete id="deletecustomercreditdetail" parameterClass="java.lang.Integer">	
+		DELETE from customer_credit_detail where id =#id#
+	</delete>
+	
+	
+	<insert id="createMReturn" parameterClass="mreturnEntity">
+		insert into `mreturn`
+            (`id`,
+             `no`,
+             `return_type`,
+             `product_type_id`,
+             `customer_id`,
+             `customer_name`,
+             `date`,
+             `return_date`,
+             `return_way`,
+             `number`,
+             `money`,
+             `user_id`,
+             `user_name`,
+             `text`,
+			 datetime,
+			 time_stamp)
+		values (#id#,
+		        #no#,
+		        #returnType#,
+		        #productTypeId#,
+		        #customerId#,
+		        #customerName#,
+		        #date#,
+		        #returnDate#,
+		        #returnWay#,
+		        #number#,
+		        #money#,
+		        #userId#,
+		        #userName#,
+		        #text#,
+				#date#,
+				now()) 
+	</insert>
+</sqlMap>

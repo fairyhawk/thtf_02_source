@@ -1,0 +1,187 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+	 <!--管理页面检索-->
+	 <form-bean name="searchSampleOutForm" type="org.apache.struts.action.DynaActionForm">
+		<form-property name="searchSampleOutDto" type="cn.com.thtf.egov.cms.dto.SampleOutSearchDto"/>
+	 </form-bean>
+	 <!--修改移库单-->
+	  <form-bean name="modifySampleOutForm" type="org.apache.struts.action.DynaActionForm">
+	 	<form-property name="modifySampleOutDto" type="cn.com.thtf.egov.cms.entity.SampleOutEntity"/>
+     </form-bean>
+		
+		   <!-- 样品借出评审     by jiangmx   -->
+		<form-bean name="sampleOutAssessForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="sampleOutAssess" type="cn.com.thtf.egov.cms.dto.SampleOutAssessDto"/>
+		</form-bean>
+		
+		<!-- 新建  by jiangmx-->
+		<form-bean name="createSampleOutForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="createSampleOutDto" type="cn.com.thtf.egov.cms.dto.SampleOutAssessDto"/>
+		</form-bean>
+		
+			<!-- 客户选择 -->
+	 <form-bean name="selectCoustomerForm" type="org.apache.struts.action.DynaActionForm">
+	 	<form-property name="name" type="java.lang.String"></form-property>
+	  	<form-property name="id" type="java.lang.String"></form-property>
+	 </form-bean>
+	 
+	 <!-- 供应商选择 -->
+	 <form-bean name="selectSupplierForm" type="org.apache.struts.action.DynaActionForm">
+	 	<form-property name="supplierName" type="java.lang.String"></form-property>
+	 </form-bean>
+	 
+	 
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>
+		 <!--样品借出单一览  by zhangzx-->
+		<action path="/getSampleOutList" type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="getSampleOutList" scope="request" validate="false">
+			<forward name="success" path="/jsp/sampleOut/sampleOutmanager.jsp"/>
+		</action> 	
+		
+		<!--样品借出单检索  by zhangzx-->
+		<action path="/searchSampleOut" type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="searchSampleOut"
+			scope="request"
+			name="searchSampleOutForm" validate="false">
+			<forward name="success" path="/jsp/sampleOut/sampleOutmanager.jsp"/>
+		</action>	
+		
+		<!-- 修改样品借出单 显示页  By zhangzx   --> 
+		<action path="/getSampleOutModifyInfo" type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="getSampleOutModifyInfo"  scope="request"  validate="false">
+			<forward name="success" path="/jsp/sampleOut/sampleOutModify.jsp"/>			
+		</action>
+		
+		<!-- 修改样品借出单  By zhangzx   --> 
+		<action path="/modifySampleOut" type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="modifySampleOut" name="modifySampleOutForm" scope="request"  validate="false">
+			<forward name="success" path="/getSampleOutList.do"/>
+			<forward name="failure" path="/getSampleOutList.do"/>				
+		</action>
+
+		<!-- 产品信息显示 检索  By LiuQingGang   --> 
+		<action path="/getSampleOutProductSelect" type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="getSampleOutProductSelect" name="getMoveProductSelectForm" scope="request"  validate="false">
+			<forward name="success" path="/jsp/sampleOut/sample_out_product_select.jsp"/>
+			<forward name="failure" path="/jsp/sampleOut/sample_out_product_select.jsp"/>
+		</action>
+		
+	     <!--显示样品借出评审  by jiangmx-->
+		<action path="/getShowSampleOutAssess" type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="getShowSampleOutAssess"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/sampleOut/sampleOutAudit.jsp"/>
+			<forward name="view" path="/jsp/sampleOut/sampleOutView.jsp"/>
+			<forward name="failure" path="/getSampleOutList.do"/>
+		</action>
+		
+		<!--样品借出评审  by jiangmx-->
+		<action path="/getSampleOutAssess" type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="getSampleOutAssess"
+			scope="request"
+			validate="false"
+			name="sampleOutAssessForm">
+			<forward name="success" path="/getSampleOutList.do"/>
+			<forward name="failure" path="/getShowSampleOutAssess.do?type=2"/>
+			<forward name="failureToList" path="/getSampleOutList.do"/>
+		</action> 
+		
+			
+		<!-- 新建样品借出申请 显示页   by jiangmx--> 
+		<action path="/createSampleOutInfo" type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="createSampleOutInfo"  scope="request"  validate="false">
+			<forward name="success" path="/jsp/sampleOut/sampleOutAdd.jsp"/>
+			<forward name="failure" path="/jsp/sampleOut/sampleOutAdd.jsp"/>
+		</action>	
+		
+		<!-- 新建样品借出单  By jiangmx--> 
+		<action path="/createSampleOut" type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="createSampleOut" name="createSampleOutForm" scope="request"  validate="false">
+			<forward name="success" path="/getSampleOutList.do"/>
+			<forward name="failure" path="/getSampleOutList.do"/>
+		</action>  	  	 
+	  		
+	  		
+		 <!-- 客户选择 -->
+	  	<action path="/getSampleOutCoustomerSelect"
+			type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="getSampleOutCoustomerSelect"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/sampleOut/selectCustomer.jsp"/> 
+		</action>
+		
+		<!-- 客户选择搜索 -->
+	  	<action path="/getSampleOutCoustomerSelectByName"
+			type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="getSampleOutCoustomerSelectByName"
+			name="selectCoustomerForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/sampleOut/selectCustomer.jsp"/> 
+		</action>
+		
+		<!-- 供应商选择 -->
+		<action path="/getSampleOutSupplierSelect"
+			type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="getSampleOutSupplierSelect"
+			name="selectSupplierForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/sampleOut/selectSupplier.jsp"/> 
+		</action>
+		
+		
+		
+		
+		<!-- 客户发货地址选择 -->
+		<action path="/getSampleOutCustomerAddressList"
+			type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="getSampleOutCustomerAddressList"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/sampleOut/customerAddressSelectSub.jsp"/> 
+		</action>
+		
+		<!-- 供应商发货地址选择 -->
+		<action path="/getSampleOutSupplierAddressList"
+			type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="getSampleOutAddressSupplierSelect"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/sampleOut/supplierAddressSelectSub.jsp"/> 
+		</action>
+		
+		<!-- 公司发货地址选择 -->
+		<action path="/getSampleOutCompanyAddressList"
+			type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="getSampleOutCompanyAddressList"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/sampleOut/companyAddressSelectSub.jsp"/> 
+		</action>
+		
+		<!-- 删除借出单 -->
+		<action path="/deleteSampleOut"
+			type="cn.com.thtf.egov.cms.action.stock.SampleOutAction"
+			parameter="deleteSampleOut"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/getSampleOutList.do"/> 
+			<forward name="failure" path="/getSampleOutList.do"/> 
+		</action>
+		
+		
+	</action-mappings>
+	<message-resources
+		parameter="com.tsinghua.mp.web.conf.i18n.ApplicationResources"
+		/>
+</struts-config>

@@ -1,0 +1,4053 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="salesContract_sqlMap">
+
+    <typeAlias alias="userEntity" type="cn.com.thtf.egov.cms.entity.UserEntity" />
+    <typeAlias alias="userAreaMappingEntity" type="cn.com.thtf.egov.cms.entity.UserAreaMappingEntity" />
+    
+    <typeAlias alias="demand" type="cn.com.thtf.egov.cms.entity.DemandEntity" />
+    
+     <typeAlias alias="work" type="cn.com.thtf.egov.cms.entity.WorkEntity" />
+    
+	<typeAlias alias="userAreaProductEntity" type="cn.com.thtf.egov.cms.entity.UserAreaProductEntity" />
+	
+	<typeAlias alias="userProductEntity" type="cn.com.thtf.egov.cms.entity.UserProductEntity" />
+	
+	<typeAlias alias="salesContractQueryDto" type="cn.com.thtf.egov.cms.dto.SalesContractQueryDto" />
+	
+	<typeAlias alias="salesContractResultDto" type="cn.com.thtf.egov.cms.dto.SalesContractResultDto" /> 
+	
+	<typeAlias alias="salesConCustomerDto" type="cn.com.thtf.egov.cms.dto.SalesConCustomerDto" /> 
+	
+	<!--销售合同dto-->
+	<typeAlias alias="salesContractInfoDto" 
+		type="cn.com.thtf.egov.cms.dto.SalesContractInfoDto" /> 
+	
+	<typeAlias alias="customerLinkman" type="cn.com.thtf.egov.cms.entity.CustomerLinkmanEntity" />
+	 
+	<typeAlias alias="customerAddress" type="cn.com.thtf.egov.cms.entity.CustomerAddressEntity" />
+	
+	<typeAlias alias="salesConProductDto" type="cn.com.thtf.egov.cms.dto.SalesConProductDto" />
+	
+	<typeAlias alias="salesConSendGoodsDto" type="cn.com.thtf.egov.cms.dto.SalesConSendGoodsDto" /> 
+	
+	<typeAlias alias="sellContractDetail" type="cn.com.thtf.egov.cms.entity.SellContractDetailEntity" />
+
+    <typeAlias alias="salesContractProductDetailDto" type="cn.com.thtf.egov.cms.dto.SalesContractProductDetailDto" /> 
+	
+    <typeAlias alias="salesJudgeRoleDto" type="cn.com.thtf.egov.cms.dto.SalesJudgeRoleDto" />
+    
+    <typeAlias alias="companyInfoDto" type="cn.com.thtf.egov.cms.dto.CompanyInfoDto" />
+
+
+	<!--销售合同产品明细(dto) by llw-->
+	<typeAlias alias="salesContractProductDetailDto" 
+		type="cn.com.thtf.egov.cms.dto.SalesContractProductDetailDto" />
+	
+
+	<!--评审人(dto) by llw-->
+	<typeAlias alias="assessManDto" 
+		type="cn.com.thtf.egov.cms.dto.AssessManDto" />
+		 
+    <!-- 产品分类及部门信息 By Chenhj @2010-7-2 -->
+    <typeAlias alias="productTypeDeptDto" type="cn.com.thtf.egov.cms.dto.ProductTypeDeptDto"/>
+    <!-- 根据条件检索产品信息 By Chenhj @2010-7-2 -->
+    <typeAlias alias="productSelectDto" type="cn.com.thtf.egov.cms.dto.BuyContractProductSelectDto"/>
+    <typeAlias alias="searchProdCondition" type="cn.com.thtf.egov.cms.form.ProductSearchForm"/> 
+    <!-- 产品系列 By Chenhj @2010-7-2 -->
+    <typeAlias alias="prodSerieEntity" type="cn.com.thtf.egov.cms.entity.ProductSerieEntity"/>      	
+	
+	<!-- 新建销售合同 根据用户查看负责的客户信息  shensi -->
+	<select id="getCompanycontractcode" parameterClass="java.lang.String" resultClass="java.lang.String">
+		select company_contract_code from sell_contract where company_contract_code = #code#
+	</select>
+	
+	
+	<!-- 新建销售合同 根据用户查看负责的客户信息  shensi -->
+	<select id="selectCustomerByUserId" parameterClass="java.lang.String" resultClass="salesConCustomerDto">
+	  SELECT CUSTOMER.ID   AS CUSTOMERID,
+       		 CUSTOMER.NAME AS CUSTOMERNAME
+	  FROM   CUSTOMER,
+             USER_CUSTOMER USERCUSTOMER
+	  WHERE  USERCUSTOMER.CUSTOMER_ID = CUSTOMER.ID
+             AND USERCUSTOMER.USER_ID = #userId#
+	</select>
+	<!-- 新建销售合同 根据客户Id查看联系人  shensi -->
+	<select id="selectCusLinkManByCustomerId" parameterClass="java.lang.String" resultClass="salesConCustomerDto">
+		SELECT CUSLINK.ID               AS CUSLINKID,
+		       CUSLINK.NAME             AS CUSLINKNAME,
+		       CUS.PROVINCE             AS CUSPROVINCE,
+		       CUS.CITY                 AS CUSCITY,
+		       CUS.INVOICE_BANK_NAME    AS CUSINVOICEBANKNAME,
+		       CUS.INVOICE_BANK_ACCOUNT AS CUSINVOICEBANKACCOUNT,
+		       CUS.TAX_NUMBER           AS CUSTAXNUMBER,
+		       (CASE WHEN CUS.INVOICE_TYPE =1 THEN '增值税' ELSE '普通' END) AS CUSINVOICETYPE,
+		       CUSLINK.FAX              AS CUSLINKFAX,
+		       CUSLINK.TEL              AS CUSLINKTEL
+		FROM   CUSTOMER CUS,
+		       CUSTOMER_LINKMAN CUSLINK
+		WHERE  CUS.ID = CUSLINK.CUSTOMER_ID
+		       AND CUS.ID = #customerId#
+	</select>
+	<!-- 新建销售合同 根据联系人Id查看联系人的相关信息  shensi -->
+	<select id="selectLinkMsgByLinkManId" parameterClass="java.lang.String" resultClass="customerLinkman">
+		SELECT ID,
+		       TEL,
+		       FAX
+		FROM   CUSTOMER_LINKMAN
+		WHERE  ID = #id#
+	</select>
+	<!-- 新建销售合同 根据用户Id查看所属区域  shensi -->
+	<select id="selectUserNameByUserId" parameterClass="java.lang.String" resultClass="java.lang.String">
+		SELECT USER_AREA.NAME AS USERAREANAME
+		FROM   USER,
+		       USER_AREA
+		WHERE  USER.USER_AREA_ID = USER_AREA.ID
+		       AND USER.ID = #userId#
+	</select>
+	<!-- 新建销售合同 客户发货地址选择求总数 小页面  shensi -->
+	<select id="sendAddress.recordCount" parameterClass="java.lang.String" resultClass="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM   CUSTOMER,
+		       CUSTOMER_ADDRESS CUSADDRESS
+		WHERE  CUSTOMER.ID = CUSADDRESS.CUSTOMER_ID
+		       AND CUSTOMER_ID = #customerId#
+	</select>
+	<!-- 新建销售合同 客户发货地址选择 小页面  shensi -->
+	<select id="sendAddress.selectSendGoodsAddress" parameterClass="java.lang.String" resultClass="customerAddress">
+		SELECT CUSADDRESS.ID,
+		       CUSADDRESS.NAME,
+		       CUSADDRESS.ADDRESS,
+		       CUSADDRESS.POSTCODE,
+		       CUSADDRESS.LINKMAN,
+		       CUSADDRESS.TEL,
+		       CUSADDRESS.MOBILE
+		FROM   CUSTOMER,
+		       CUSTOMER_ADDRESS CUSADDRESS
+		WHERE  CUSTOMER.ID = CUSADDRESS.CUSTOMER_ID
+		       AND CUSTOMER_ID = #customerId#
+	    ORDER  BY CUSADDRESS.NAME,CUSADDRESS.ADDRESS
+	</select>
+	<!-- 新建销售合同   付款方式选择求总数 小页面  shensi -->
+	<select id="paymentType.recordCount" parameterClass="salesConSendGoodsDto" resultClass="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM   CUSTOMER_CREDIT CUSCREDIT,
+		       CREDIT_TYPE CREDITTYPE
+		WHERE  CUSCREDIT.ENABLE = 1
+		       AND CUSCREDIT.CREDIT_TYPE_ID = CREDITTYPE.ID
+		       AND CUSCREDIT.CUSTOMER_ID = #customerId#
+		       AND PRODUCT_TYPE_ID = #proTypeId#
+	</select>
+
+	<!-- 新建销售合同   根据用户Id查看所负责的产品分类 shensi -->
+	<select id="selectProTypeByUserId" parameterClass="java.lang.String" resultClass="salesConProductDto">
+		SELECT PROTYPE.ID   AS PROTYPEID,
+		       PROTYPE.NAME AS PROTYPENAME
+		FROM   PRODUCT_TYPE PROTYPE,
+		       USER_PRODUCT USEPRO
+		WHERE  PROTYPE.ID = USEPRO.PRODUCT_TYPE_ID
+		       AND USER_ID = #userId#
+	</select>
+
+	<!--根据合同id查询对应的产品明细   zzx-->
+	<select id="selectSalesContractProductDetailList" parameterClass="java.lang.String" resultClass="salesConProductDto">
+
+	SELECT   DETAIL.ID                          AS DETAILID,
+	         DETAIL.COUNT                       AS SALESCOUNT,
+	         DETAIL.PRICE                       AS SALESPRICE,
+	         DETAIL.COUNT * DETAIL.PRICE        AS SALESMONEY,
+	         DETAIL.BUY_PRICE                   AS DETAILBUYPRICE,
+	         (CASE
+	         	WHEN DETAIL.PRICE=0 THEN 0
+	         	ELSE ROUND(((DETAIL.PRICE-DETAIL.BUY_PRICE)/DETAIL.PRICE)*100,2) END
+	         )AS GROSSRATEROUND,
+	         PRODUCT.ID                         AS PRODUCTID,
+	         PRODUCT.NAME                       AS PRODUCTNAME,
+	         PRODUCT.UNIT                       AS PRODUCTUNIT,
+	         PRODUCT.TYPE                       AS PRODUCTTYPE,
+	         PRODUCT.CODE                       AS PRODUCTCODE,
+	         PRODUCT.LIMIT_PRICE				AS LIMITPRICE,
+	         RESULT.FREECOUNT                   AS PRODUCTUSABLECOUNT,
+	         IFNULL(VSPGM.SENDGOODSMONEY,0)     AS SENDGOODSMONEY,
+	         IFNULL(VSPGM.PREGOODSMONEY,0)      AS READYGOODSMONEY,
+	         IFNULL(VBGCM.BACKCONTRACTMONEY,0)  AS BACKSELLMONEY,
+	         IFNULL(VBGM.BACKGOODSMONEY,0)      AS BACKGOODSMONEY,
+	         IFNULL(VAM.APPOINTMONEY,0)         AS APPOINTMONEY,
+	         IFNULL(VIM.INVOICEMONEY,0)         AS INVOICEMONEY
+	FROM     SELL_CONTRACT_DETAIL AS DETAIL
+		     LEFT JOIN PRODUCT
+	           ON DETAIL.PRODUCT_ID = PRODUCT.ID
+	         LEFT JOIN VIEW_RESULT_PROD_FREECOUNT AS RESULT
+	           ON PRODUCT.ID = RESULT.PRODID
+	         LEFT JOIN VIEW_SEND_PREPARED_GOODS_MONEY VSPGM
+	           ON VSPGM.CONTRACTID = DETAIL.SELL_CONTRACT_ID
+	              AND DETAIL.PRODUCT_ID = VSPGM.PRODID
+	         LEFT JOIN VIEW_BACK_GOODS_CONTRACT_MONEY VBGCM
+	           ON VBGCM.CONTRACTID = DETAIL.SELL_CONTRACT_ID
+	              AND DETAIL.PRODUCT_ID = VBGCM.PRODID
+	         LEFT JOIN VIEW_BACK_GOODS_MONEY VBGM
+	           ON VBGM.CONTRACTID = DETAIL.SELL_CONTRACT_ID
+	              AND DETAIL.PRODUCT_ID = VBGM.PRODID
+	         LEFT JOIN VIEW_APPOINT_MONEY VAM
+	           ON VAM.CONTRACTID = DETAIL.SELL_CONTRACT_ID
+	              AND DETAIL.PRODUCT_ID = VAM.PRODID
+	         LEFT JOIN VIEW_INVOICE_MONEY VIM
+	           ON VIM.CONTRACTID = DETAIL.SELL_CONTRACT_ID
+	              AND DETAIL.PRODUCT_ID = VIM.PRODID
+	WHERE    DETAIL.SELL_CONTRACT_ID = #CONTRACTID#
+	GROUP BY PRODUCT.ID
+	</select>
+	
+	<!--根据id 查找销售合同  by llw -->
+	<select id="selectSalesContractById" resultClass="salesContractInfoDto" parameterClass="java.lang.String">
+		SELECT CONTRACT.ID,
+		       PRODUCT_CONTRACT_CODE AS PRODUCTCONTRACTCODE,
+		       COMPANY_CONTRACT_CODE AS COMPANYCONTRACTCODE,
+		       DATE,
+		       STATUS,
+		       STAMP_TYPE AS STAMPTYPE,
+		       TEMPLATE_TYPE AS TEMPLATETYPE,
+		       PLACE,
+		       PROTECT_LIMIT AS PROTECTLIMIT,
+		       CHECK_LIMIT AS CHECKLIMIT,
+		       BREACH,
+		       LAWSUIT,
+		       CLAUSE,
+		       FILE AS FILENAME,
+			   CONTRACT.DATETIME,
+		       
+		       CONTRACT.CUSTOMER_ID AS CUSTOMERID,
+		       CUSTOMER.NAME AS CUSTOMERNAME,
+		       CUSTOMER.CITY AS CUSTOMERCITY,
+		       CUSTOMER.PROVINCE AS CUSTOMERPROVINCE,
+		       CUSTOMER.INVOICE_BANK_NAME AS CUSTOMERINVOICEBANKNAME,
+		       CUSTOMER.INVOICE_BANK_ACCOUNT AS CUSTOMERINVOICEBANKACCOUNT,
+		       CUSTOMER.TAX_NUMBER AS CUSTOMERTAXNUMBER,
+		       CUSTOMER.INVOICE_TYPE AS CUSTOMERINVOICETYPE,
+		       CUSTOMER_LINKMAN_ID AS CUSTOMERLINKMANID,
+		       
+		       LINKMAN.NAME AS CUSTOMERLINKMANNAME,
+		       LINKMAN.TEL AS CUSTOMERLINKMANTEL,
+		       LINKMAN.FAX AS CUSTOMERLINKMANFAX,
+		       
+		       CONTRACT.PRODUCT_TYPE_ID AS PRODUCTTYPEID,
+		       PTYPE.NAME AS PRODUCTTYPENAME,
+		       PTYPE.NO AS PRODUCTTYPENO,
+		       
+		       DEPT.NO AS PRODUCTDEPTNO,
+		       DEPT.NAME AS PRODUCTDEPTNAME,
+		       DEPT.FAX AS PRODUCTDEPTFAX,
+		       DEPT.ACCOUNT AS PRODUCTDEPTACCOUNT,
+		       
+		       PAYMENT_WAY AS PAYMENTWAY,
+		       BATCH_WAY AS BATCHWAY,
+		       CASH_MONEY AS CASHMONEY,
+		       BATCH_MAX_MONEY AS BATCHMAXMONEY,
+		       CONTRACT.CUSTOMER_CREDIT_ID AS CUSTOMERCREDITID,
+		       CONTRACT.CREDIT_TYPE_ID AS CREDITTYPEID,
+		       CTYPE.NAME AS CREDITTYPENAME,
+		       CONTRACT.ARTERM,
+		       CONTRACT.CLIMIT,
+		       CONTRACT.PROJECT_NAME AS PROJECTNAME,
+		       CREDIT.LOCK_LIMIT AS LOCKLIMIT,
+		       CREDIT.USED_LIMIT AS USEDLIMIT,
+		       CREDIT.VIEW_PROJECT_NAME AS CREDITPROJECTNAME,
+		       IFNULL(CREDIT.AGREEMENT_CODE,"")  AS AGREEMENTCODE ,
+		       CONTRACT.FREE AS FREELIMIT,
+		       
+		       CUSTOMER_ADDRESS_ID AS CUSTOMERADDRESSID,
+		       CONTRACT.ca_name AS CUSTOMERADDRESSNAME,
+		       CONTRACT.ca_address AS CUSTOMERADDRESSADDRESS,
+		       CONTRACT.ca_linkman AS CUSTOMERADDRESSLINKMAN,
+		       CONTRACT.ca_postcode AS CUSTOMERADDRESSPOSTCODE,
+		       CONTRACT.ca_tel AS CUSTOMERADDRESSTEL,
+		       CONTRACT.ca_mobile AS CUSTOMERADDRESSMOBILE,
+		       
+		       REQUEST_SEND_DATE AS REQUESTSENDDATE,
+		       USER_ID AS USERID,
+		       USER_NAME AS USERNAME,
+		       CONTRACT.USER_AREA_ID AS USERAREAID,
+		       USER.TEL AS USERTEL,
+		       AREA.NAME AS USERAREANAME,
+		       TEXT,
+		       MONEY,
+		       INTEREST_RATE AS INTERESTRATE,
+			   INTEREST_RATE  as INTERESTRATEROUND,
+		       PRO_MAJ_ID AS PROMAJID,
+		       PRO_MAJ_NAME AS PROMAJNAME,
+		       PRO_MAJ_IDEA AS PROMAJIDEA,
+		       PRO_MAJ_DATE AS PROMAJDATE,
+			   DATE_FORMAT(PRO_MAJ_DATE,'%Y-%m-%d') AS PROMAJDATE2,
+		       PRO_MAJ_TEXT AS PROMAJTEXT,
+		       
+		       LEGAL_ID AS LEGALID,
+		       LEGAL_NAME AS LEGALNAME,
+		       LEGAL_IDEA AS LEGALIDEA,
+		       LEGAL_DATE AS LEGALDATE,
+			   DATE_FORMAT(LEGAL_DATE,'%Y-%m-%d') AS LEGALDATE2,
+		       LEGAL_TEXT AS LEGALTEXT,
+		       
+		       SELL_MAJ_ID AS SELLMAJID,
+		       SELL_MAJ_NAME AS SELLMAJNAME,
+		       SELL_MAJ_IDEA AS SELLMAJIDEA,
+		       SELL_MAJ_DATE AS SELLMAJDATE,
+			   DATE_FORMAT(SELL_MAJ_DATE,'%Y-%m-%d') AS SELLMAJDATE2,
+		       SELL_MAJ_TEXT AS SELLMAJTEXT,
+		       
+		       OPE_MAJ_ID AS OPEMAJID,
+		       OPE_MAJ_NAME AS OPEMAJNAME,
+		       OPE_MAJ_IDEA AS OPEMAJIDEA,
+		       OPE_MAJ_DATE AS OPEMAJDATE,
+			   DATE_FORMAT(OPE_MAJ_DATE,'%Y-%m-%d') AS OPEMAJDATE2,
+		       OPE_MAJ_TEXT AS OPEMAJTEXT,
+		       
+		       AREA_MAJ_ID  AS AREAMAJID,
+		       AREA_MAJ_NAME AS AREAMAJNAME,
+		       DATE_FORMAT(AREA_MAJ_DATE,'%Y-%m-%d') AS AREAMAJDATE,
+		       AREA_MAJ_IDEA AS AREAMAJIDEA,
+		       AREA_MAJ_TEXT AS AREAMAJTEXT,
+		       contract_pro_name as contractProName
+		FROM   SELL_CONTRACT AS CONTRACT
+		       LEFT JOIN CUSTOMER
+		         ON CONTRACT.CUSTOMER_ID = CUSTOMER.ID
+		       LEFT JOIN CUSTOMER_LINKMAN AS LINKMAN
+		         ON CONTRACT.CUSTOMER_LINKMAN_ID = LINKMAN.ID
+		       LEFT JOIN VIEW_RESULT_CUSTOMER_CREDIT_RESULTLIMT AS CREDIT
+		         ON CREDIT.CUSTOMER_CREDIT_ID = CONTRACT.CUSTOMER_CREDIT_ID
+		       LEFT JOIN PRODUCT_TYPE AS PTYPE
+		         ON CONTRACT.PRODUCT_TYPE_ID = PTYPE.ID
+		       LEFT JOIN PRODUCT_DEPT AS DEPT
+		         ON DEPT.ID = PTYPE.PRODUCT_DEPT_ID
+		       LEFT JOIN CREDIT_TYPE AS CTYPE
+		         ON CTYPE.ID = CONTRACT.CREDIT_TYPE_ID
+		       LEFT JOIN USER_AREA AS AREA
+		         ON AREA.ID = CONTRACT.USER_AREA_ID
+		       LEFT JOIN USER
+		         ON USER.ID = CONTRACT.USER_ID
+		WHERE  CONTRACT.ID = #contractId#
+	</select>
+	
+
+	
+	<!-- 根据合同id查询对应的合同产品明细 by llw--> 
+	<select id="selectSalesContractDetailListByContractId" parameterClass="java.lang.String" resultClass="salesContractProductDetailDto">
+		
+			SELECT DETAIL.ID        AS DETAILID,
+			       DETAIL.COUNT     AS DETAILCOUNT,
+			       DETAIL.PRICE     AS DETAILPRICE,
+			       DETAIL.BUY_PRICE AS DETAILBUYPRICE,
+			       PRODUCT.ID       AS PRODUCTID,
+			       PRODUCT.NAME     AS PRODUCTNAME,
+			       PRODUCT.UNIT     AS PRODUCTUNIT,
+			       PRODUCT.TYPE     AS PRODUCTTYPE,
+			       PRODUCT.CODE     AS PRODUCTCODE,
+			       PRODUCT.LIMIT_PRICE AS LIMITPRICE,
+			       RESULT.FREECOUNT AS PRODUCTUSABLECOUNT
+			FROM   SELL_CONTRACT_DETAIL AS DETAIL,
+			       PRODUCT,
+			       VIEW_RESULT_PROD_FREECOUNT AS RESULT
+			       
+			WHERE  DETAIL.SELL_CONTRACT_ID = #contractId#
+			       AND DETAIL.PRODUCT_ID = PRODUCT.ID
+			       AND PRODUCT.ID = RESULT.PRODID
+	</select>
+	
+	<!--销售合同评审更新运营总监或运营总监助理ID-->
+	<update id="updateOpeMajId" parameterClass="java.util.HashMap">
+	    UPDATE SELL_CONTRACT AS CONTRACT
+	    SET OPE_MAJ_ID = #userId#
+	    WHERE ID = #id#
+	</update>	
+	
+	<!--销售合同评审 by llw-->
+	<!-- 修改 HanHaiyun 2010-11-29  判断语句修改 -->
+	<update id="updateSalesContractForAssess" parameterClass="salesContractInfoDto">
+
+	UPDATE SELL_CONTRACT AS CONTRACT
+
+	SET STATUS = #status#
+			<!-- 产品总监评审 产品总监角色编号为10-->
+			<isEqual prepend="," property="userRoleId" compareValue="10">				
+				pro_maj_name = #proMajName#,
+				pro_maj_date = #proMajDate#,
+				pro_maj_idea = #proMajIdea#,	
+				pro_maj_text = #proMajText#,
+				legal_id     = #legalId#,
+				sell_maj_id  = #sellMajId#,
+				interest_rate = $interestRate$
+			</isEqual>
+			<!-- 销售总监评审  销售总监角色编号为5 -->
+			<isEqual prepend="," property="userRoleId" compareValue="5">
+				sell_maj_name = #sellMajName#,
+				sell_maj_date = #sellMajDate#,
+				sell_maj_idea = #sellMajIdea#,  
+				sell_maj_text = #sellMajText#,
+				ope_maj_id    = #opeMajId#
+			</isEqual>
+			<!-- 运营总监评审 运营总监角色编号为17 -->
+			<isEqual prepend="," property="userRoleId" compareValue="17">	
+				<!-- 只有评审通过时才更新日期和生成产品合同号  运营总监通过  即待打印状态-->
+				<isEqual prepend="" property="status" compareValue="12">
+				 DATE = date_format(now(),'%Y-%m-%d'),
+				 PRODUCT_CONTRACT_CODE = #productContractCode#,	
+				</isEqual>
+				ope_maj_name = #opeMajName#,
+				ope_maj_date = #opeMajDate#,
+				ope_maj_idea = #opeMajIdea#,  
+				ope_maj_text = #opeMajText#
+			</isEqual>
+			<!-- 运营总监助理评审 运营总监助理角色编号为16 -->
+			<isEqual prepend="," property="userRoleId" compareValue="16">
+				<!-- 只有评审通过时才更新日期和生成产品合同号 运营总监助理通过  即待打印状态-->
+				<isEqual prepend="" property="status" compareValue="12">
+				 DATE = date_format(now(),'%Y-%m-%d'),
+				 PRODUCT_CONTRACT_CODE = #productContractCode#,	
+				</isEqual>
+				ope_maj_name = #opeMajName#,
+				ope_maj_date = #opeMajDate#,
+				ope_maj_idea = #opeMajIdea#,  
+				ope_maj_text = #opeMajText#
+			</isEqual>
+			<!-- 法务专员评审  法务专员角色编号为15 -->
+			<isEqual prepend="," property="userRoleId" compareValue="15">		
+				legal_name = #legalName#,
+				legal_date = #legalDate#,
+				legal_idea = #legalIdea#,  
+				legal_text = #legalText#,
+				sell_maj_id  = #sellMajId#	
+			</isEqual>
+			<!-- 区域总监评审 区域总监角色编号为9 -->
+			<isEqual prepend="," property="userRoleId" compareValue="9">
+				area_Maj_id=#areaMajId#,
+				area_maj_name=#areaMajName#,
+				area_maj_text=#areaMajText#,
+				area_maj_idea=#areaMajIdea#,
+				area_maj_date=#areaMajDate#
+			</isEqual>
+			WHERE CONTRACT.ID = #id# 
+	</update>
+	
+	<!--更新当前评审人的待办事务 by llw -->
+	<update id="updateCurrentAssessManWork" parameterClass="assessManDto">
+			
+			UPDATE WORK
+			SET    COUNT = COUNT - 1
+			WHERE  USER_ID = #assessManId#
+			       AND WORK_ID = #workId#
+			       
+	</update>
+	
+	
+	<!--新建下一个评审人的待办事务 by llw -->
+	<insert id="insertNextAssessManWork" parameterClass="assessManDto">
+			
+			INSERT WORK
+			      (USER_ID,
+			       WORK_ID,
+			       COUNT)
+			VALUES(#assessManId#,
+			       #workId#,
+			       1)
+				       
+	</insert>
+	
+	<!--更新下一个评审人的待办事务 by llw -->
+	<update id="updateNextAssessManWork" parameterClass="assessManDto">
+			
+			UPDATE WORK
+			SET    COUNT = COUNT + 1
+			WHERE  USER_ID = #assessManId#
+			       AND WORK_ID = #workId#
+			       
+	</update>
+	
+	
+	<!--根据事务id,用户id查询下一个评审人的对应事务记录数 by llw -->
+	<select id="selectNextAssessManWorkRecordCount" parameterClass="assessManDto" resultClass="java.lang.Integer">
+			
+			SELECT COUNT(*)
+			FROM WORK
+			WHERE  USER_ID = #assessManId#
+			       AND WORK_ID = #workId#			       
+	</select>
+	
+	<!--更行销售合同明细(产品总监评审)by llw-->
+	<update id="updateSalesContractDeailForProMajAssess" parameterClass="salesContractProductDetailDto">
+		
+		UPDATE SELL_CONTRACT_DETAIL
+		SET    BUY_PRICE = #detailBuyPrice#
+		WHERE  ID = #detailId#	
+		
+	</update>
+	
+	<!--查询与销售合同对应的销售助理id by llw -->
+	<select id="selectSalesAssistantByContractId" parameterClass="java.lang.String" resultClass="java.lang.String">
+		
+		SELECT USER.ID
+		FROM   USER,
+		       USER_PRODUCT AS PRODUCT,
+		       USER_AREA AS AREA,
+		       SELL_CONTRACT AS CONTRACT
+		WHERE  CONTRACT.ID = #contractId#
+		       AND USER.ROLE_ID = 3
+		       AND USER.enable = 1
+		       AND AREA.ID = USER.USER_AREA_ID
+		       AND AREA.ID = CONTRACT.USER_AREA_ID
+		       AND PRODUCT.PRODUCT_TYPE_ID = CONTRACT.PRODUCT_TYPE_ID
+		       AND PRODUCT.USER_ID = USER.ID
+		       
+	</select>
+	
+	<!--销售合同修改 by llw-->
+	<update id="updateSalesContract"  parameterClass="salesContractInfoDto">
+		UPDATE  SELL_CONTRACT 
+		SET     status    		    = #status#,
+				stamp_type    		= #stampType#,
+				template_type 		= #templateType#,
+				product_contract_code = null,
+				date                 = null,
+				place         		= #place#,
+				protect_limit 		= #protectLimit#,
+		        check_limit   		= #checkLimit#,
+		        breach        		= #breach#,
+				lawsuit             = #lawsuit#,
+				contract_pro_name = #contractProName#
+			<isEqual prepend="," property="templateType" compareValue="2">				
+					file            = #fileName#,				
+			</isEqual>
+					
+			<isNotEqual prepend="," property="templateType" compareValue="2">
+				file                = null,
+			</isNotEqual>	
+			
+				clause              = #clause#,
+				user_area_id		=#userAreaId#,
+				customer_id         = #customerId#,
+				customer_name       = #customerName#,
+				customer_linkman_id = #customerLinkmanId#,
+				
+				product_type_id     = #productTypeId#,				
+				
+				payment_way 		= #paymentWay#,
+				batch_way   		= #batchWay#,
+				cash_money  		= #cashMoney#,
+				batch_max_money     = #batchMaxMoney#,
+				customer_credit_id  = #customerCreditId#,
+
+				credit_type_id      = #creditTypeId#,
+				project_name        = #projectName#,				
+				arterm       		= #arterm#,
+				climit       		= #climit#,				
+				free  				= #freeLimit#,
+				
+				money        		= #money#,
+				
+				customer_address_id = #customerAddressId#,
+				request_send_date   = #requestSendDate#,		
+				
+				ca_name=#customerAddressName#,
+				ca_address=#customerAddressAddress#,
+				ca_postcode=#customerAddressPostcode#,
+				ca_linkman=#customerAddressLinkman#,
+				ca_tel=#customerAddressTel#,
+				ca_mobile=#customerAddressMobile#,
+				
+				text 				= #text#,					
+				interest_rate 		= #interestRate#,								
+				
+				sell_maj_id  		= #sellMajId#,
+				sell_maj_name		= null,
+				sell_maj_text		= null,
+				sell_maj_date		= null,
+				sell_maj_idea		= null,
+				
+				ope_maj_id   		= #opeMajId#,
+				ope_maj_name 		= null,
+				ope_maj_idea 		= null,
+				ope_maj_text		= null,
+				ope_maj_date		= null,
+				
+				pro_maj_id   		= #proMajId#,
+				pro_maj_name 		= null,
+				pro_maj_text		= null,
+				pro_maj_date		= null,	
+				pro_maj_idea		= null,			
+			
+				legal_id   			= #legalId#,
+				legal_name 			= null,
+				legal_text		    = null,
+				legal_date		    = null,
+				legal_idea		    = null,
+				
+				area_maj_id			=#areaMajId#,
+				area_maj_name		=null,
+				area_maj_text		=null,
+				area_maj_date		=null,
+				area_maj_idea		=null
+			WHERE ID = #id#	
+	</update>
+	
+	<!--删除销售合同的全部明细  by llw-->
+	<delete id="deleteAllContractDetailByContractId" parameterClass="java.lang.String">
+		      DELETE FROM SELL_CONTRACT_DETAIL 
+			  WHERE       SELL_CONTRACT_ID = #contractId#
+	</delete>
+	
+	
+	<!-- 用户区域 --> 
+	<select id="getUserArea" parameterClass="userEntity" resultClass="userAreaMappingEntity">
+		select 
+			id as id,
+			user_id as userid,
+			user_area_id as userAreaid 
+		from
+			user_area_mapping
+		where
+			user_area_mapping.user_id = #id#
+	</select>
+	<!-- 用户区域产品 --> 
+	<select id="getUserAreaProduct" parameterClass="userEntity" resultClass="userAreaProductEntity">
+		select 
+			id as id,
+			user_id as userid,
+			user_area_id as userAreaid,
+			product_type_id as productTypeid
+		from
+			user_area_product
+		where
+			user_area_product.user_id = #id# 
+	</select>
+	<!-- 用户产品 --> 
+	<select id="getUserProduct" parameterClass="userEntity" resultClass="userProductEntity">
+		select 
+		    id as id,
+			user_id as userId, 
+			product_type_id as productTypeId
+		from
+		  user_product
+		where
+		  user_product.user_id = #id#
+	</select>
+	
+	<!-- 发货金额 -->
+	<select id="salesContractsDetailFh" parameterClass="java.lang.String" resultClass="java.lang.String">
+		select delivery_amount_money from view_salescontract_delivery_amount where id = #id#
+	</select>
+	<!-- 备货金额 -->
+	<select id="salesContractsDetailBh" parameterClass="java.lang.String" resultClass="java.lang.String">
+	    select reserve_amount_money from view_salescontract_reserve_amount where id = #id#
+	</select>
+	<!-- 指定金额 --> 
+	<select id="salesContractsDetailZd" parameterClass="java.lang.String" resultClass="java.lang.String">
+		select specify_amount_money from view_salescontract_specify_amount where id = #id#
+	</select>
+	<!-- 预收金额 -->
+	<select id="salesContractsDetailYs" parameterClass="java.lang.String" resultClass="java.lang.String">
+		select advance_amount_money from view_salescontract_advance_amount where id = #id#
+	</select> 
+	<!-- 冻结金额 -->
+	<select id="salesContractsDetailDj" parameterClass="java.lang.String" resultClass="java.lang.String">
+		select freeze_amount_money from view_freeze_amount where id = #id#
+	</select>
+	<!-- 开票金额 -->
+	<select id="salesContractsDetailKp" parameterClass="java.lang.String" resultClass="java.lang.String">
+		select make_amount_money from view_salescontract_make_amount where id = #id#
+	</select>
+	<!-- 退货合同金额 -->
+	<select id="salesContractsDetailThh" parameterClass="java.lang.String" resultClass="java.lang.String">
+		select back_amount_money from view_salescontract_back_amount where id = #id#
+	</select>
+	<!-- 退货金额 -->
+	<select id="salesContractsDetailTh" parameterClass="java.lang.String" resultClass="java.lang.String">
+		select sellback_amount_money from view_salescontract_sellback_amount where id = #id#
+	</select>
+	
+	<!-- 总 -->
+	<select id="salesContractsDetailZ" parameterClass="java.lang.String" resultClass="salesContractResultDto"> 
+		select 
+			ifnull(delivery_amount.delivery_amount_money,0) as deliveryAmountDeliveryAmountMoney,
+			ifnull(reserve_amount.reserve_amount_money,0) as reserveAmountReserveAmountMoney,
+			ifnull(specify_amount.specify_amount_money,0) as specifyAmountSpecifyAmountMoney,
+			ifnull(advance_amount.advance_amount_money,0) as advanceAmountAdvanceAmountMoney,
+			ifnull(freeze_amount.freeze_amount_money,0) as freezeAmounFreezeAmountMoney,
+			ifnull(make_amount.make_amount_money,0) as makeAmountMakeAmountMoney,
+			ifnull(back_amount.back_amount_money,0) as backAmountBackAmountMoney,
+			ifnull(sellback_amount.sellback_amount_money,0) as sellbackAmountSellbackAmountMoney
+		from 
+			sell_contract
+			/*发货金额*/
+			left join 
+			(select 
+				send_goods.sell_contract_id as id,
+				sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+			from 
+				send_goods
+			where 
+				send_goods.send_goods_type = 1 
+				and send_goods.status = 5 
+				and send_goods.sell_contract_id = #id#
+			group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+			/*备货金额*/
+			left join 
+			(select 
+				send_goods.sell_contract_id as id, 
+				sum(ifnull(`send_goods`.`money`,0)) as reserve_amount_money 
+			from 
+				send_goods
+			where 
+				send_goods.send_goods_type = 0 
+				and send_goods.status = 8 
+				and send_goods.sell_contract_id = #id#
+			group by send_goods.sell_contract_id) as reserve_amount on sell_contract.id = reserve_amount.id 
+			/*指定金额*/ 
+			left join 
+			(select 
+				send_goods.sell_contract_id as id, 
+				sum(ifnull(`return_detail`.`money`,0)) as specify_amount_money 
+			from 
+				 return_detail,mreturn,send_goods 
+			where 
+				send_goods.status=5 
+				and  return_detail.appoint_type = 4 
+				and (mreturn.return_type=0 or mreturn.return_type=2) 
+				and return_detail.send_goods_id=send_goods.id 
+				and return_detail.return_id=mreturn.id 
+				and send_goods.sell_contract_id = #id#
+			group by send_goods.sell_contract_id) as specify_amount on sell_contract.id = specify_amount.id 
+			/*预收金额*/
+			left join 
+			(select 
+				return_detail.sell_contract_id as id, 
+				sum(ifnull(`return_detail`.`money`,0)) as advance_amount_money 
+			from 
+				return_detail,mreturn 
+			where 
+				return_detail.appoint_type = 2 
+				and (mreturn.return_type=0 or mreturn.return_type=2) 
+				and return_detail.sell_contract_id = #id#
+				and return_detail.return_id=mreturn.id 
+			group by return_detail.sell_contract_id) as advance_amount on sell_contract.id = advance_amount.id 
+			/*冻结金额*/
+			left join 
+			(select 
+				return_detail.sell_contract_id as id,
+				sum(ifnull(`return_detail`.`money`,0)) as freeze_amount_money 
+			from 
+				 return_detail,mreturn,send_goods 
+			where 
+				(send_goods.status=2 or send_goods.status=3) 
+				and   return_detail.appoint_type = 4 
+				and (mreturn.return_type=0 or mreturn.return_type=2) 
+				and return_detail.send_goods_id=send_goods.id 
+				and return_detail.sell_contract_id = #id#
+				and return_detail.return_id=mreturn.id 
+			group by return_detail.sell_contract_id) as freeze_amount on sell_contract.id = freeze_amount.id 
+			/*开票金额*/
+			left join 
+			(select 
+				send_goods.sell_contract_id as id, 
+				sum(ifnull(`sell_invoice_detail`.`money`,0)) as make_amount_money 
+			from 
+				sell_invoice_detail,sell_invoice,send_goods 
+			where 
+				sell_invoice_detail.send_goods_id = send_goods.id 
+				and sell_invoice_detail.sell_invoice_id = sell_invoice.id
+				and sell_invoice.status != 7
+			and send_goods.sell_contract_id = #id#
+			group by send_goods.sell_contract_id) as make_amount on sell_contract.id = make_amount.id 
+			/*退货合同金额*/
+			left join 
+			(select 
+				sell_back_contract.sell_contract_id as id, 
+				sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+			from 
+				sell_back_contract 
+			where 
+				sell_back_contract.status = 11 
+				and sell_back_contract.sell_contract_id = #id#
+			group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+			/*退货金额*/
+			left join 
+			(select 
+				send_goods.sell_contract_id as id, 
+				sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+			from 
+				 sell_back_goods,send_goods 
+			where 
+				sell_back_goods.send_goods_id = send_goods.id 
+				and sell_back_goods.status = 8 
+				and send_goods.sell_contract_id = #id#
+			group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+		where
+			sell_contract.id = #id#
+	</select>
+	
+	<!-- 区域经理和大区经理 -->
+	<select id="salesContractsList_qy.search" parameterClass="salesContractQueryDto" resultClass="salesContractResultDto">
+		select 
+			sellContractId, 
+			productTypeName,  
+			productContractCode,  
+			companyContractCode,  
+			customerName,  
+			sellContractStampType, 
+			sellContractTemplateType, 
+			sellContractPaymentWay, 
+			sellContractDate, 
+			sellContractUserName, 
+			sellContractStatus,  
+			sellContractMoney,  
+
+			sellContractProductTypeId,  
+			sellContractUserAreaId, 
+			sellContractCustomerId, 
+			sellContractUserId,
+			sellContractCreditTypeId,
+			contractProName
+		from(
+			select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				customer.name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId,
+				sell_contract.contract_Pro_Name as contractProName
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = $paymentWay$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by 
+				sell_contract.id desc
+		) as sell_contract_
+		<dynamic prepend="WHERE"> 
+			<isNotEmpty prepend="and" property="userAreaIdArr">
+					sell_contract_.sellContractUserAreaId in ($userAreaIdArr$) 
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 14
+			</isNotEmpty> 
+		</dynamic>
+	</select>
+	<select id="salesContractsList_qy.recordCount" resultClass="java.lang.Integer">
+		select 
+			count(*) 
+		from (select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				sell_contract.customer_name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = #paymentWay#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty>
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by 
+				sell_contract.id 
+		) as sell_contract_
+		<dynamic prepend="WHERE"> 
+			<isNotEmpty prepend="and" property="userAreaIdArr">
+					sell_contract_.sellContractUserAreaId in ($userAreaIdArr$) 
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 14
+			</isNotEmpty> 
+		</dynamic>
+	</select>
+	
+	<!-- 销售助理 --> 
+	<select id="salesContractsList_xszl.search" parameterClass="salesContractQueryDto" resultClass="salesContractResultDto">
+		select 
+			sellContractId, 
+			productTypeName,  
+			productContractCode,  
+			companyContractCode,  
+			customerName,  
+			sellContractStampType, 
+			sellContractTemplateType, 
+			sellContractPaymentWay, 
+			sellContractDate, 
+			sellContractUserName, 
+			sellContractStatus,  
+			sellContractMoney,  
+			contractProName, 
+			
+			sellContractProductTypeId,  
+			sellContractUserAreaId, 
+			sellContractCustomerId, 
+			sellContractUserId,
+			sellContractCreditTypeId
+		from(
+			select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				customer.name as customerName,
+				sell_contract.contract_Pro_Name as contractProName, 
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = $paymentWay$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%' 
+				</isNotEmpty>
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by
+				sell_contract.id desc
+		) as sell_contract_
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="and" property="userAreaProductList">
+				<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						(sell_contract_.sellContractProductTypeId = $userAreaProductList[].productTypeId$ 
+					and sell_contract_.sellContractUserAreaId = $userAreaProductList[].userAreaId$)
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="init">
+				(sell_contract_.sellContractStatus = 12 or sell_contract_.sellContractStatus = 13)
+			</isNotEmpty> 
+		</dynamic>
+	</select>
+	<select id="salesContractsList_xszl.recordCount" resultClass="java.lang.Integer">
+		select 
+			count(*) 
+		from (select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				sell_contract.customer_name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = #paymentWay#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by 
+				sell_contract.id 
+		) as sell_contract_
+		<dynamic prepend="WHERE"> 
+			<isNotEmpty prepend="and" property="userAreaProductList">
+				<iterate property="userAreaProductList" open="(" close=")" conjunction="or" >  
+						(sell_contract_.sellContractProductTypeId = $userAreaProductList[].productTypeId$ 
+					and sell_contract_.sellContractUserAreaId = $userAreaProductList[].userAreaId$)
+				</iterate>
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="init">
+				(sell_contract_.sellContractStatus = 12 or sell_contract_.sellContractStatus = 13)
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	<!-- 销售经理 -->
+	<select id="salesContractsList_xsjl.search" parameterClass="salesContractQueryDto" resultClass="salesContractResultDto">
+		select 
+			sellContractId, 
+			productTypeName,  
+			productContractCode,  
+			companyContractCode,  
+			customerName,  
+			sellContractStampType, 
+			sellContractTemplateType, 
+			sellContractPaymentWay, 
+			sellContractDate, 
+			sellContractUserName, 
+			sellContractStatus,  
+			sellContractMoney,  
+
+			sellContractProductTypeId,  
+			sellContractUserAreaId, 
+			sellContractCustomerId, 
+			sellContractUserId,
+			sellContractCreditTypeId,
+			contractProName
+		from(
+			select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				customer.name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId,
+				sell_contract.contract_Pro_Name as contractProName
+			from
+				product_type,customer,sell_contract
+			<isNotEmpty property="unfinished">	
+			/* 退货金额 */
+			left join 
+			(select 
+				send_goods.sell_contract_id as id, 
+				sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+			from 
+				 sell_back_goods,send_goods 
+			where 
+				sell_back_goods.send_goods_id = send_goods.id 
+				and sell_back_goods.status = 8  
+			group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+			
+			/* 退货合同金额 */
+			left join 
+			(select 
+				sell_back_contract.sell_contract_id as id, 
+				sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+			from 
+				sell_back_contract 
+			where 
+				sell_back_contract.status = 11  
+			group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+			/* 发货金额 */
+			left join 
+			(select 
+				send_goods.sell_contract_id as id,
+				sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+			from 
+				send_goods
+			where 
+				send_goods.send_goods_type = 1 
+				and send_goods.status = 5  
+			group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+			</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = $paymentWay$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty>
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by
+				sell_contract.id desc
+		) as sell_contract_
+		<dynamic prepend="WHERE"> 
+			<isNotEmpty prepend="and" property="user.id">
+					sell_contract_.sellContractUserId = #user.id# 
+			</isNotEmpty>
+		</dynamic> 
+	</select>
+	<select id="salesContractsList_xsjl.recordCount" resultClass="java.lang.Integer">
+		select 
+			count(*) 
+		from (select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				sell_contract.customer_name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId
+			from
+				product_type,customer,sell_contract
+			<isNotEmpty property="unfinished">	
+			/* 退货金额 */
+			left join 
+			(select 
+				send_goods.sell_contract_id as id, 
+				sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+			from 
+				 sell_back_goods,send_goods 
+			where 
+				sell_back_goods.send_goods_id = send_goods.id 
+				and sell_back_goods.status = 8  
+			group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+			
+			/* 退货合同金额 */
+			left join 
+			(select 
+				sell_back_contract.sell_contract_id as id, 
+				sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+			from 
+				sell_back_contract 
+			where 
+				sell_back_contract.status = 11  
+			group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+			/* 发货金额 */
+			left join 
+			(select 
+				send_goods.sell_contract_id as id,
+				sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+			from 
+				send_goods
+			where 
+				send_goods.send_goods_type = 1 
+				and send_goods.status = 5  
+			group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+			</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = #paymentWay#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty>
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by 
+				sell_contract.id 
+		) as sell_contract_
+		<dynamic prepend="WHERE"> 
+			<isNotEmpty prepend="and" property="user.id">
+					sell_contract_.sellContractUserId = #user.id# 
+			</isNotEmpty>
+		</dynamic> 
+	</select>
+	<!-- 销售总监 --> 
+	<select id="salesContractsList_xszj.search" parameterClass="salesContractQueryDto" resultClass="salesContractResultDto">
+		select 
+			sellContractId, 
+			productTypeName,  
+			productContractCode,  
+			companyContractCode,  
+			customerName,  
+			sellContractStampType, 
+			sellContractTemplateType, 
+			sellContractPaymentWay, 
+			sellContractDate, 
+			sellContractUserName, 
+			sellContractStatus,  
+			sellContractMoney,  
+
+			sellContractProductTypeId,  
+			sellContractUserAreaId, 
+			sellContractCustomerId, 
+			sellContractUserId,
+			sellContractCreditTypeId,
+			contractProName
+		from(
+			select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				customer.name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId,
+				sell_contract.contract_Pro_Name as contractProName
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = $paymentWay$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by
+				sell_contract.id desc
+		) as sell_contract_
+		<dynamic prepend="WHERE"> 
+			<isNotEmpty prepend="and" property="productTypeIdArr">
+					sell_contract_.sellContractProductTypeId in ($productTypeIdArr$)
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 6
+			</isNotEmpty> 
+		</dynamic>
+	</select>
+	<select id="salesContractsList_xszj.recordCount" resultClass="java.lang.Integer">
+		select 
+			count(*) 
+		from (select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				sell_contract.customer_name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = #paymentWay#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by 
+				sell_contract.id 
+		) as sell_contract_
+		<dynamic prepend="WHERE"> 
+			<isNotEmpty prepend="and" property="productTypeIdArr">
+					sell_contract_.sellContractProductTypeId in ($productTypeIdArr$)
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 6
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	<!-- 区域总监 -->
+	<select id="salesContractsList_qyzj.search" parameterClass="salesContractQueryDto" resultClass="salesContractResultDto">
+		select 
+			sellContractId, 
+			productTypeName,  
+			productContractCode,  
+			companyContractCode,  
+			customerName,  
+			sellContractStampType, 
+			sellContractTemplateType, 
+			sellContractPaymentWay, 
+			sellContractDate, 
+			sellContractUserName, 
+			sellContractStatus,  
+			sellContractMoney,  
+
+			sellContractProductTypeId,  
+			sellContractUserAreaId, 
+			sellContractCustomerId, 
+			sellContractUserId,
+			sellContractCreditTypeId,
+			contractProName
+		from(
+			select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				customer.name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId,
+				sell_contract.contract_Pro_Name as contractProName
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = $paymentWay$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by 
+				sell_contract.id desc
+		) as sell_contract_
+		<dynamic prepend="WHERE"> 
+			<isNotEmpty prepend="and" property="productTypeIdArr">
+					sell_contract_.sellContractProductTypeId in ($productTypeIdArr$)
+				and	sell_contract_.sellContractUserAreaId = $user.userAreaId$
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 16
+			</isNotEmpty> 
+		</dynamic>
+	</select>
+	<select id="salesContractsList_qyzj.recordCount" resultClass="java.lang.Integer">
+		select 
+			count(*) 
+		from (select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				sell_contract.customer_name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = #paymentWay#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by 
+				sell_contract.id 
+		) as sell_contract_
+		<dynamic prepend="WHERE"> 
+			<isNotEmpty prepend="and" property="productTypeIdArr">
+					sell_contract_.sellContractProductTypeId in ($productTypeIdArr$)
+				and	sell_contract_.sellContractUserAreaId = $user.userAreaId$
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 16
+			</isNotEmpty> 
+		</dynamic>
+	</select>
+	<!-- 产品总监 --> 
+	<select id="salesContractsList_cpzj.search" parameterClass="salesContractQueryDto" resultClass="salesContractResultDto">
+		select 
+			sellContractId, 
+			productTypeName,  
+			productContractCode,  
+			companyContractCode,  
+			customerName,  
+			sellContractStampType, 
+			sellContractTemplateType, 
+			sellContractPaymentWay, 
+			sellContractDate, 
+			sellContractUserName, 
+			sellContractStatus,  
+			sellContractMoney,  
+
+			sellContractProductTypeId,  
+			sellContractUserAreaId, 
+			sellContractCustomerId, 
+			sellContractUserId,
+			sellContractCreditTypeId,
+			contractProName
+		from(
+			select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				customer.name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId,
+				sell_contract.contract_Pro_Name as contractProName
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = $paymentWay$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by
+				sell_contract.id desc
+		) as sell_contract_
+		<dynamic prepend="WHERE"> 
+			<isNotEmpty prepend="and" property="productTypeIdArr">
+					sell_contract_.sellContractProductTypeId in ($productTypeIdArr$)
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 2
+			</isNotEmpty> 
+		</dynamic>
+	</select>
+	<select id="salesContractsList_cpzj.recordCount" resultClass="java.lang.Integer">
+		select 
+			count(*) 
+		from (select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				sell_contract.customer_name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = #paymentWay#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by 
+				sell_contract.id 
+		) as sell_contract_
+		<dynamic prepend="WHERE"> 
+			<isNotEmpty prepend="and" property="productTypeIdArr">
+					sell_contract_.sellContractProductTypeId in ($productTypeIdArr$)
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 2
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	<!-- 法务专员 --> 
+	<select id="salesContractsList_fwzy.search" parameterClass="salesContractQueryDto" resultClass="salesContractResultDto">
+		select 
+			sellContractId, 
+			productTypeName,  
+			productContractCode,  
+			companyContractCode,  
+			customerName,  
+			sellContractStampType, 
+			sellContractTemplateType, 
+			sellContractPaymentWay, 
+			sellContractDate, 
+			sellContractUserName, 
+			sellContractStatus,  
+			sellContractMoney,  
+
+			sellContractProductTypeId,  
+			sellContractUserAreaId, 
+			sellContractCustomerId, 
+			sellContractUserId,
+			sellContractCreditTypeId,
+			contractProName
+		from(
+			select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				customer.name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId,
+				sell_contract.contract_Pro_Name as contractProName
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = $paymentWay$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by
+				sell_contract.id desc
+		) as sell_contract_
+		<dynamic prepend="WHERE">  
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 4
+			</isNotEmpty> 
+		</dynamic>
+	</select>
+	<select id="salesContractsList_fwzy.recordCount" resultClass="java.lang.Integer">
+		select 
+			count(*) 
+		from (select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				sell_contract.customer_name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = #paymentWay#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by 
+				sell_contract.id 
+		) as sell_contract_
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 4
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	<!-- 运营总监助理 --> 
+	<select id="salesContractsList_yyzjzl.search" parameterClass="salesContractQueryDto" resultClass="salesContractResultDto">
+		select 
+			sellContractId, 
+			productTypeName,  
+			productContractCode,  
+			companyContractCode,  
+			customerName,  
+			sellContractStampType, 
+			sellContractTemplateType, 
+			sellContractPaymentWay, 
+			sellContractDate, 
+			sellContractUserName, 
+			sellContractStatus,  
+			sellContractMoney,  
+
+			sellContractProductTypeId,  
+			sellContractUserAreaId, 
+			sellContractCustomerId, 
+			sellContractUserId,
+			sellContractCreditTypeId,
+			contractProName
+		from(
+			select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				customer.name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId,
+				sell_contract.contract_Pro_Name as contractProName
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = $paymentWay$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by
+				sell_contract.id desc
+		) as sell_contract_
+		<dynamic prepend="WHERE">  
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 8
+			</isNotEmpty> 
+		</dynamic>
+	</select>
+	<select id="salesContractsList_yyzjzl.recordCount" resultClass="java.lang.Integer">
+		select 
+			count(*) 
+		from (select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				sell_contract.customer_name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = #paymentWay#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by 
+				sell_contract.id 
+		) as sell_contract_
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 8
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	<!-- 运营总监 --> 
+	<select id="salesContractsList_yyzj.search" parameterClass="salesContractQueryDto" resultClass="salesContractResultDto">
+		select 
+			sellContractId, 
+			productTypeName,  
+			productContractCode,  
+			companyContractCode,  
+			customerName,  
+			sellContractStampType, 
+			sellContractTemplateType, 
+			sellContractPaymentWay, 
+			sellContractDate, 
+			sellContractUserName, 
+			sellContractStatus,  
+			sellContractMoney,  
+
+			sellContractProductTypeId,  
+			sellContractUserAreaId, 
+			sellContractCustomerId, 
+			sellContractUserId,
+			sellContractCreditTypeId,
+			contractProName
+		from(
+			select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				customer.name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId,
+				sell_contract.contract_Pro_Name as contractProName
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = $paymentWay$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by
+				sell_contract.id desc
+		) as sell_contract_
+		<dynamic prepend="WHERE">  
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 10
+			</isNotEmpty> 
+		</dynamic>
+	</select>
+	<select id="salesContractsList_yyzj.recordCount" resultClass="java.lang.Integer">
+		select 
+			count(*) 
+		from (select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				sell_contract.customer_name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = #paymentWay#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by 
+				sell_contract.id 
+		) as sell_contract_
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 10
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	<!-- 信用专员&采购主管 --> 
+	<select id="salesContractsList_xyzy_cgzg.search" parameterClass="salesContractQueryDto" resultClass="salesContractResultDto">
+		select 
+			sellContractId, 
+			productTypeName,  
+			productContractCode,  
+			companyContractCode,  
+			customerName,  
+			sellContractStampType, 
+			sellContractTemplateType, 
+			sellContractPaymentWay, 
+			sellContractDate, 
+			sellContractUserName, 
+			sellContractStatus,  
+			sellContractMoney,  
+
+			sellContractProductTypeId,  
+			sellContractUserAreaId, 
+			sellContractCustomerId, 
+			sellContractUserId,
+			sellContractCreditTypeId,
+			contractProName
+		from(
+			select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				customer.name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId,
+				sell_contract.contract_Pro_Name as contractProName
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = $paymentWay$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by
+				sell_contract.id desc
+		) as sell_contract_
+		<dynamic prepend="WHERE"> 
+			<isNotEmpty prepend="and" property="productTypeIdArr">
+					sell_contract_.sellContractProductTypeId in ($productTypeIdArr$)
+			</isNotEmpty> 
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 14
+			</isNotEmpty> 
+		</dynamic>
+	</select>
+	<select id="salesContractsList_xyzy_cgzg.recordCount" resultClass="java.lang.Integer">
+		select 
+			count(*) 
+		from (select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				sell_contract.customer_name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = #paymentWay#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by 
+				sell_contract.id 
+		) as sell_contract_
+		<dynamic prepend="WHERE"> 
+			<isNotEmpty prepend="and" property="productTypeIdArr">
+					sell_contract_.sellContractProductTypeId in ($productTypeIdArr$)
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 14
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	<!-- 信用主管&总经理 --> 
+	<select id="salesContractsList_xyzg_zjl.search" parameterClass="salesContractQueryDto" resultClass="salesContractResultDto">
+		select 
+			sellContractId, 
+			productTypeName,  
+			productContractCode,  
+			companyContractCode,  
+			customerName,  
+			sellContractStampType, 
+			sellContractTemplateType, 
+			sellContractPaymentWay, 
+			sellContractDate, 
+			sellContractUserName, 
+			sellContractStatus,  
+			sellContractMoney,  
+
+			sellContractProductTypeId,  
+			sellContractUserAreaId, 
+			sellContractCustomerId, 
+			sellContractUserId,
+			sellContractCreditTypeId,
+			contractProName
+		from(
+			select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				customer.name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId,
+				sell_contract.contract_Pro_Name as contractProName
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = $paymentWay$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by
+				sell_contract.id desc
+		) as sell_contract_
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 14
+			</isNotEmpty> 
+		</dynamic>
+	</select>
+	<select id="salesContractsList_xyzg_zjl.recordCount" resultClass="java.lang.Integer">
+		select 
+			count(*) 
+		from (select
+				sell_contract.id as sellContractId,
+				product_type.name as productTypeName, 
+				product_contract_code as productContractCode, 
+				company_contract_code as companyContractCode,  
+				sell_contract.customer_name as customerName,
+				sell_contract.stamp_type sellContractStampType,
+				sell_contract.template_type as sellContractTemplateType,
+				sell_contract.payment_way as sellContractPaymentWay,
+				sell_contract.date as sellContractDate,
+				sell_contract.user_name as sellContractUserName,
+				sell_contract.status as sellContractStatus,  
+				sell_contract.money as sellContractMoney,  
+				 
+				sell_contract.product_type_id as sellContractProductTypeId,
+				sell_contract.user_area_id as sellContractUserAreaId,
+				sell_contract.customer_id as sellContractCustomerId,
+				sell_contract.user_id as sellContractUserId,
+				sell_contract.credit_type_id as sellContractCreditTypeId
+			from
+				product_type,customer,sell_contract
+				<isNotEmpty property="unfinished">	
+				/* 退货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id, 
+					sum(ifnull(`sell_back_goods`.`money`,0)) as sellback_amount_money 
+				from 
+					 sell_back_goods,send_goods 
+				where 
+					sell_back_goods.send_goods_id = send_goods.id 
+					and sell_back_goods.status = 8  
+				group by send_goods.sell_contract_id) as sellback_amount on sell_contract.id = sellback_amount.id
+				
+				/* 退货合同金额 */
+				left join 
+				(select 
+					sell_back_contract.sell_contract_id as id, 
+					sum(ifnull(`sell_back_contract`.`money`,0)) as back_amount_money 
+				from 
+					sell_back_contract 
+				where 
+					sell_back_contract.status = 11  
+				group by sell_back_contract.sell_contract_id) as back_amount on sell_contract.id = back_amount.id 
+				/* 发货金额 */
+				left join 
+				(select 
+					send_goods.sell_contract_id as id,
+					sum(ifnull(`send_goods`.`money`,0)) as delivery_amount_money 
+				from 
+					send_goods
+				where 
+					send_goods.send_goods_type = 1 
+					and send_goods.status = 5  
+				group by send_goods.sell_contract_id) as delivery_amount on sell_contract.id = delivery_amount.id 
+				</isNotEmpty>
+			where 
+				sell_contract.product_type_id = product_type.id
+				and sell_contract.customer_id = customer.id
+				<isNotEmpty prepend="and" property="productTypeId">
+					sell_contract.product_type_id = $productTypeId$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="productContractCode">
+					sell_contract.product_contract_code like '%$productContractCode$%'
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="companyContractCode">
+					sell_contract.company_contract_code like '%$companyContractCode$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="customerName">
+					customer.name like '%$customerName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="stampType">
+					sell_contract.stamp_type = $stampType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="templateType">
+					sell_contract.template_type = $templateType$
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="paymentWay">
+					sell_contract.payment_way = #paymentWay#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="userName">
+					sell_contract.user_name like '%$userName$%'
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="starttime">
+					<![CDATA[ sell_contract.date >= #starttime# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="endtime">
+					<![CDATA[ sell_contract.date <= #endtime# ]]>
+				</isNotEmpty> 
+				<isNotEmpty prepend="and" property="status">
+					sell_contract.status = $status$
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="contractProName">
+					sell_contract.contract_Pro_Name like '%$contractProName$%'
+				</isNotEmpty> 
+				<isEqual prepend="and"  property="unfinished" compareValue="1">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)>0]]>
+				</isEqual>
+				<isEqual prepend="and"  property="unfinished" compareValue="2">
+					<![CDATA[sell_contract.money-ifnull(back_amount.back_amount_money,0)-ifnull(delivery_amount.delivery_amount_money,0)+ifnull(sellback_amount.sellback_amount_money,0)<=0]]>
+				</isEqual>
+			order by 
+				sell_contract.id 
+		) as sell_contract_
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="and" property="init">
+				sell_contract_.sellContractStatus = 14
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	<!-- 插入销售合同表 -->
+	<insert id ="insertSalesContract" parameterClass="salesContractInfoDto">
+		INSERT INTO SELL_CONTRACT
+				           		(ID,
+					            PRODUCT_CONTRACT_CODE,
+					            STATUS,
+					            STAMP_TYPE,
+					            TEMPLATE_TYPE,
+					            PLACE,
+					            PROTECT_LIMIT,
+					            CHECK_LIMIT,
+					            BREACH,
+					            LAWSUIT,
+					            CLAUSE,
+					            FILE,
+					            CUSTOMER_ID,
+					            CUSTOMER_NAME,
+					            CUSTOMER_LINKMAN_ID,
+					            PRODUCT_TYPE_ID,
+					            PAYMENT_WAY,
+					            BATCH_WAY,
+					            CASH_MONEY,
+					            BATCH_MAX_MONEY,
+					            CUSTOMER_CREDIT_ID,
+					            CREDIT_TYPE_ID,
+					            PROJECT_NAME,
+					            ARTERM,
+					            CLIMIT,
+					            FREE,
+					            CUSTOMER_ADDRESS_ID,
+					            REQUEST_SEND_DATE,
+					            USER_ID,
+					            USER_NAME,
+					            USER_AREA_ID,
+					            TEXT,
+					            MONEY,
+					            DATETIME,
+								pro_maj_id,
+								pro_maj_name,
+								legal_id,
+								legal_name,
+								sell_maj_id,
+								sell_maj_name,
+								ope_maj_id,
+								ope_maj_name,
+								area_maj_id,
+								area_maj_name,
+								interest_rate,
+								ca_name,
+					            ca_address,
+					            ca_postcode,
+					            ca_linkman,
+					            ca_tel,
+					            ca_mobile,
+					            contract_pro_name)
+		VALUES     				(#id#,
+								 #productContractCode#,
+								 #status#,
+								 #stampType#,
+								 #templateType#,
+								#place#,
+								#protectLimit#,
+								#checkLimit#,
+								#breach#,
+								#lawsuit#,
+								#clause#,
+								#fileName#,
+								#customerId#,
+								#customerName#,
+								#customerLinkmanId#,
+								#productTypeId#,
+								#paymentWay#,
+								#batchWay#,
+								#cashMoney#,
+								#batchMaxMoney#,
+								#customerCreditId#,
+								#creditTypeId#,
+								#projectName#,
+								#arterm#,
+								#climit#,
+								#freeLimit#,
+								#customerAddressId#,
+								#requestSendDate#,
+								#userId#,
+								#userName#,
+								#userAreaId#,
+								#text#,
+								#money#,
+								date_format(now(),'%Y-%m-%d'),
+								#proMajId#,
+								#proMajName#,
+								#legalId#,
+								#legalName#,
+								#sellMajId#,
+								#sellMajName#,
+								#opeMajId#,
+								#opeMajName#,
+								#areaMajId#,
+								#areaMajName#,
+								#interestRate#,
+								#customerAddressName#,
+								#customerAddressAddress#,
+								#customerAddressPostcode#,
+								#customerAddressLinkman#,
+								#customerAddressTel#,
+								#customerAddressMobile#,
+								#contractProName#)
+	
+	</insert>
+	<!-- 插入销售合同明细表 shensi -->
+	<insert id = "insertSalesConDetail" parameterClass="sellContractDetail">
+		INSERT INTO SELL_CONTRACT_DETAIL
+			           (SELL_CONTRACT_ID,
+			            PRODUCT_ID,
+			            COUNT,
+			            BUY_PRICE,
+			            PRICE)
+		VALUES     		(#sellContractId#,
+			            #productId#,
+			            #count#,
+			            #buyPrice#,
+			            #price#)
+		
+	</insert>
+	<!-- 插入需求单  shensi-->
+	<insert id = "insertDemand" parameterClass="demand">
+		INSERT INTO DEMAND
+			           (
+						SELL_CONTRACT_ID,
+			            PRODUCT_ID,
+			            PRODUCT_TYPE_ID,
+			            COUNT,
+			            USER_ID,
+			            USER_NAME,
+			            USER_AREA_ID,
+			            STATUS)
+		VALUES     		(
+			            #sellContractId#,
+			            #productId#,
+			            #productTypeId#,
+			            #count#,
+			            #userId#,
+			            #userName#,
+			            #userAreaId#,
+			            0)
+	</insert>
+	<!-- 判断评审人是否存在 （ 查询法务专员，运营总监，运营总监助理）shensi -->
+	<select id="selectJudgeRole"  resultClass="salesJudgeRoleDto" parameterClass="java.util.HashMap">
+		SELECT ID      AS USERID,
+		       NAME    AS USERNAME,
+		       ROLE_ID as roleId
+		FROM   USER
+		WHERE  
+		       enable = 1
+		        <!--评审 下一评审人角色ID-->
+				<isNotEmpty prepend="and" property="roleId">
+                    ROLE_ID = #roleId#	
+				</isNotEmpty>
+				<!--新建、修改-->
+				<isEmpty prepend="and" property="roleId">
+                    ROLE_ID IN ('15','16','17')
+				</isEmpty>								       
+	</select>
+	<!-- 判断评审人是否存在 （查询产品总监，销售总监）shensi -->
+	<select id="selectJudgeRoleById"  resultClass="salesJudgeRoleDto" parameterClass="java.util.HashMap">
+		SELECT U.ID                AS USERID,
+		       U.NAME              AS USERNAME,
+		       U.ROLE_ID           AS roleId
+		FROM   USER U,
+		       USER_PRODUCT UP
+		WHERE  U.enable = 1
+		       AND U.ID = UP.USER_ID
+		       <!--评审 下一评审人角色ID-->
+				<isNotEmpty prepend="and" property="roleId">
+                    U.ROLE_ID = #roleId#	
+				</isNotEmpty>
+				<!--新建、修改-->
+				<isEmpty prepend="and" property="roleId">
+                    U.ROLE_ID IN ('10','5')
+				</isEmpty>			       
+		       AND UP.PRODUCT_TYPE_ID = #proTypeId#
+	</select> 
+	<select id="selectJudgeRoleByRegionalId"  resultClass="salesJudgeRoleDto" parameterClass="java.util.HashMap">
+		SELECT U.ID             AS USERID,
+				U.NAME			AS USERNAME,
+				U.ROLE_ID		AS ROLEID
+		FROM  USER U,
+				USER_PRODUCT UP
+		WHERE U.ENABLE=1
+			 AND U.ID=UP.USER_ID
+			 <!-- 评审 下一评审人角色ID -->
+			 <isNotEmpty prepend="and" property="roleId">
+			 	U.ROLE_ID=#roleId#
+			 </isNotEmpty>
+			 <!-- 新建、修改-->
+			 <isEmpty prepend="and" property="roleId">
+			 	U.ROLE_ID = '9'
+			 </isEmpty>
+			 AND UP.PRODUCT_TYPE_ID=#proTypeId#
+			 AND U.USER_AREA_ID=#regionalId#
+	</select>
+	<!-- 销售合同修改时删除需求单表对应产品   shensi -->
+	<delete id="deleteDemand" parameterClass="demand">
+			DELETE FROM DEMAND
+			WHERE   SELL_CONTRACT_ID = #sellContractId#
+	            	AND STATUS=0  
+					AND AND PRODUCT_ID = #productId#
+		
+	</delete>
+	<!-- 销售合同修改时删除销售合同明细   shensi -->
+	<delete id="deleteSalesConDetail" parameterClass="sellContractDetail">
+			DELETE FROM sell_contract_detail
+			WHERE       SELL_CONTRACT_ID = #sellContractId#
+	            		AND PRODUCT_ID = #productId#
+		
+	</delete>
+	<!-- 销售合同修改  shensi-->
+	<update id = "updateSalesCon" parameterClass="salesContractInfoDto">
+				UPDATE SELL_CONTRACT
+				SET    STATUS = #status#,
+					   STAMP_TYPE = #stampType#,
+				       TEMPLATE_TYPE = #templateType#,
+				       PLACE = #place#,
+				       PROTECT_LIMIT = #protectLimit#,
+				       CHECK_LIMIT = #checkLimit#,
+				       BREACH = #breach#,
+				       LAWSUIT = #lawsuit#,
+				       FILE = #fileName#,
+				       CLAUSE = #clause#,
+				       CUSTOMER_ID = #customerId#,
+				       CUSTOMER_NAME = #customerName#,
+				       CUSTOMER_LINKMAN_ID = #customerLinkmanId#,
+					   CUSTOMER_LINKMAN_NAME = #customerLinkmanName#,
+				       PRODUCT_TYPE_ID = #productTypeId#,
+				       PAYMENT_WAY = #paymentWay#,
+				       BATCH_WAY = #batchWay#,
+				       CASH_MONEY = #cashMoney#,
+				       BATCH_MAX_MONEY = #batchMaxMoney#,
+				       CUSTOMER_CREDIT_ID = #customerCreditId#,
+				       CREDIT_TYPE_ID = #creditTypeId#,
+				       PROJECT_NAME = #projectName#,
+				       ARTERM = #arterm#,
+				       CLIMIT = #climit#,
+				       FREE = #freeLimit#,
+				       MONEY = #money#,
+				       CUSTOMER_ADDRESS_ID = #customerAddressId#,
+				       REQUEST_SEND_DATE = #requestSendDate#,
+				       USER_ID = #userId#,
+				       USER_NAME = #userName#,
+				       USER_AREA_ID = #userAreaId#,
+				       TEXT = #text#,
+				       INTEREST_RATE = #interestRate#,
+				       pro_maj_id=#proMajId#,
+						pro_maj_name=#proMajName#,
+						legal_id=#legalId#,
+						legal_name=#legalName#,
+						sell_maj_id=#sellMajId#,
+						sell_maj_name=#sellMajName#,
+						ope_maj_id=#opeMajId#,
+						ope_maj_name=#opeMajName#,
+						area_maj_id=#areaMajId#,
+						area_maj_name=#areaMajName#
+			WHERE	   ID=#id#       
+	</update>
+	
+	<!--删除与销售合同对应的全部合同明细(需求单  只删除未确认的需求单)-->
+	<delete id="deleteAllDemandOfContract" parameterClass="java.lang.String">
+			DELETE FROM DEMAND
+			WHERE   STATUS=0  
+					AND SELL_CONTRACT_ID = #contractId#
+	</delete>
+	<!-- 销售合同删除时删除销售合同主表  zhangzixu -->
+	<delete id="deleteSalesContract" parameterClass="java.lang.String">
+			DELETE FROM SELL_CONTRACT
+			WHERE       ID = #CONTRACTID#
+		      			AND (STATUS = '17'
+		                  OR STATUS = '1'
+		                  OR STATUS = '3'
+		                  OR STATUS = '5'
+		                  OR STATUS = '7'
+		                  OR STATUS = '9'
+		                  OR STATUS = '11'
+		                  OR STATUS = '15')		
+	</delete>
+	<!-- 销售合同删除时删除销售合同明细表  zhangzixu -->
+	<delete id="deleteSalesContractDetail" parameterClass="java.lang.String">
+			DELETE FROM SELL_CONTRACT_DETAIL
+			WHERE  SELL_CONTRACT_ID = #CONTRACTID#	
+	</delete>
+	<!-- 销售合同删除时获得合同明细表记录数  zhangzixu -->
+	<select id="getSalesContractDetailCount" parameterClass="java.lang.String" resultClass="java.lang.Integer">
+			SELECT COUNT(id )
+			FROM   SELL_CONTRACT_DETAIL
+			WHERE  SELL_CONTRACT_ID = #CONTRACTID#	
+	</select>
+	
+	<!-- 查询公司表  zhangzixu -->
+	<select id="getCompanyInfo"  resultClass="companyInfoDto">
+			SELECT ID,
+      			   NAME,
+			       INVOICE_BANK_NAME,
+			       INVOICE_BANK_ACCOUNT,
+			       TAX_NUMBER,
+			       INVOICE_BANK_ADDRESS,
+			       INVOICE_BANK_TEL,
+			       TAX_RATE,
+			       REMIT_BANK_NAME,
+			       REMIT_BANK_ACCOUNT
+			FROM   COMPANY
+	</select>
+	<!-- 更改打印后的状态  zhangzixu -->
+	<update id="modifyPrintStatus"  parameterClass="java.lang.String">
+			UPDATE SELL_CONTRACT
+			SET    STATUS = '13'
+			WHERE  ID = #CONTRACTID#
+				   AND 	STATUS = '12'
+	</update>
+	<!-- 更改生效后的状态  zhangzixu -->
+	<update id="modifyContractStatusEffect"  parameterClass="java.util.Map">
+			UPDATE SELL_CONTRACT
+			SET    STATUS = '14',
+				   COMPANY_CONTRACT_CODE=#companyContractCode#
+			WHERE  ID = #contractId#
+				   AND 	STATUS = '13'
+	</update>
+	<!-- 更改取消后的状态  zhangzixu -->
+	<update id="modifyContractStatusCancel"  parameterClass="java.lang.String">
+			UPDATE SELL_CONTRACT
+			SET    STATUS = '15'
+			WHERE  ID = #CONTRACTID#
+				   AND 	STATUS = '13'
+	</update>
+	<!-- 合同取消同时删除demand表  zhangzixu -->
+	<delete id="deleteContractDemand" parameterClass="java.lang.String">
+			DELETE FROM DEMAND
+			WHERE  
+				STATUS=0  
+				AND SELL_CONTRACT_ID = #CONTRACTID#	
+	</delete>
+
+	<!-- 产品分类及部门 信息-->	
+	<select id="saleContract.selectProductTypeByUserId" resultClass="productTypeDeptDto" parameterClass="java.util.HashMap">
+		SELECT   PT.ID AS PRODID,
+		         PT.NO AS PRODNO,
+		         PT.NAME AS PRODNAME,
+		         PT.PRODUCT_DEPT_ID AS PRODDEPTID,
+		         PD.NAME AS PRODDEPTNAME,
+		         PT.CLIMIT
+		FROM     PRODUCT_TYPE PT,
+		         PRODUCT_DEPT PD
+		WHERE    PT.PRODUCT_DEPT_ID = PD.ID
+		<!-- 销售经理 -->
+		<isNotEmpty prepend="and" property="userId">
+			PT.ID IN 
+			(
+				SELECT  PRODUCT_TYPE_ID 
+				FROM    USER_PRODUCT
+				WHERE   USER_ID = #userId#
+			)		
+		</isNotEmpty>		
+		ORDER BY PT.NAME
+	</select>
+
+	
+	<!-- 根据条件检索产品信息 -->	
+	<select id="saleContractProd.selectProductByCondition" resultClass="productSelectDto" parameterClass="searchProdCondition">
+		SELECT PRODUCT.ID                    AS PRODID,
+		       PRODUCT.NAME                  AS PRODNAME,
+		       PRODUCT.TYPE                  AS PRODTYPE,
+		       PRODUCT.UNIT                  AS PRODUNIT,
+		       PRODUCT.CODE                  AS PRODCODE,
+		       PRODUCT.LIMIT_PRICE			 AS LIMITPRICE,
+		       IFNULL(VIEWPROD.FREECOUNT,0)  AS salesCanUse
+		FROM   PRODUCT
+		       INNER JOIN PRODUCT_SERIE PROSERIE
+		         ON PRODUCT.PRODUCT_SERIES_ID = PROSERIE.ID
+		       INNER JOIN PRODUCT_TYPE PROTYPE
+		         ON PROTYPE.ID = PROSERIE.PRODUCT_TYPE_ID
+		            AND PROTYPE.ID = #prodTypeId#
+		       LEFT JOIN VIEW_RESULT_PROD_FREECOUNT VIEWPROD
+		         ON VIEWPROD.PRODID = PRODUCT.ID
+		WHERE  PROTYPE.ID = #prodTypeId#
+		       	<isNotEmpty prepend="and" property="prodSerieId">
+		       	   PROSERIE.ID = #prodSerieId#
+		       </isNotEmpty>
+		       	<isNotEmpty prepend="and" property="prodName">
+		       	   	PRODUCT.NAME LIKE '%$prodName$%'
+		       </isNotEmpty>
+		       	<isNotEmpty prepend="and" property="prodType">
+		       	   PRODUCT.TYPE LIKE '%$prodType$%'
+		       </isNotEmpty>
+		        <isNotEmpty prepend="and" property="prodCode">
+		       	   PRODUCT.CODE LIKE '%$prodCode$%'
+		       </isNotEmpty>
+		ORDER BY  PRODUCT.CODE ASC
+	</select>
+	
+	<!-- 根据条件检索产品信息 分页 -->	
+	<select id="saleContractProd.recordCount" resultClass="java.lang.Integer" parameterClass="searchProdCondition">
+		SELECT  COUNT(*)
+		FROM   PRODUCT
+		       INNER JOIN PRODUCT_SERIE PROSERIE
+		         ON PRODUCT.PRODUCT_SERIES_ID = PROSERIE.ID
+		       INNER JOIN PRODUCT_TYPE PROTYPE
+		         ON PROTYPE.ID = PROSERIE.PRODUCT_TYPE_ID
+		            AND PROTYPE.ID = #prodTypeId#
+		       LEFT JOIN VIEW_RESULT_PROD_FREECOUNT VIEWPROD
+		         ON VIEWPROD.PRODID = PRODUCT.ID
+		WHERE  PROTYPE.ID = #prodTypeId#
+		       	<isNotEmpty prepend="and" property="prodSerieId">
+		       	   PROSERIE.ID = #prodSerieId#
+		       </isNotEmpty>
+		       	<isNotEmpty prepend="and" property="prodName">
+		       	   	PRODUCT.NAME LIKE '%$prodName$%'
+		       </isNotEmpty>
+		       	<isNotEmpty prepend="and" property="prodType">
+		       	   PRODUCT.TYPE LIKE '%$prodType$%'
+		       </isNotEmpty>
+		        <isNotEmpty prepend="and" property="prodCode">
+		       	   PRODUCT.CODE LIKE '%$prodCode$%'
+		       </isNotEmpty>
+	</select>
+	
+	<!-- 产品系列-->	
+	<select id="saleContractSeries.selectProdSeriesByProdTypeId" resultClass="prodSerieEntity" parameterClass="java.util.HashMap">
+		SELECT   ID,
+		         NO,
+		         NAME
+		FROM     PRODUCT_SERIE
+		WHERE    PRODUCT_TYPE_ID = #prodTypeId#
+		ORDER BY NAME
+	</select>
+	
+	<!-- 新建销售合同   根据产品分类查看系列 shensi -->
+	<select id="selectProSerieByProTypeId" parameterClass="java.lang.String" resultClass="salesConProductDto">
+		SELECT PROSERIE.ID     AS PROSERIEID,
+		       PROSERIE.NAME   AS PROSERIENAME,
+		       PRODEPT.NAME    AS PRODEPTNAME,
+		       PRODEPT.ACCOUNT AS PRODEPTACCOUNT,
+		       PRODEPT.FAX     AS PRODEPTFAX
+		FROM   PRODUCT_SERIE PROSERIE,
+		       PRODUCT_DEPT PRODEPT,
+		       PRODUCT_TYPE PROTYPE
+		WHERE  PROTYPE.ID = PROSERIE.PRODUCT_TYPE_ID
+		       AND PROTYPE.PRODUCT_DEPT_ID = PRODEPT.ID
+		       AND PROTYPE.ID = #proTypeId#
+	</select>
+
+	<!-- 新建销售合同   选择产品shensi -->
+	<select id="salesProduct.selectProduct" parameterClass="salesConProductDto" resultClass="salesConProductDto">
+		SELECT PRODUCT.ID                    AS PROID,
+		       PRODUCT.NAME                  AS PRODUCTNAME,
+		       PRODUCT.TYPE                  AS PRODUCTTYPE,
+		       PRODUCT.UNIT                  AS PRODUCTUNIT,
+		       PRODUCT.CODE                  AS PRODUCTCODE,
+		       IFNULL(VIEWPROD.FREECOUNT,0)  AS salesCanUse
+		FROM   PRODUCT
+		       INNER JOIN PRODUCT_SERIE PROSERIE
+		         ON PRODUCT.PRODUCT_SERIES_ID = PROSERIE.ID
+		       INNER JOIN PRODUCT_TYPE PROTYPE
+		         ON PROTYPE.ID = PROSERIE.PRODUCT_TYPE_ID
+		            AND PROTYPE.ID = #proTypeId#
+		       LEFT JOIN VIEW_RESULT_PROD_FREECOUNT VIEWPROD
+		         ON VIEWPROD.PRODID = PRODUCT.ID
+		WHERE  PROTYPE.ID = #proTypeId#
+		       	<isNotEmpty prepend="and" property="proSerieId">
+		       	   PROSERIE.ID = #proSerieId#
+		       </isNotEmpty>
+		       	<isNotEmpty prepend="and" property="productName">
+		       	   	PRODUCT.NAME LIKE '%$productName$%'
+		       </isNotEmpty>
+		       	<isNotEmpty prepend="and" property="productType">
+		       	   PRODUCT.TYPE = #productType#
+		       </isNotEmpty>
+		        <isNotEmpty prepend="and" property="productCode">
+		       	   PRODUCT.CODE = #productCode#
+		       </isNotEmpty>
+		ORDER BY  PRODUCT.CODE ASC
+	</select>	
+	<!-- 新建销售合同   选择产品 求总数 分页 shensi -->
+	<select id="salesProduct.recordCount" parameterClass="salesConProductDto" resultClass="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM   PRODUCT
+		       INNER JOIN PRODUCT_SERIE PROSERIE
+		         ON PRODUCT.PRODUCT_SERIES_ID = PROSERIE.ID
+		       INNER JOIN PRODUCT_TYPE PROTYPE
+		         ON PROTYPE.ID = PROSERIE.PRODUCT_TYPE_ID
+		            AND PROTYPE.ID = #proTypeId#
+		       LEFT JOIN VIEW_RESULT_PROD_FREECOUNT VIEWPROD
+		         ON VIEWPROD.PRODID = PRODUCT.ID
+		WHERE  PROTYPE.ID = #proTypeId#
+		       	<isNotEmpty prepend="and" property="proSerieId">
+		       	   PROSERIE.ID = #proSerieId#
+		       </isNotEmpty>
+		       	<isNotEmpty prepend="and" property="productName">
+		       	 	PRODUCT.NAME LIKE '%$productName$%'
+		       </isNotEmpty>
+		       	<isNotEmpty prepend="and" property="productType">
+		       	   PRODUCT.TYPE = #productType#
+		       </isNotEmpty>
+		        <isNotEmpty prepend="and" property="productCode">
+		       	   PRODUCT.CODE = #productCode#
+		       </isNotEmpty>
+	</select>		
+</sqlMap>

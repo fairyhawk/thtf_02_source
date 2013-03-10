@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="stockForm" type="cn.com.thtf.egov.cms.form.StockForm">
+		</form-bean> 
+		<form-bean name="orderForm" type="cn.com.thtf.egov.cms.form.OrderForm">
+		</form-bean>
+		<form-bean name="boxForm" type="cn.com.thtf.egov.cms.form.BoxForm">
+		</form-bean>
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>
+		<!-- 装箱单确认初始化 -->
+		<action path="/boxTbcInit"
+			type="cn.com.thtf.egov.cms.action.inventory.BoxAction"
+			parameter="boxTbcInit"
+			name="boxForm"
+			scope="request"
+			validate="false">
+			<forward name="toBeConfirm" path="/jsp/inventory/boxTbc.jsp"/> 
+		</action>
+		<!-- 装箱单确认 -->
+		<action path="/boxTbc"
+			type="cn.com.thtf.egov.cms.action.inventory.BoxAction"
+			parameter="boxTbc"
+			name="boxForm"
+			scope="request"
+			validate="false">
+			<forward name="boxList" path="/boxList.do"/> 
+		</action>
+		<!-- 装箱单已付款确认 -->
+		<action path="/boxTbcPay"
+			type="cn.com.thtf.egov.cms.action.inventory.BoxAction"
+			parameter="boxTbcPay"
+			name="boxForm"
+			scope="request"
+			validate="false">
+			<forward name="boxList" path="/boxList.do"/> 
+		</action>
+		<!-- 库存单查看 -->
+		<action path="/stockView"
+			type="cn.com.thtf.egov.cms.action.inventory.StockListAction"
+			parameter="getStock"
+			name="stockForm"
+			scope="request"
+			validate="false">
+			<forward name="getStock" path="/jsp/inventory/stockdetail.jsp"/> 
+		</action>
+		<!-- 库存管理列表 -->
+		<action path="/stock"
+			type="cn.com.thtf.egov.cms.action.inventory.StockListAction"
+			parameter="stockList"
+			name="stockForm"
+			scope="request"
+			validate="false">
+			<forward name="stockList" path="/jsp/inventory/stocklist.jsp"/>
+		</action> 
+		<!-- 产品系列 -->
+		<action path="/getProductSerie"
+			type="cn.com.thtf.egov.cms.action.inventory.StockListAction"
+			parameter="getProductSerie"
+			name="stockForm"
+			scope="request"
+			validate="false"> 
+		</action>
+		<!-- 发货管理列表 -->
+		<action path="/stockOrder"
+			type="cn.com.thtf.egov.cms.action.inventory.SendGoodsAuditAction"
+			parameter="orderList"
+			name="orderForm"
+			scope="request"
+			validate="false">
+			<forward name="orderList" path="/jsp/inventory/sendgoodslist.jsp"/>
+		</action>
+
+		<!-- 发货单查看 -->
+		<action path="/getStockSendGoodsView"
+			type="cn.com.thtf.egov.cms.action.inventory.SendGoodsAuditAction"
+			parameter="getSendGoodsView"
+			name="orderForm"
+			scope="request"
+			validate="false">
+			<forward name="view" path="/jsp/inventory/sendgoodview.jsp"/>
+			<forward name="audit" path="/jsp/inventory/sendgoodaudit.jsp"/>
+			<forward name="list" path="/stockOrder.do"/>
+		</action>
+		<!-- 发货单评审 --> 
+		<action path="/stockSendgoodsAudit"
+			type="cn.com.thtf.egov.cms.action.inventory.SendGoodsAuditAction"
+			parameter="sendgoodsAudit"
+			name="orderForm"
+			scope="request"
+			validate="false">
+			<forward name="createSuccess" path="/stockOrder.do"/>
+			<forward name="createFail" path="/getStockSendGoodsView.do"/>
+		</action>
+
+		<!-- 返场单查看 -->
+		<action path="/getStockBuyBackGoodsView"
+			type="cn.com.thtf.egov.cms.action.inventory.SendGoodsAuditAction"
+			parameter="getStockBuyBackGoodsView"
+			name="orderForm"
+			scope="request"
+			validate="false">
+			<forward name="view" path="/jsp/inventory/buybackgoodsview.jsp"/>
+			<forward name="audit" path="/jsp/inventory/buybackgoodsaudit.jsp"/>
+			<forward name="list" path="/stockOrder.do"/>
+		</action>
+		<!-- 返场单评审 --> 
+		<action path="/getStockBuyBackGoodsAudit"
+			type="cn.com.thtf.egov.cms.action.inventory.SendGoodsAuditAction"
+			parameter="getStockBuyBackGoodsAudit"
+			name="orderForm"
+			scope="request"
+			validate="false">
+			<forward name="createSuccess" path="/stockOrder.do"/>
+			<forward name="createFail" path="/getStockBuyBackGoodsView.do"/>
+		</action>
+
+		<!-- 移库单查看 -->
+		<action path="/getStockMoveView"
+			type="cn.com.thtf.egov.cms.action.inventory.SendGoodsAuditAction"
+			parameter="getStockMoveView"
+			name="orderForm"
+			scope="request"
+			validate="false">
+			<forward name="view" path="/jsp/inventory/moveview.jsp"/>
+			<forward name="audit" path="/jsp/inventory/moveaudit.jsp"/>
+		</action>
+		<!-- 移库单评审 --> 
+		<action path="/getStockMoveAudit"
+			type="cn.com.thtf.egov.cms.action.inventory.SendGoodsAuditAction"
+			parameter="getStockMoveAudit"
+			name="orderForm"
+			scope="request"
+			validate="false">
+			<forward name="createSuccess" path="/stockOrder.do"/>
+			<forward name="createFail" path="/getStockMoveView.do"/>
+		</action>
+
+		<!-- 借出单查看 -->
+		<action path="/getStockSampleView"
+			type="cn.com.thtf.egov.cms.action.inventory.SendGoodsAuditAction"
+			parameter="getStockSampleView"
+			name="orderForm"
+			scope="request"
+			validate="false">
+			<forward name="view" path="/jsp/inventory/sampleview.jsp"/>
+			<forward name="audit" path="/jsp/inventory/sampleaudit.jsp"/>
+		</action>
+		<!-- 借出单评审 --> 
+		<action path="/getStockSampleAudit"
+			type="cn.com.thtf.egov.cms.action.inventory.SendGoodsAuditAction"
+			parameter="getStockSampleAudit"
+			name="orderForm"
+			scope="request"
+			validate="false">
+			<forward name="createSuccess" path="/stockOrder.do"/>
+			<forward name="createFail" path="/getStockSampleView.do"/>
+		</action>
+
+		<!-- 装箱单 --> 
+		<action path="/addBoxInit"
+			type="cn.com.thtf.egov.cms.action.inventory.BoxAction"
+			parameter="addBoxInit"
+			name="boxForm"
+			scope="request"
+			validate="false">
+			<forward name="addBoxInit" path="/jsp/inventory/boxCreate.jsp"/> 
+		</action>
+		<!-- 装箱单 --> 
+		<action path="/addBox"
+			type="cn.com.thtf.egov.cms.action.inventory.BoxAction"
+			parameter="addBox"
+			name="boxForm"
+			scope="request"
+			validate="false">
+			<forward name="createSuccessSave" path="/boxList.do"/>
+			<forward name="createSuccess" path="/getBoxPrintView.do"/>
+			<forward name="createFail" path="/addBoxInit.do"/>
+			<forward name="submitRepeat" path="/boxList.do"/>
+		</action>
+		<!-- 选择发货单小页面 --> 
+		<action path="/getOrder"
+			type="cn.com.thtf.egov.cms.action.inventory.BoxAction"
+			parameter="getOrder"
+			name="boxForm"
+			scope="request"
+			validate="false">
+			<forward name="getOrder" path="/jsp/inventory/orderSelect.jsp"/> 
+		</action>
+		<!-- 选择发货单小页面 获得详细数据 --> 
+		<action path="/getOrderDetail"
+			type="cn.com.thtf.egov.cms.action.inventory.BoxAction"
+			parameter="getOrderDetail"
+			name="boxForm"
+			scope="request"
+			validate="false">
+		</action>
+		<!-- 装箱单查看 --> 
+		<action path="/getBoxView"
+			type="cn.com.thtf.egov.cms.action.inventory.BoxAction"
+			parameter="getBox"
+			name="boxForm"
+			scope="request"
+			validate="false">
+			<forward name="view" path="/jsp/inventory/boxView.jsp"/> 
+		</action>
+		<!-- 装箱单查看 --> 
+		<action path="/boxConfirmInit"
+			type="cn.com.thtf.egov.cms.action.inventory.BoxAction"
+			parameter="boxConfirmInit"
+			name="boxForm"
+			scope="request"
+			validate="false">
+			<forward name="toConfirm" path="/jsp/inventory/boxConfirm.jsp"/> 
+		</action>
+		
+		<!-- 装箱单打印 --> 
+		<action path="/getBoxPreView"
+			type="cn.com.thtf.egov.cms.action.inventory.BoxAction"
+			parameter="getBoxPreView"
+			name="boxForm"
+			scope="request"
+			validate="false">
+			<forward name="view" path="/jsp/inventory/boxPreView.jsp"/> 
+		</action>
+		<!-- 装箱单打印 --> 
+		<action path="/getBoxPrintView"
+			type="cn.com.thtf.egov.cms.action.inventory.BoxAction"
+			parameter="getBoxPrintView"
+			name="boxForm"
+			scope="request"
+			validate="false">
+			<forward name="view" path="/jsp/inventory/boxPrint.jsp"/> 
+		</action>
+		<!-- 装箱单管理列表 -->
+		<action path="/boxList"
+			type="cn.com.thtf.egov.cms.action.inventory.BoxAction"
+			parameter="boxList"
+			name="boxForm"
+			scope="request"
+			validate="false">
+			<forward name="boxList" path="/jsp/inventory/boxList.jsp"/>
+		</action>
+		<!-- 装箱单 回执 -->
+		<action path="/boxConfirm"
+			type="cn.com.thtf.egov.cms.action.inventory.BoxAction"
+			parameter="boxConfirm"
+			name="boxForm"
+			scope="request"
+			validate="false">
+			<forward name="boxList" path="/boxList.do"/>
+		</action>
+		<!-- 装箱单 删除 -->
+		<action path="/boxDel"
+			type="cn.com.thtf.egov.cms.action.inventory.BoxAction"
+			parameter="boxDel"
+			name="boxForm"
+			scope="request"
+			validate="false">
+			<forward name="boxList" path="/boxList.do"/>
+		</action>
+		<!--    发货单打印       -->
+		<action path="/getStockSendGoodsPrint"
+			type="cn.com.thtf.egov.cms.action.inventory.SendGoodsAuditAction"
+			parameter="getStockSendGoodsPrint"
+			scope="request"
+			validate="false">
+			<forward name="sendgoodprint" path="/jsp/inventory/sendgoodsPrint.jsp"/>
+		</action>
+		<!--    借出单打印         -->
+		<action path="/getStockSamplePrint"
+			type="cn.com.thtf.egov.cms.action.inventory.SendGoodsAuditAction"
+			parameter="getStockSamplePrint"
+			scope="request"
+			validate="false">
+			<forward name="stocksampleprint" path="/jsp/inventory/sampleprint.jsp"/>
+		</action>
+		<!--    移库单打印         -->
+		<action path="/getStockMovePrint"
+			type="cn.com.thtf.egov.cms.action.inventory.SendGoodsAuditAction"
+			parameter="getStockMovePrint"
+			scope="request"
+			validate="false">
+			<forward name="stockmoveprint" path="/jsp/inventory/moveprint.jsp"/>
+		</action>
+		<!--   返厂单打印      -->
+		<action path="/getStockBuyBackGoodsPrint"
+			type="cn.com.thtf.egov.cms.action.inventory.SendGoodsAuditAction"
+			parameter="getStockBuyBackGoodsPrint"
+			scope="request"
+			validate="false">
+			<forward name="stockbuybackgoodsprint" path="/jsp/inventory/buybackgoodsprint.jsp"/>
+		</action>
+	</action-mappings>
+</struts-config>

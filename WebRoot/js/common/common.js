@@ -1,0 +1,117 @@
+function gotoPage(pageOffset, pageSize) {
+	if (pageOffset < 0) {
+		return;
+	}
+
+	var form = document.getElementsByTagName("Form")[0];
+	if (document.getElementById("oldPageByProduct") != null
+			&& document.getElementById("oldPageByProduct").value == 'cutPage') {
+		if (document.getElementById("mappingTname") != null) {
+			document.getElementById("tname").value = document
+					.getElementById("mappingTname").value;
+		} else {
+			document.getElementById("tname").value = "";
+		}
+		if (document.getElementById("mappingSname") != null) {
+			document.getElementById("sname").value = document
+					.getElementById("mappingSname").value;
+		} else {
+			document.getElementById("sname").value = "";
+		}
+		document.getElementById("productcode").value = document
+				.getElementById("mappingProductcode").value;
+		document.getElementById("name").value = document
+				.getElementById("mappingName").value;
+		document.getElementById("type").value = document
+				.getElementById("mappingType").value;
+	}
+	if (document.getElementById("oldPageByCustomer") != null
+			&& document.getElementById("oldPageByCustomer").value == 'cutPage') {
+		document.getElementById("supplier.name").value = document
+				.getElementById("mappingName").value;
+		document.getElementById("supplier.area").value = document
+				.getElementById("mappingArea").value;
+		document.getElementById("supplier.province").value = document
+				.getElementById("mappingProvince").value;
+		document.getElementById("supplier.city").value = document
+				.getElementById("mappingCity").value;
+	}
+	if (document.getElementById("oldPageBySupplier") != null
+			&& document.getElementById("oldPageBySupplier").value == 'cutPage') {
+		document.getElementById("supplier.name").value = document
+				.getElementById("mappingName").value;
+		document.getElementById("supplier.area").value = document
+				.getElementById("mappingArea").value;
+		document.getElementById("supplier.province").value = document
+				.getElementById("mappingProvince").value;
+		document.getElementById("supplier.city").value = document
+				.getElementById("mappingCity").value;
+	}
+	form.elements["pager.offset"].value = pageOffset;
+	form.elements["pageSize"].value = pageSize;
+	form.submit();
+}
+
+function FloatAdd(arg1, arg2) {
+	var r1, r2, m;
+	try {
+		r1 = arg1.toString().split(".")[1].length
+	} catch (e) {
+		r1 = 0
+	}
+	try {
+		r2 = arg2.toString().split(".")[1].length
+	} catch (e) {
+		r2 = 0
+	}
+	m = Math.pow(10, Math.max(r1, r2))
+	return (arg1 * m + arg2 * m) / m
+}
+
+function FloatSub(arg1, arg2) {
+	var r1, r2, m, n;
+	try {
+		r1 = arg1.toString().split(".")[1].length
+	} catch (e) {
+		r1 = 0
+	}
+	try {
+		r2 = arg2.toString().split(".")[1].length
+	} catch (e) {
+		r2 = 0
+	}
+	m = Math.pow(10, Math.max(r1, r2));
+	n = (r1 >= r2) ? r1 : r2;
+	return ((arg1 * m - arg2 * m) / m).toFixed(n);
+}
+
+function FloatMul(arg1, arg2) {
+	var m = 0, s1 = arg1.toString(), s2 = arg2.toString();
+	try {
+		m += s1.split(".")[1].length
+	} catch (e) {
+	}
+	try {
+		m += s2.split(".")[1].length
+	} catch (e) {
+	}
+	return Number(s1.replace(".", "")) * Number(s2.replace(".", ""))
+			/ Math.pow(10, m)
+}
+
+function FloatDiv(arg1, arg2) {
+	var t1 = 0, t2 = 0, r1, r2;
+	try {
+		t1 = arg1.toString().split(".")[1].length
+	} catch (e) {
+	}
+	try {
+		t2 = arg2.toString().split(".")[1].length
+	} catch (e) {
+	}
+	with (Math) {
+		r1 = Number(arg1.toString().replace(".", ""))
+		r2 = Number(arg2.toString().replace(".", ""))
+		return (r1 / r2) * pow(10, t2 - t1);
+	}
+}

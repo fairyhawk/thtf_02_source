@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="wayBill">
+
+	 <typeAlias alias="wayBillAllDto" type="cn.com.thtf.egov.cms.dto.WayBillAllDto"/>
+	 
+	 <typeAlias alias="searchwayBillDto" type="cn.com.thtf.egov.cms.dto.WayBillSearchDto"/>
+	 
+	 <typeAlias alias="wayBillViewDto" type="cn.com.thtf.egov.cms.dto.WayBillViewDto"/>
+ 
+	
+	<!-- 获得运单一览 -->
+	<select id="wayBillAllPage.selectWayBillAll" parameterClass="java.lang.Integer" resultClass="wayBillAllDto">
+		select  
+			    box.no as no, 
+			    box.id as id,  
+			    logistics.name as logistics_name, 
+			    box.company_name as company_name ,
+			    box.address as address, 
+			    box.count as count, 
+			    box.request_way as request_way, 
+			    box.reality_way as reality_way,
+			    stockroom.name as stockroom_name, 
+			    box.send_date  as send_date, 
+			    box.estimate_date as estimate_date, 
+			    box.arrival_date as arrival_date, 
+			    box.signoff_date as signoff_date, 
+			    box.confirm_date as confirm_date, 
+			    box.status as status 
+		from  box left join   logistics on
+				box.logistics_id=logistics.id  
+		left join   stockroom  on  box.stockroom_id=stockroom.id  
+		<!-- left join box_detail on   box.id=box_detail.box_id   -->
+			
+		where     
+			       box.logistics_id=#logisticsId# and  
+			         
+			       box.status in (2,3,4,5)          
+			
+		order by  box.id desc, box.no
+
+
+	</select> 
+	
+		<!-- 获得运单一览分页用 -->
+	<select id="wayBillAllPage.recordCount" parameterClass="java.lang.Integer" resultClass="java.lang.Integer">
+		select  
+		    count(*)
+ 
+		from  box left join   logistics on
+				box.logistics_id=logistics.id  
+		left join   stockroom  on  box.stockroom_id=stockroom.id    
+		<!-- left join box_detail on   box.id=box_detail.box_id   -->
+			
+		where     
+			       box.logistics_id=#logisticsId# and  
+			         
+			       box.status in (2,3,4,5)          
+			
+		order by  box.id desc, box.no
+
+	</select> 
+
+
+		
+	<!-- 检索运单一览 -->
+	<select id="searchWayBillPage.selectWayBillByCondition" parameterClass="searchwayBillDto" resultClass="wayBillAllDto">
+			select  
+			    box.no as no, 
+			    box.id as id,  
+			    logistics.name as logistics_name, 
+			    box.company_name as company_name ,
+			    box.address as address, 
+			    box.count as count, 
+			    box.request_way as request_way, 
+			    box.reality_way as reality_way,
+			    stockroom.name as stockroom_name, 
+			    box.send_date  as send_date, 
+			    box.estimate_date as estimate_date, 
+			    box.arrival_date as arrival_date, 
+			    box.signoff_date as signoff_date, 
+			    box.confirm_date as confirm_date, 
+			    box.status as status
+		from  box left join   logistics on
+				box.logistics_id=logistics.id  
+		left join   stockroom  on  box.stockroom_id=stockroom.id  
+		<!-- left join box_detail on   box.id=box_detail.box_id  -->
+			
+		where     
+			       box.logistics_id=#logisticsId# and  
+			         
+			       box.status in (2,3,4,5)    
+		 	<isNotEmpty prepend="and" property="no">
+				box.no = #no#
+			</isNotEmpty>                
+	 		<isNotEmpty prepend="and" property="boxId">
+				box.id = #boxId#
+		   </isNotEmpty>
+		   <isNotEmpty prepend="and" property="company_name">
+				box.company_name like  '%$company_name$%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="status">
+				box.status = #status#
+		    </isNotEmpty>
+		 order by   box.id desc, box.no
+
+	</select> 
+	 
+    <!-- 检索运单一览(分页用) -->
+    
+ 	<select id="searchWayBillPage.recordCount" parameterClass="searchwayBillDto" resultClass="java.lang.Integer">
+		select  
+			    count(*)
+		from  box left join   logistics on
+				box.logistics_id=logistics.id  
+		left join   stockroom  on  box.stockroom_id=stockroom.id  
+		<!-- left join box_detail on   box.id=box_detail.box_id  -->
+			
+		where     
+			       box.logistics_id=#logisticsId# and  
+			         
+			       box.status in (2,3,4,5)   
+		       
+			<isNotEmpty prepend="and" property="no">
+				box.no = #no#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="boxId">
+				box.id = #boxId#
+		   </isNotEmpty>
+		   <isNotEmpty prepend="and" property="company_name">
+				box.company_name  like '%$company_name$%' 
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="status">
+				box.status =  #status# 
+		    </isNotEmpty>
+		 order by   box.id desc, box.no
+
+	</select> 	
+	
+	 <!-- 修改运单详情 -->
+ 	<select id="selectWayBillForModify" parameterClass="java.lang.String" resultClass="wayBillViewDto">
+		select box.id as box_id,
+	       box.send_date as box_date,
+	       box.customer_name as customer_name,
+	       box.company_name as  name,
+	       box.address as customer_address,
+	       box.linkman as linkman,
+	       box.postcode as customer_postcode,
+	       box.linkman_tel as customer_tel,
+	       box.mobile as customer_mobile,
+	       box.count as box_count,
+	       box.request_way as request_way,
+	       box.no as no,
+	       box.reality_way as reality_way,
+	       box.estimate_date as estimate_date,
+	       box.tel as box_tel,
+	       box.info as box_info,
+	       box.arrival_date as arrival_date,
+	       box.signoff_date as signoff_date,
+	       box.signoff_name as signoff_name  
+	     
+	     from  box left join   logistics on box.logistics_id=logistics.id  
+		left join   stockroom  on  box.stockroom_id=stockroom.id
+	     where  
+	        box.id = #boxId#
+	</select> 	
+	
+	<!-- 修改运单 -->
+  <update id="updateWayBill" parameterClass="wayBillViewDto" >
+		update box 
+			set  no =#no#,
+		 	reality_way=#reality_way#,
+		 	estimate_date=#estimate_date#,
+		 	tel=#box_tel#,
+		 	info=#box_info#,
+		 	arrival_date=#arrival_date#,
+		 	signoff_date=#signoff_date#,
+		 	signoff_name=#signoff_name#,
+		 	log_adm_name=#log_adm_name#
+		 	<isNotEmpty prepend="," property="status">
+				status = #status#
+		   </isNotEmpty>
+		where box.id = #box_id#
+ </update> 		
+	
+	 
+</sqlMap>

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="incomeStockListForm" type="cn.com.thtf.egov.cms.form.IncomeStockListForm"/>
+	</form-beans>
+	<global-exceptions />
+	<global-forwards />
+	<action-mappings>
+		<!-- 入库列表 -->
+		<action path="/getIncomeStockList"
+			type="cn.com.thtf.egov.cms.action.stock.IncomeStockAction"
+			parameter="getIncomeStockList"
+			name="incomeStockListForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/stock/inStockManage.jsp" />
+		</action>
+		<!-- 入库管理查看 -->
+		<action path="/incomeStoreRoomOfView"
+			type="cn.com.thtf.egov.cms.action.stock.IncomeStockAction"
+			parameter="incomeStoreRoomOfView"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/invoice/redirect.jsp" />
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>	
+		<!-- 入库管理核对 显示-->
+		<action path="/incomeStoreRoomOfComment"
+			type="cn.com.thtf.egov.cms.action.stock.IncomeStockAction"
+			parameter="incomeStoreRoomOfComment"
+			name="incomeStockListForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/invoice/redirect.jsp" />
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+		</action>			
+		<!-- 入库单查看 -->
+		<action path="/getInstockOfInCome"
+			type="cn.com.thtf.egov.cms.action.stock.IncomeStockAction"
+			parameter="getInstockOfInCome"
+			name="incomeStockListForm"
+			scope="request"
+			validate="false">
+			<forward name="auditView" path="/jsp/stock/instock.jsp" />
+		</action>
+		<!-- 销售退货单查看 -->
+		<action path="/viewSaleReturnsOfInCome"
+			type="cn.com.thtf.egov.cms.action.stock.IncomeStockAction"
+			parameter="viewSaleReturnsOfInCome"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/stock/returnGoodsSaleView.jsp" />
+		</action>
+		<!-- 移库单查看 -->
+		<action path="/viewMoveOfInCome"
+			type="cn.com.thtf.egov.cms.action.stock.IncomeStockAction"
+			parameter="viewMoveOfInCome"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/stock/moveStockViewOfIncome.jsp" />
+		</action>
+		<!--样品归还单查看 -->
+		<action path="/viewSampleInAssessOfInCome"
+			type="cn.com.thtf.egov.cms.action.stock.IncomeStockAction"
+			parameter="viewSampleInAssessOfInCome"
+			name=""
+			scope="request"
+			validate="false">
+			<forward name="success" path="/jsp/stock/sampleInView.jsp" />
+		</action>
+		<!-- 评审 执行-->
+		<action path="/modifyInStockOfincomeStoreComment"
+			type="cn.com.thtf.egov.cms.action.stock.IncomeStockAction"
+			parameter="modifyInStockOfincomeStoreComment"
+			name="incomeStockListForm"
+			scope="request"
+			validate="false">
+			<forward name="success" path="/getIncomeStockList.do" />
+			<forward name="fail" path="/jsp/invoice/redirect.jsp" />
+			<forward name="error" path="/getIncomeStockList.do?statusError=true" />
+		</action>		
+		
+	</action-mappings>
+	
+</struts-config>

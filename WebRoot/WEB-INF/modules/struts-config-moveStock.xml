@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources/>
+	<form-beans>
+		<!--管理页面检索-->
+	 	<form-bean name="searchMoveStockForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="searchMoveStockDto" type="cn.com.thtf.egov.cms.dto.MoveStockSearchDto"/>
+		</form-bean>
+		
+		<!--修改移库单-->
+	 	<form-bean name="modifyMoveStockForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="modifyMoveStockDto" type="cn.com.thtf.egov.cms.entity.MoveEntity"/>
+		</form-bean>		
+		
+		 <!-- 移库评审     by jiangmx   -->
+		<form-bean name="moveStockAssessForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="moveStockAssess" type="cn.com.thtf.egov.cms.dto.MoveStockAssessDto"/>
+		</form-bean>
+		
+		<!-- 新建 -->
+		<form-bean name="createMoveStockForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="createMoveStockDto" type="cn.com.thtf.egov.cms.dto.MoveStockAssessDto"></form-property>
+		</form-bean>
+		
+		<!-- 产品显示  -->
+		<form-bean name="getMoveProductSelectForm" type="org.apache.struts.action.DynaActionForm">
+			<form-property name="moveStockProductDto" type="cn.com.thtf.egov.cms.dto.MoveStockProductDto"></form-property>
+		</form-bean>
+			
+			
+
+	</form-beans>
+	<global-exceptions/>
+	<global-forwards>
+	</global-forwards>
+	
+	<action-mappings>
+		<!--移库单一览  by zhangzx-->
+		<action path="/getMoveStockList" type="cn.com.thtf.egov.cms.action.stock.MoveStockAction"
+			parameter="getMoveStockList" scope="request" validate="false">
+			<forward name="success" path="/jsp/stock/moveStockManager.jsp"/>
+		</action> 	 
+		
+		<!--移库单检索  by zhangzx-->
+		<action path="/searchMoveStock" type="cn.com.thtf.egov.cms.action.stock.MoveStockAction"
+			parameter="searchMoveStock"
+			scope="request"
+			name="searchMoveStockForm" validate="false">
+			<forward name="success" path="/jsp/stock/moveStockManager.jsp"/>
+		</action>	
+		
+		<!--收货地址选择  by zhangzx-->
+		<action path="/getSendGoodsAddressByStockroomId" type="cn.com.thtf.egov.cms.action.stock.MoveStockAction"
+			parameter="getSendGoodsAddressByStockroomId" scope="request"   validate="false">
+			<forward name="success" path="/jsp/stock/receive_address_select.jsp"/>
+		</action>	
+		
+		<!-- 修改移库单 显示页  By zhangzx   --> 
+		<action path="/getMoveStockModifyInfo" type="cn.com.thtf.egov.cms.action.stock.MoveStockAction"
+			parameter="getMoveStockModifyInfo"  scope="request"  validate="false">
+			<forward name="success" path="/jsp/stock/moveStockModify.jsp"/>			
+		</action>
+		
+		<!-- 修改移库单  By zhangzx   --> 
+		<action path="/modifyMoveStock" type="cn.com.thtf.egov.cms.action.stock.MoveStockAction"
+			parameter="modifyMoveStock" name="modifyMoveStockForm" scope="request"  validate="false">
+			<forward name="success" path="/getMoveStockList.do"/>
+			<forward name="failure" path="/getMoveStockModifyInfo.do"/>				
+		</action>
+		
+		<!--显示移库评审、查看  by jiangmx-->
+		<action path="/getShowMoveStockAssess" type="cn.com.thtf.egov.cms.action.stock.MoveStockAction"
+			parameter="getShowMoveStockAssess"
+			scope="request"
+			validate="false">
+			<forward name="showAssess" path="/jsp/stock/moveStockAudit.jsp"/>
+			<forward name="view" path="/jsp/stock/moveStockView.jsp"/>
+			<forward name="failure" path="/getMoveStockList.do"/>
+		</action>
+		
+		<!--移库评审  by jiangmx-->
+		<action path="/getMoveStockAssess" type="cn.com.thtf.egov.cms.action.stock.MoveStockAction"
+			parameter="getMoveStockAssess"
+			scope="request"
+			validate="false"
+			name="moveStockAssessForm">
+			<forward name="success" path="/getMoveStockList.do"/>
+			<forward name="failure" path="/getShowMoveStockAssess.do?type=showAssess"/>
+			<forward name="failureToList" path="/getMoveStockList.do"/>
+		</action> 	  	  
+
+	<!-- 新建移库单 显示页  By LiuQingGang   --> 
+		<action path="/createMoveStockInfo" type="cn.com.thtf.egov.cms.action.stock.MoveStockAction"
+			parameter="createMoveStockInfo"  scope="request"  validate="false">
+			<forward name="success" path="/jsp/stock/moveStockAdd.jsp"/>
+			<forward name="failure" path="/getMoveStockList.do"/>
+		</action>
+		
+		<!-- 新建移库单  By LiuQingGang   --> 
+		<action path="/createMoveStock" type="cn.com.thtf.egov.cms.action.stock.MoveStockAction"
+			parameter="createMoveStock" name="createMoveStockForm" scope="request"  validate="false">
+			<forward name="failure" path="/createMoveStockInfo.do"/>
+			<forward name="success" path="/getMoveStockList.do"/>
+		</action>
+		  
+		<!-- 产品信息显示 检索  By LiuQingGang   --> 
+		<action path="/getMoveProductSelect" type="cn.com.thtf.egov.cms.action.stock.MoveStockAction"
+			parameter="getMoveProductSelect" name="getMoveProductSelectForm" scope="request"  validate="false">
+			<forward name="success" path="/jsp/stock/move_product_select.jsp"/>
+			<forward name="failure" path="/jsp/stock/moveStockAdd.jsp"/>
+		</action>
+		
+		
+		<!-- 产品信息显示 检索  By LiuQingGang   --> 
+		<action path="/getMoveProductSelectView" type="cn.com.thtf.egov.cms.action.stock.MoveStockAction"
+			parameter="getMoveProductSelect"  scope="request"  validate="false">
+			<forward name="success" path="/jsp/stock/move_product_select.jsp"/>
+			<forward name="failure" path="/jsp/stock/moveStockAdd.jsp"/>
+		</action>
+		<!-- 删除移库单 -->
+		<action path="/deleteMoveStock" type="cn.com.thtf.egov.cms.action.stock.MoveStockAction"
+			parameter="deleteMoveStock"  scope="request"  validate="false">
+			<forward name="success" path="/getMoveStockList.do"/> 
+		</action>
+		
+		
+	</action-mappings>
+
+	<message-resources parameter="com.tsinghua.mp.web.conf.i18n.ApplicationResources"/>
+	
+</struts-config>

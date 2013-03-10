@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans>
+		<form-bean name="creditTypeLimitForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="creditlimit"
+				type="cn.com.thtf.egov.cms.dto.CreditTypeLimitInfoDto"/>
+		</form-bean>
+		<form-bean name="creditTypeForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="credittype"
+				type="cn.com.thtf.egov.cms.dto.CreditTypeInfoDto"/>
+		</form-bean>
+
+		<form-bean name="customerCreditForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="customercredit"
+				type="cn.com.thtf.egov.cms.dto.CustomerCreditInfoDto"/>
+		</form-bean>
+		<form-bean name="productCreditForm"
+			type="org.apache.struts.action.DynaActionForm">
+			<form-property name="productCredit"
+				type="cn.com.thtf.egov.cms.dto.ProdCreditLimitDto"/>
+		</form-bean>
+		
+		<form-bean name="customerCreditForm"
+			type="cn.com.thtf.egov.cms.form.CustomerCreditForm">			
+		</form-bean>		
+
+	</form-beans>
+	<global-exceptions />
+	
+	<global-forwards>
+		<forward name="customerCreditList" path="/customerCreditManage.do" redirect="true" />	
+	</global-forwards>
+	
+	
+	<action-mappings>
+		<!-- 根据ID查看信用类型-->
+		<action path="/findCreditType"
+			type="cn.com.thtf.egov.cms.action.credit.CreditTypeAction"
+			name="creditTypeForm"
+			parameter="findCreditTypeById"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/credit/creditTypeModify.jsp"/>
+		</action>
+		
+		<!-- 查看所有的信用类型 -->
+		<action path="/findAllCreditType"
+			type="cn.com.thtf.egov.cms.action.credit.CreditTypeAction"
+			name="creditTypeForm"
+			parameter="findAllCreditType"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/credit/creditTypeList.jsp" />
+		</action>
+		
+		<!-- 修改信用类型-->
+		<action path="/updateCreditType"
+			type="cn.com.thtf.egov.cms.action.credit.CreditTypeAction"
+			name="creditTypeForm"
+			parameter="updateCreditType"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/findAllCreditType.do?" />
+			<forward name="fail"
+				path="/jsp/credit/creditTypeModify.jsp"/>
+		</action>
+
+         
+        <!-- 修改信用类型前信用名称的检查(jquery_ajax)llw-->
+		<action path="/updateCreditTypeCheck"
+			type="cn.com.thtf.egov.cms.action.credit.CreditTypeAction"
+			name="creditTypeForm"
+			parameter="updateCreditTypeCheck" scope="request"
+			validate="false">			
+		</action>
+
+		
+		
+		<!-- 显示要修改的用户信用llw-->
+		<action path="/showCustomerCredit"
+			type="cn.com.thtf.egov.cms.action.credit.CreditCustomerLimitAction"
+			name="customerCreditForm"
+			parameter="showCustomerCredit" scope="request"
+			validate="false">
+			
+			<forward name="success"
+				path="/jsp/credit/creditCustomerLimitModify.jsp" />
+			<forward name="fail"
+				path="/jsp/credit/creditCustomerLimitList.jsp" />				
+		</action>
+		
+		<!-- 显示添加用户信用页面llw-->
+		<action path="/forwardNewCustomerCreditPage"
+			type="cn.com.thtf.egov.cms.action.credit.CreditCustomerLimitAction"
+			name="customerCreditForm"
+			parameter="forwardNewCustomerCreditPage" scope="request"
+			validate="false">
+			
+			<forward name="success"
+				path="/jsp/credit/creditCustomerLimitAdd.jsp" />
+			<forward name="fail"
+				path="/jsp/credit/creditCustomerLimitList.jsp" />				
+		</action>
+		
+		<!-- 选择客户(添加用户信用)llw-->
+		<action path="/selectCustomer"
+			type="cn.com.thtf.egov.cms.action.credit.CreditCustomerLimitAction"
+			name="customerCreditForm"
+			parameter="selectCustomer" scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/credit/creditCustomerLimitAdd_selectCustomer.jsp" />
+			<forward name="fail"
+				path="/forwardNewCustomerCreditPage.do" />				
+		</action>
+		
+		<!-- 添加用户信用llw-->
+		<action path="/addCustomerCredit"
+			type="cn.com.thtf.egov.cms.action.credit.CreditCustomerLimitAction"
+			name="customerCreditForm"
+			parameter="addCustomerCredit" scope="request"
+			validate="false">
+			<forward name="success"
+				path="/customerCreditManage.do" redirect="true"/>
+			<forward name="fail"
+				path="/jsp/credit/creditCustomerLimitAdd.jsp" />				
+		</action>
+		
+		<!-- 修改用户信用llw-->
+		<action path="/modifyCustomerCredit"
+			type="cn.com.thtf.egov.cms.action.credit.CreditCustomerLimitAction"
+			name="customerCreditForm"
+			parameter="modifyCustomerCredit" scope="request"
+			validate="false">
+			<forward name="success"
+				path="/customerCreditManage.do"  redirect="true" />
+			<forward name="fail"
+				path="/jsp/credit/creditCustomerLimitModify.jsp" />
+										
+		</action>
+		
+		
+		<!-- 删除用户信用llw-->
+		<action path="/removeCustomerCredit"
+			type="cn.com.thtf.egov.cms.action.credit.CreditCustomerLimitAction"			
+			parameter="removeCustomerCredit" scope="request"
+			validate="false">
+			<forward name="customerCreditList"
+				path="/customerCreditManage.do"/>			
+		</action>		
+		
+		
+		<!-- 客户信用查看llw-->
+		<action path="/viewCustomerCredit"
+			type="cn.com.thtf.egov.cms.action.credit.CreditCustomerLimitAction"			
+			parameter="viewCustomerCredit" scope="request"
+			validate="false">			
+			<forward name="success"
+				path="/jsp/credit/creditCustomerLimitView.jsp"/>					
+		</action>
+		
+		<!-- 客户信用管理llw-->
+		<action path="/customerCreditManage"
+			type="cn.com.thtf.egov.cms.action.credit.CreditCustomerLimitAction"
+			name="customerCreditForm"
+			parameter="customerCreditManage" scope="request"
+			validate="false">
+			
+			<forward name="customerCreditList"
+				path="/jsp/credit/creditCustomerLimitList.jsp"/>
+					
+		</action>
+		
+		<!-- 获取可分配额度 llw-->
+		<action path="/getCanDistributeLimit"
+			type="cn.com.thtf.egov.cms.action.credit.CreditCustomerLimitAction"
+			name="customerCreditForm"
+			parameter="getCanDistributeLimit" scope="request"
+			validate="false">					
+		</action>
+			
+		
+		<action path="/pcreditall"
+			type="cn.com.thtf.egov.cms.action.credit.ProductCreditAllAction"
+			parameter="method"
+			scope="request" name="productCreditForm">
+			<forward name="pcreditalll"
+				path="/jsp/credit/credit020305.jsp" />
+
+			<forward name="update"
+				path="/jsp/credit/credit020206modify.jsp" />
+
+			<forward name="updateErr"
+				path="/jsp/credit/credit020305.jsp" />
+
+			<forward name="index" path="/jsp/credit/credit020305.jsp" />
+		</action>
+
+	
+
+		<!--产品分类信用类型额度            start    by   zhaolei-->
+	  	<!--  查看所有产品分类信用额度 -->
+	  	<action path="/creditTypeLimit"
+	  		  	type="cn.com.thtf.egov.cms.action.credit.CreditTypeLimitAction"
+	  			name="creditTypeLimitForm"
+	  			parameter="findAllProdAssortCreditLimit" scope="request"
+	  			validate="false">		
+	  			<forward name="success"
+	  				  path="/jsp/credit/creditTypeLimitLisit.jsp"/>
+	  	</action>
+	  	
+		<!--  对产品分类信用额度 进行修改返回的数据-->
+	  	<action path="/findProdAssortCreditLimit"
+	  		  	type="cn.com.thtf.egov.cms.action.credit.CreditTypeLimitAction"
+	  			name="creditTypeLimitForm"
+	  			parameter="findProdAssortCreditLimitById" scope="request"
+	  			validate="false">		
+	  			<forward name="success"
+	  				  path="/jsp/credit/creditTypeLimitModify.jsp"/>
+	  	</action>
+	  	
+		<!--  对产品分类信用额度 进行修改-->
+	  	<action path="/updateProdAssortCreditLimit"
+	  		  	type="cn.com.thtf.egov.cms.action.credit.CreditTypeLimitAction"
+	  			name="creditTypeLimitForm"
+	  			parameter="updateProdAssortCreditLimit" scope="request"
+	  			validate="false">		
+	  			<forward name="success"
+	  				  path="/creditTypeLimit.do"/>
+	  			<forward name="fail"
+	  				  path="/findProdAssortCreditLimit.do?"/>
+	  	</action>
+	  	
+		<!-- 查看所有产品分类信用总额 -->
+		<action path="/prodCreditLimit"
+			type="cn.com.thtf.egov.cms.action.credit.CreditTotalLimitAction"
+			name="productCreditForm"
+			parameter="findAllProdCreditLimit"
+			scope="request"
+
+			validate="false">
+			<forward name="success"
+				path="/jsp/credit/creditTotalLimitList.jsp" />
+		</action>
+		
+		<!-- 根据ID查看产品分类信用总额-->
+		<action path="/findProdCreditLimitById"
+			type="cn.com.thtf.egov.cms.action.credit.CreditTotalLimitAction"
+			name="productCreditForm"
+			parameter="findProdCreditLimitById"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/jsp/credit/creditTotalLimitModify.jsp"
+				/>
+		</action>
+		
+		<!-- 修改产品分类信用总额-->
+		<action path="/updateProdCreditLimit"
+			type="cn.com.thtf.egov.cms.action.credit.CreditTotalLimitAction"
+			name="productCreditForm"
+			parameter="updateProdCreditLimit"
+			scope="request"
+			validate="false">
+			<forward name="success"
+				path="/prodCreditLimit.do" />
+			<forward name="fail"
+				path="/jsp/credit/creditTotalLimitModify.jsp"/>
+		</action>
+		
+		<!--  添加产品分类信用额度-->
+	  	<action path="/insertNewProdAssortCreditTypeLimit"
+	  		  	type="cn.com.thtf.egov.cms.action.credit.CreditTypeLimitAction"
+	  			name="creditTypeLimitForm"
+	  			parameter="insertNewProdAssortCreditTypeLimit" scope="request"
+	  			validate="false">		
+	  			<forward name="success"
+	  				  path="/creditTypeLimit.do"/>
+	  			<forward name="fail"
+	  				  path="/findAllProdType.do"/>
+	  	</action>
+	  	
+		<!--  删除产品分类信用一条记录-->
+	  	<action path="/deleteProdAssortCreditTypeLimit"
+	  		  	type="cn.com.thtf.egov.cms.action.credit.CreditTypeLimitAction"
+	  			name="creditTypeLimitForm"
+	  			parameter="deleteProdAssortCreditTypeLimit" scope="request"
+	  			validate="false">		
+	  			<forward name="success"
+	  				  path="/creditTypeLimit.do"/>
+	  			<forward name="fail"
+	  				  path="/creditTypeLimit.do"/>
+	  	</action>
+	  	
+		<!--  进入”产品分类信用额度添加“页面-->
+	  	<action path="/findAllProdType"
+	  		  	type="cn.com.thtf.egov.cms.action.credit.CreditTypeLimitAction"
+	  			name="creditTypeLimitForm"
+	  			parameter="findAllProdType" scope="request"
+	  			validate="false">		
+	  			<forward name="success"
+	  				  path="/jsp/credit/creditTypeLimitAdd.jsp"/>
+	  	</action>
+	  	
+	  	<!--Ajax返回可分配金额-->
+	  	<action path="/findCanAssignClimit"
+	  		  	type="cn.com.thtf.egov.cms.action.credit.CreditTypeLimitAction"
+	  			name="creditTypeLimitForm"
+	  			parameter="findCanAssignClimit" scope="request"
+	  			validate="false">		
+	  	</action>
+		<!-- end     by  zhaolei-->
+		
+		<!--Ajax返回对产品类型下的分配了信用额度的creditType llw -->
+	  	<action path="/getAllCreditTypeOfProduct"
+	  		  	type="cn.com.thtf.egov.cms.action.credit.CreditCustomerLimitAction"
+	  			
+	  			parameter="getAllCreditTypeOfProduct" scope="request"
+	  			validate="false">		
+	  	</action>
+		
+	  	
+	</action-mappings>
+	<message-resources
+		parameter="com.tsinghua.mp.web.conf.i18n.ApplicationResources"
+		/>
+</struts-config>

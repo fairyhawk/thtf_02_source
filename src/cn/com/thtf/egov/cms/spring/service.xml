@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN"
+"http://www.springframework.org/dtd/spring-beans.dtd">
+<beans> 
+
+	<bean id="custwaybillService"
+		class="cn.com.thtf.egov.cms.serviceimpl.custwaybill.CustwaybillServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+	
+	<!-- 用户信息管理 -->
+	<bean id="UserSearchService"
+		class="cn.com.thtf.egov.cms.serviceimpl.UserSearchServiceImpl">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<bean id="UserSearchBeforeService"
+		class="cn.com.thtf.egov.cms.serviceimpl.UserSearchBeforeServiceImpl">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<bean id="UserRemoveService"
+		class="cn.com.thtf.egov.cms.serviceimpl.UserRemoveServiceImpl">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+
+	<bean id="UserViewService"
+		class="cn.com.thtf.egov.cms.serviceimpl.UserViewServiceImpl">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+
+	<bean id="UserChangeBeforeService"
+		class="cn.com.thtf.egov.cms.serviceimpl.UserChangeBeforeServiceImpl">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<bean id="UserChangeService"
+		class="cn.com.thtf.egov.cms.serviceimpl.UserChangeServiceImpl">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<bean id="AllCustomerSearchService"
+		class="cn.com.thtf.egov.cms.serviceimpl.AllCustomerSearchServiceImpl">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<bean id="AddCustomerService"
+		class="cn.com.thtf.egov.cms.serviceimpl.AddCustomerServiceImpl">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<bean id="UserAddService"
+		class="cn.com.thtf.egov.cms.serviceimpl.UserAddServiceImpl">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<bean id="UserAdd1Service"
+		class="cn.com.thtf.egov.cms.serviceimpl.UserAdd1ServiceImpl">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<bean id="SalesAssistantAddBeforeService"
+		class="cn.com.thtf.egov.cms.serviceimpl.SalesAssistantAddBeforeServiceImpl">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<bean id="SalesAssistantAddBeforeCheckService"
+		class="cn.com.thtf.egov.cms.serviceimpl.SalesAssistantAddBeforeCheckServiceImpl">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<bean id="TreasuryManagerAddBeforeService" class="cn.com.thtf.egov.cms.serviceimpl.TreasuryManagerAddBeforeServiceImpl">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<bean id="SalesAssistantAddBeforeCheck1Service" class="cn.com.thtf.egov.cms.serviceimpl.SalesAssistantAddBeforeCheck1ServiceImpl">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<!-- 人员区域管理 -->
+	<bean id="areaServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.AreaServiceImp">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<!-- 人员部门管理 -->
+	<bean id="userDeptServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.UserDeptServiceImp">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<!-- 产品部门管理 -->
+	<bean id="productDeptServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.ProductDeptServiceImp">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<!-- 产品分类管理 -->
+	<bean id="productTypeServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.ProductTypeServiceImp">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<!-- 产品系类管理 -->
+	<bean id="productSerieServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.ProductSerieServiceImp">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<!-- 库房类管理 -->
+	<bean id="depotServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.DepotServiceImp">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<!-- 物流公司类管理 -->
+	<bean id="logisticsServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.LogisticsServiceImp">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+		<property name="newDao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+	<!-- 省市类管理 -->
+	<bean id="provinceCityServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.ProvinceCityServiceImp">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<!-- 品牌管理 -->
+	<bean id="brandServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.BrandServiceImp">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<!-- 产品管理 -->
+	<bean id="productServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.ProductServiceImp">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<!-- 供货商管理 -->
+	<bean id="supplierServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.SupplierServiceImp">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<!-- 客户管理 -->
+	<bean id="customerServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.CustomerServiceImp">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<!-- 公司管理 -->
+	<bean id="companyServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.CompanyServiceImp">
+		<property name="dao">
+			<ref bean="genericDao" />
+		</property>
+	</bean>
+	<!-- 个人信息修改 -->
+	<bean id="userServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.UserServiceImp">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean> 
+	<!-- 树目录 -->
+	<bean id="createTreeServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.CreateTreeServiceImp">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+	
+	<!-- 信用类型管理 -->
+	<bean id="creditTypeServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.credit.CreditServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+	<!-- 销售合同管理-->
+	<bean id="salesContractManagementServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.sell.SalesContractManagementServiceImp">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+	
+	<!-- 客户信用管理 (新)-->
+	<bean id="customerCreditService"
+		class="cn.com.thtf.egov.cms.serviceimpl.credit.CreditServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+
+	<!-- 销售合同列表 -->
+	<bean id="salesContractServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.sell.SalesContractManagementServiceImp">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+	<!-- 发货管理 -->
+	<bean id="sendGoodsServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.sell.SendGoodsServiceImp">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+
+	<!-- 库房管理 -->
+	<bean id="stockroomServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.inventory.StockroomServiceImp">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+	
+	<!-- 共通 -->
+	<bean id="commonServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.common.CommonServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+	<!-- 待办事项 -->
+	<bean id="todoWrokServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.work.TodoWorkService">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+
+	<!-- 开票管理 -->
+	<bean id="invoiceListServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.sell.InvoiceListServiceImp">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+
+	
+	<!-- 回款 -->
+	<bean id="mReturnServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.mreturn.MReturnServiceImp">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+	<!-- 运单一览 -->
+	<bean id="wayBillServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.wayBill.WayBillServiceImp">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+	
+	<!-- 运单查看-->
+	<bean id="wayBillViewServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.wayBill.WayBillViewServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean> 
+	<!-- 退票-->
+	<bean id="backInvoiceServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.sell.BackInvoiceServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean> 
+	<!-- 销售退货-->
+	<bean id="saleReturnsServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.sell.SaleReturnsServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean> 
+	
+	<!-- 销售退货合同管理-->
+	<bean id="saleBackContractServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.salesBackContract.SalesBackContractServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+
+	<!-- 入库单 -->
+	<bean id="inStockServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.purchase.InStockServiceImp">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+	
+	<!-- 销售退款管理 -->
+	<bean id="sellBackServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.sell.SellBackServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+
+	<!-- 采购合同管理 -->
+	<bean id="buyContractServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.purchase.BuyContractServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+
+	<!-- 采购退货合同管理 -->
+	<bean id="buyBackContractServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.purchase.BuyBackContractServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+
+	<!-- 装箱单 -->
+	<bean id="boxServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.inventory.BoxServiceImp">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+
+	<!-- 邮件模块 -->
+	<bean id="mailServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.mail.MailServiceImp">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+
+	<!-- 库存 -->
+	<bean id="stockServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.inventory.StockServiceImp">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+	
+	<!-- 库存 -->
+	<bean id="buyPaymentServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.purchase.BuyPaymentServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+
+	<!-- 需求管理 -->
+	<bean id="demandServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.demand.DemandServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>	
+	
+	<!-- 采购退款 -->
+	<bean id="buyBackServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.purchase.BuyBackServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>	
+	
+	<!-- 收票管理 -->
+	<bean id="receiveInvoiceServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.invoice.ReceiveInvoiceServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>		
+	
+	<!-- 采购返厂 -->
+	<bean id="buyBackGoodsServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.purchase.BuyBackGoodsServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>	
+		
+	<!-- 入库管理 -->
+	<bean id="incomeStockServiceImp"
+		class="cn.com.thtf.egov.cms.serviceimpl.stock.IncomeStockServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>	
+	
+	<!-- 移库单 -->
+	<bean id="moveStockServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.stock.MoveStockServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>	
+	
+	<!-- 借出单 -->
+	<bean id="sampleOutServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.stock.SampleOutServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>	
+	
+	<!-- 归还单 -->
+	<bean id="sampleInServiceImpl"
+		class="cn.com.thtf.egov.cms.serviceimpl.stock.SampleInServiceImpl">
+		<property name="dao">
+			<ref bean="newgenericDao" />
+		</property>
+	</bean>
+	
+	
+	
+</beans>
